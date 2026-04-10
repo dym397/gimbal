@@ -2,8 +2,8 @@
 """
 UDP sender for main_tracking_v9.py.
 
-This script sends test packets to the RK3588 receiver (default: 10.70.117.28:8888)
-using multiple payload shapes that parse_udp_objects() already supports.
+This script sends test packets to the Linux receiver (default: 172.28.239.28:8888)
+using payload shapes that parse_udp_objects() already supports.
 """
 
 import argparse
@@ -55,26 +55,38 @@ def moving_targets(seq: int, t: float) -> Tuple[List[float], List[float], float,
     return box1, box2, max(1.0, d1), max(1.0, d2)
 
 
-def build_packet(board: str, cam: int, seq: int, t: float) -> Dict:
+def build_packet(board: str, cam: int, seq: int, t: float, payload_mode: str, target_count: int) -> Dict:
     box1, box2, d1, d2 = moving_targets(seq, t)
-    fmt = seq % 4
-
-    if fmt == 0:
-        # format 1/2: flat list [x1,y1,x2,y2,dist]
-        objs = [box1[0], box1[1], box1[2], box1[3], d1]
-    elif fmt == 1:
-        # format 3: list of dict objects with "box"
-        objs = [
-            {"box": box1, "distance_m": d1},
-            {"box": box2, "distance": d2},
-        ]
-    elif fmt == 2:
-        # format 4: dict with "boxes" + "distances"
-        objs = {"boxes": [box1, box2], "distances": [d1, d2]}
+    if payload_mode == "stable":
+        if target_count <= 1:
+            objs = [box1[0], box1[1], box1[2], box1[3], d1]
+        else:
+            objs = [
+                [box1[0], box1[1], box1[2], box1[3], d1],
+                [box2[0], box2[1], box2[2], box2[3], d2],
+            ]
     else:
-        # compatible variant: x,y,w,h + distance
-        x1, y1, x2, y2 = box1
-        objs = [{"x": x1, "y": y1, "w": (x2 - x1), "h": (y2 - y1), "distance": d1}]
+        fmt = seq % 4
+
+        if fmt == 0:
+            objs = [box1[0], box1[1], box1[2], box1[3], d1]
+        elif fmt == 1:
+            objs = [{"box": box1, "distance_m": d1}]
+            if target_count > 1:
+                objs.append({"box": box2, "distance": d2})
+        elif fmt == 2:
+            boxes = [box1]
+            distances = [d1]
+            if target_count > 1:
+                boxes.append(box2)
+                distances.append(d2)
+            objs = {"boxes": boxes, "distances": distances}
+        else:
+            x1, y1, x2, y2 = box1
+            objs = [{"x": x1, "y": y1, "w": (x2 - x1), "h": (y2 - y1), "distance": d1}]
+            if target_count > 1:
+                x1b, y1b, x2b, y2b = box2
+                objs.append({"x": x1b, "y": y1b, "w": (x2b - x1b), "h": (y2b - y1b), "distance": d2})
 
     return {
         "board": board,
@@ -87,12 +99,25 @@ def build_packet(board: str, cam: int, seq: int, t: float) -> Dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="UDP sender for main_tracking_v9.py")
-    parser.add_argument("--ip", default="10.70.117.28", help="Receiver IP")
+    parser.add_argument("--ip", default="172.28.239.28", help="Receiver IP")
     parser.add_argument("--port", type=int, default=8888, help="Receiver UDP port")
-    parser.add_argument("--board", default="BOARD_1", help="Board id string")
-    parser.add_argument("--cam", type=int, default=0, help="Camera index")
+    parser.add_argument("--board", default="BOARD_3", help="Board id string")
+    parser.add_argument("--cam", type=int, default=2, help="Camera index")
     parser.add_argument("--fps", type=float, default=20.0, help="Send rate")
     parser.add_argument("--duration", type=float, default=30.0, help="Seconds to run")
+    parser.add_argument(
+        "--payload-mode",
+        choices=("stable", "mixed"),
+        default="stable",
+        help="stable: steady format for integration; mixed: cycle all supported payload shapes",
+    )
+    parser.add_argument(
+        "--target-count",
+        type=int,
+        choices=(1, 2),
+        default=1,
+        help="Number of simulated targets",
+    )
     parser.add_argument(
         "--bad-json-every",
         type=int,
@@ -123,7 +148,8 @@ def main() -> None:
 
     print(
         f"[Sender] target={args.ip}:{args.port}, board={args.board}, cam={args.cam}, "
-        f"fps={args.fps}, duration={args.duration}s, frames={total}"
+        f"fps={args.fps}, duration={args.duration}s, frames={total}, "
+        f"payload_mode={args.payload_mode}, target_count={args.target_count}"
     )
 
     t0 = time.time()
@@ -139,7 +165,7 @@ def main() -> None:
             raw = b"{\"board\":\"BROKEN\", \"objs\": [1,2,3,4]"  # missing closing brace
             kind = "bad_json"
         else:
-            pkt = build_packet(args.board, args.cam, seq, t)
+            pkt = build_packet(args.board, args.cam, seq, t, args.payload_mode, args.target_count)
             raw = json.dumps(pkt, ensure_ascii=False).encode("utf-8")
             kind = "normal"
 

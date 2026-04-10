@@ -1,0 +1,22 @@
+{
+  "scenario": "single_sine",
+  "board": "BOARD_3",
+  "cam": 2,
+  "duration_s": 20.0,
+  "fps": 20.0,
+  "noise_px": 1.5,
+  "drop_prob": 0.05,
+  "seed": 42,
+  "frames": 400,
+  "command_updates": 65,
+  "master_switches": 0,
+  "lock_ratio": 0.995,
+  "stable_ratio_err_le_1_5deg": 0.97,
+  "settle_time_s": 0.6000000000000001,
+  "err_total_mean": 0.6137734941595937,
+  "err_total_p95": 0.1786080741927623,
+  "err_az_mean": 0.09856948092198081,
+  "err_az_p95": 0.15415820035314448,
+  "err_el_mean": 0.5654081624901987,
+  "err_el_p95": 0.08250214042906968
+}

@@ -26,29 +26,37 @@ except ImportError:
 # ==========================================
 # 配置
 # ==========================================
+# Linux-only deployment: keep defaults aligned with the target runtime.
+_SERIAL_PORT_DEFAULTS = {
+    "gimbal": "/dev/ttyUSB0",
+    "laser": "/dev/ttyUSB1",
+    "imu": "/dev/ttyUSB2",
+}
+
+
 def _serial_port_default(role):
-    if os.name == "nt":
-        defaults = {
-            "gimbal": "COM3",
-            "laser": "COM4",
-            "imu": "COM5",
-        }
-    else:
-        defaults = {
-            "gimbal": "/dev/ttyUSB0",
-            "laser": "/dev/ttyUSB1",
-            "imu": "/dev/ttyUSB2",
-        }
-    return defaults[role]
+    return _SERIAL_PORT_DEFAULTS[role]
 
 
-def _warn_if_windows_port(label, port_name):
-    if os.name == "nt":
+def _linux_serial_port(env_name, role):
+    port_name = os.getenv(env_name, _serial_port_default(role))
+    return port_name.strip() if isinstance(port_name, str) else port_name
+
+
+def _validate_linux_serial_port(label, port_name):
+    if not isinstance(port_name, str) or not port_name:
+        print(f"[Config][Warn] {label} 未配置有效的 Linux 串口路径。")
         return
-    if isinstance(port_name, str) and port_name.upper().startswith("COM"):
+    if not port_name.startswith("/dev/"):
         print(
-            f"[Config][Warn] {label}={port_name} 看起来是 Windows 串口名。"
-            "Linux 下请改为 /dev/ttyUSB* 或 /dev/ttyS*。"
+            f"[Config][Warn] {label}={port_name} 不是 Linux 串口设备路径。"
+            "请改为 /dev/ttyUSB*、/dev/ttyACM*、/dev/ttyS* 或 /dev/serial/by-id/*。"
+        )
+        return
+    if not os.path.exists(port_name):
+        print(
+            f"[Config][Warn] {label}={port_name} 当前不存在。"
+            "请确认设备节点或 udev 映射是否正确。"
         )
 
 
@@ -133,21 +141,23 @@ def _env_flag(name, default=True):
 
 UI_IP = "192.168.2.200"
 UI_PORT = 9999
-LOCAL_PORT = 8888       
-GIMBAL_PORT = os.getenv("GIMBAL_PORT", _serial_port_default("gimbal"))
-LASER_PORT = os.getenv("LASER_PORT", _serial_port_default("laser"))
-USE_MOCK_GIMBAL = True  # True: 使用 mock_gimbal.py; False: 使用真实 GT06Z
+LOCAL_PORT = 8888
+GIMBAL_PORT = _linux_serial_port("GIMBAL_PORT", "gimbal")
+LASER_PORT = _linux_serial_port("LASER_PORT", "laser")
+USE_MOCK_GIMBAL = False  # True: 使用 mock_gimbal.py; False: 使用真实 GT06Z
 ENABLE_IMU = False      # Manual switch: True to enable IMU read/print
-IMU_PORT = os.getenv("IMU_PORT", _serial_port_default("imu"))
+IMU_PORT = _linux_serial_port("IMU_PORT", "imu")
 IMU_BAUDRATE = 9600
 IMU_PRINT_INTERVAL = 0.2
 GIMBAL_AZ_BASE = 90.0  # 云台水平基准角（UI绝对方位 0° 映射到控制角的基准）
+GIMBAL_INIT_EL = 0.0  # 启动时俯仰归位角，目标通常从该方向进入
 GIMBAL_CMD_DEADBAND_AZ = 0.20
 GIMBAL_CMD_DEADBAND_EL = 0.12
-GIMBAL_PREEMPT_DEG = 0.7  # 新指令与当前指令的最小抢占角度差，单位：度
-GIMBAL_SETTLE_THRESHOLD = 0.8
-GIMBAL_SETTLE_TIMEOUT = 1.0
+GIMBAL_PREEMPT_DEG = 1.5  # 新指令与当前指令的最小抢占角度差，单位：度
+GIMBAL_SETTLE_THRESHOLD = 0.3
+GIMBAL_SETTLE_TIMEOUT = 2.5
 GIMBAL_THREAD_SLEEP = 0.02
+GIMBAL_PROGRESS_LOG_INTERVAL = 0.10
 LASER_DIST_TTL = 2.0
 MONO_DIST_TTL = 1.2
 DEFAULT_TRACKING_DISTANCE_M = 450.0  # 仅用于内部参数冷启动（保持稳定）
@@ -157,6 +167,7 @@ HIT_STREAK_DECAY = 1
 STABILITY_HIT_CAP = 20
 STABILITY_WEIGHT = 0.8
 STATS_PRINT_INTERVAL = 2.0
+MASTER_SELECTION_LOG_TOPK = 5
 LOG_TO_FILE = _env_flag("LOG_TO_FILE", True)
 LOG_DIR = os.getenv("LOG_DIR", "logs")
 
@@ -553,6 +564,7 @@ def gimbal_control_thread(gimbal):
     target_az = 0.0
     target_el = 0.0
     cmd_start_t = 0.0
+    last_progress_log_t = 0.0
 
     while True:
         try:
@@ -577,11 +589,17 @@ def gimbal_control_thread(gimbal):
                 target_az = float(active_cmd["az"])#方位角
                 target_el = float(active_cmd["el"])#俯仰角
                 cmd_start_t = time.time()
+                last_progress_log_t = 0.0
                 gimbal.set_attitude(elevation=target_el, azimuth=target_az)
                 with shared_state.lock:
                     shared_state.active_cmd_id = int(active_cmd["cmd_id"])#设置当前执行指令的ID
                     shared_state.active_track_id = int(active_cmd.get("track_id", -1))
                     shared_state.is_settled = False#转动到位标志重置
+                print(
+                    f"[GimbalCmd] cmd_id={int(active_cmd['cmd_id'])}, "
+                    f"track_id={int(active_cmd.get('track_id', -1))}, "
+                    f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°)"
+                )
             #2.若当前有指令在执行(执行态)
             now_t = time.time()
             #检查指令队列中是否有更新的指令，如果有则取出最新的一条（丢弃旧指令），准备进行抢占式执行判断
@@ -599,11 +617,18 @@ def gimbal_control_thread(gimbal):
                     target_el = new_el
                     active_cmd = newer_cmd
                     cmd_start_t = now_t
+                    last_progress_log_t = 0.0
                     gimbal.set_attitude(elevation=target_el, azimuth=target_az)
                     with shared_state.lock:
                         shared_state.active_cmd_id = int(active_cmd["cmd_id"])
                         shared_state.active_track_id = int(active_cmd.get("track_id", -1))
                         shared_state.is_settled = False
+                    print(
+                        f"[GimbalCmd] preempt cmd_id={int(active_cmd['cmd_id'])}, "
+                        f"track_id={int(active_cmd.get('track_id', -1))}, "
+                        f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°), "
+                        f"delta={d_total:.2f}°"
+                    )
                 # 如果角度差<=抢占阈值，视为同一位置，直接丢弃新指令
                 else:
                     pass
@@ -620,12 +645,35 @@ def gimbal_control_thread(gimbal):
                     shared_state.gimbal_az = curr_ui_az
                     shared_state.gimbal_att_ts = now_t
 
+                if (last_progress_log_t == 0.0) or ((now_t - last_progress_log_t) >= GIMBAL_PROGRESS_LOG_INTERVAL):
+                    elapsed = now_t - cmd_start_t
+                    print(
+                        f"[GimbalAtt] cmd_id={int(active_cmd['cmd_id'])}, "
+                        f"elapsed={elapsed:.3f}s, "
+                        f"actual_ctrl=(Az={curr_az:.2f}°, El={curr_el:.2f}°), "
+                        f"actual_ui=(Az={curr_ui_az:.2f}°, El={curr_el:.2f}°), "
+                        f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°), "
+                        f"err=(dAz={err_az:.2f}°, dEl={err_el:.2f}°)"
+                    )
+                    last_progress_log_t = now_t
+
                 if err_az < GIMBAL_SETTLE_THRESHOLD and err_el < GIMBAL_SETTLE_THRESHOLD:
+                    settle_dt = now_t - cmd_start_t
                     with shared_state.lock:
                         shared_state.is_settled = True
                         shared_state.settled_cmd_id = shared_state.active_cmd_id
                         shared_state.settled_track_id = shared_state.active_track_id
                         shared_state.settled_ts = now_t
+                        active_cmd_id = shared_state.active_cmd_id
+                        active_track_id = shared_state.active_track_id
+
+                    print(
+                        f"[GimbalSettled] cmd_id={active_cmd_id}, track_id={active_track_id}, "
+                        f"settle_time={settle_dt:.3f}s, "
+                        f"actual_ctrl=(Az={curr_az:.2f}°, El={curr_el:.2f}°), "
+                        f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°), "
+                        f"err=(dAz={err_az:.2f}°, dEl={err_el:.2f}°)"
+                    )
 
                     laser_dist = read_laser_distance()
                     if laser_dist is not None:
@@ -655,6 +703,22 @@ def gimbal_control_thread(gimbal):
                     continue
 
             if (now_t - cmd_start_t) >= GIMBAL_SETTLE_TIMEOUT:
+                elapsed = now_t - cmd_start_t
+                cmd_id = int(active_cmd["cmd_id"]) if active_cmd is not None else -1
+                track_id = int(active_cmd.get("track_id", -1)) if active_cmd is not None else -1
+                if real_att:
+                    print(
+                        f"[GimbalTimeout] cmd_id={cmd_id}, track_id={track_id}, "
+                        f"elapsed={elapsed:.3f}s, "
+                        f"actual_ctrl=(Az={curr_az:.2f}°, El={curr_el:.2f}°), "
+                        f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°), "
+                        f"err=(dAz={err_az:.2f}°, dEl={err_el:.2f}°)"
+                    )
+                else:
+                    print(
+                        f"[GimbalTimeout] cmd_id={cmd_id}, track_id={track_id}, "
+                        f"elapsed={elapsed:.3f}s, no attitude feedback"
+                    )
                 with shared_state.lock:
                     shared_state.is_settled = False
                 active_cmd = None
@@ -688,7 +752,7 @@ def get_dynamic_tracking_params(distance_m):
         "MAX_VEL_AZ": max_vel_az,#速度限幅
         "MAX_VEL_EL": max_vel_az * 0.5,
         "DIST_THRESH": dist_thresh,#判定“当前帧的检测点”与“上一帧的追踪轨迹”是否为同一个目标的最大角度欧氏距离。
-        "MIN_DT": 0.08,  # 10 FPS 场景下的保护下限
+        "MIN_DT": 0.001,  # 仅防异常极小值，不再把 15 FPS 的实际 dt 抬高
     }
 
 class RangeSmoother:
@@ -751,7 +815,7 @@ class StandardKalmanTrack:
         
         self.max_vel_az = 40.0
         self.max_vel_el = 20.0
-        self.min_dt = 0.03
+        self.min_dt = 0.001
         self.dist_thresh = 4.0
         self.last_mono_dist = None
         self.mono_ts = 0.0
@@ -1075,6 +1139,63 @@ def calculate_angles(cam_key, cx, cy, cfg=None):
     ui_el = base_el + offset_el
 
     return ui_az, ui_el
+
+
+def evaluate_track_threat(track, curr_gimbal_az, curr_gimbal_el, master_id=None):
+    """保留现有调度权重，仅把评分拆出来便于审计与日志打印。"""
+    v_mag = math.hypot(track.state[2, 0], track.state[3, 0])
+    speed_score = v_mag * 2.0
+
+    dist_az = angular_diff(track.state[0, 0], curr_gimbal_az)
+    dist_el = track.state[1, 0] - curr_gimbal_el
+    dist = math.hypot(dist_az, dist_el)
+    distance_score = -dist * 1.0
+
+    stability_level = min(track.hit_streak, STABILITY_HIT_CAP)
+    stability_score = math.log1p(stability_level) * STABILITY_WEIGHT
+
+    threat_score = speed_score + distance_score + stability_score
+    inertia_applied = (track.id == master_id)
+    if inertia_applied:
+        threat_score *= 1.15
+
+    return {
+        "track": track,
+        "track_id": int(track.id),
+        "speed_deg_s": v_mag,
+        "distance_deg": dist,
+        "hit_streak": int(track.hit_streak),
+        "speed_score": speed_score,
+        "distance_score": distance_score,
+        "stability_score": stability_score,
+        "inertia_applied": inertia_applied,
+        "threat_score": threat_score,
+    }
+
+
+def choose_master_track(valid_tracks, curr_gimbal_az, curr_gimbal_el, master_id=None):
+    ranked_candidates = [
+        evaluate_track_threat(t, curr_gimbal_az, curr_gimbal_el, master_id=master_id)
+        for t in valid_tracks
+    ]
+    ranked_candidates.sort(key=lambda item: item["threat_score"], reverse=True)
+    best_track = ranked_candidates[0]["track"] if ranked_candidates else None
+    return best_track, ranked_candidates
+
+
+def format_selection_candidates(ranked_candidates, topk=MASTER_SELECTION_LOG_TOPK):
+    if not ranked_candidates:
+        return "none"
+
+    items = []
+    for item in ranked_candidates[:topk]:
+        inertia_text = ", hold=1.15x" if item["inertia_applied"] else ""
+        items.append(
+            f"id={item['track_id']}, score={item['threat_score']:.2f}, "
+            f"speed={item['speed_deg_s']:.2f}deg/s, dist={item['distance_deg']:.2f}deg, "
+            f"hits={item['hit_streak']}, stab={item['stability_score']:.2f}{inertia_text}"
+        )
+    return " | ".join(items)
 # ==========================================
 # 6. 主逻辑 V9 (多目标预测与云台调度)
 # ==========================================
@@ -1089,10 +1210,9 @@ def main():
 
     sender = UISender(UI_IP, UI_PORT)
     if not USE_MOCK_GIMBAL:
-        _warn_if_windows_port("GIMBAL_PORT", GIMBAL_PORT)
-    _warn_if_windows_port("LASER_PORT", LASER_PORT)
+        _validate_linux_serial_port("GIMBAL_PORT", GIMBAL_PORT)
     if ENABLE_IMU:
-        _warn_if_windows_port("IMU_PORT", IMU_PORT)
+        _validate_linux_serial_port("IMU_PORT", IMU_PORT)
     
     if USE_MOCK_GIMBAL:
         if MockGimbalAdapter is None:
@@ -1111,8 +1231,19 @@ def main():
         print("[Warning] Gimbal not ready instantly, wait...")
 
     # start background threads for network and gimbal control
-    threading.Thread(target=rk3588_thread, daemon=True).start()
+    push_latest_gimbal_cmd({
+        "cmd_id": 0,
+        "track_id": -1,
+        "az": GIMBAL_AZ_BASE,
+        "el": GIMBAL_INIT_EL,
+        "ts": time.time(),
+    })
+    print(
+        f"[Init] Queue gimbal initial posture: "
+        f"Az={GIMBAL_AZ_BASE:.2f}°, El={GIMBAL_INIT_EL:.2f}°"
+    )
     threading.Thread(target=gimbal_control_thread, args=(gimbal,), daemon=True).start()
+    threading.Thread(target=rk3588_thread, daemon=True).start()
 
     imu = None
     last_imu_print = 0.0
@@ -1251,48 +1382,56 @@ def main():
             # --- 4. 状态机：调度决策 ---
             # 检查当前跟踪的目标是否已经丢失
             master_track = next((t for t in valid_tracks if t.id == master_id), None)
+            selection_reason = None
+            prev_master_id = master_id
+            master_lost = (prev_master_id is not None and master_track is None)
+            lock_expired = (master_track is not None and lock_timer <= 0)
+
+            if master_lost:
+                print(
+                    f"[TargetLost] master_id={prev_master_id} 不再满足锁定条件: "
+                    f"valid_ids={[int(t.id) for t in valid_tracks]}"
+                )
             
             if master_track is None or lock_timer <= 0:
                 # 状态 A：寻找/切换新目标 (SEARCHING)
-                best_track = None
-                best_score = -float('inf')
-                
+                if master_lost:
+                    selection_reason = "master_lost"
+                elif lock_expired:
+                    selection_reason = "lock_timer_expired"
+                else:
+                    selection_reason = "initial_acquire"
+
                 curr_gimbal_az = shared_gimbal_az
                 curr_gimbal_el = shared_gimbal_el
-                #基于威胁算法的多目标抓捕优先级评估：(这个地方需要给出全部排序，不能只挑一个最优的)
-                if len(valid_tracks) > 0:
-                    for t in valid_tracks:
-                        # 1. 速度因子 (正权 2.0)：提取目标的合成角速度大小
-                        v_mag = np.sqrt(t.state[2, 0]**2 + t.state[3, 0]**2)
-                        speed_score = v_mag * 2.0
-                        
-                        # 2. 距离因子 (负权 1.0)：计算目标当前角度与云台物理角度的距离
-                        dist_az = angular_diff(t.state[0, 0], curr_gimbal_az)
-                        dist_el = t.state[1, 0] - curr_gimbal_el
-                        dist = np.sqrt(dist_az**2 + dist_el**2)
-                        distance_score = -dist * 1.0
-                        
-                        # 3. 稳定性因子（弱权且饱和）：避免 hit_streak 越积越大主导调度
-                        stability_level = min(t.hit_streak, STABILITY_HIT_CAP)
-                        stability_score = math.log1p(stability_level) * STABILITY_WEIGHT
-                        
-                        # 综合威胁度得分
-                        threat_score = speed_score + distance_score + stability_score
-                        
-                        # 当前锁定目标 15% 惯性加成防抖动
-                        if t.id == master_id:
-                            # 给原得分基础上乘以 1.15
-                            threat_score *= 1.15
-                            
-                        if threat_score > best_score:
-                            best_score = threat_score
-                            best_track = t
-                            
-                    if best_track:
-                        master_id = best_track.id
-                        lock_timer = LOCK_DURATION
-                        master_track = best_track
-                        print(f"[Phase 2: 目标调度] 基于威胁度(v={np.sqrt(master_track.state[2,0]**2+master_track.state[3,0]**2):.1f}°/s, dist={np.sqrt(angular_diff(master_track.state[0,0], curr_gimbal_az)**2 + (master_track.state[1,0]-curr_gimbal_el)**2):.1f}°) 成功锁定目标 ID: {master_id}. 准备交由云台跟踪!")
+                best_track, ranked_candidates = choose_master_track(
+                    valid_tracks,
+                    curr_gimbal_az,
+                    curr_gimbal_el,
+                    master_id=master_id,
+                )
+
+                if best_track:
+                    master_id = best_track.id
+                    lock_timer = LOCK_DURATION
+                    master_track = best_track
+                    best_eval = ranked_candidates[0]
+                    candidates_text = format_selection_candidates(ranked_candidates)
+                    if prev_master_id is None:
+                        print(
+                            f"[TargetAcquire] reason={selection_reason}, master_id={master_id}, "
+                            f"score={best_eval['threat_score']:.2f}, candidates={candidates_text}"
+                        )
+                    elif prev_master_id != master_id:
+                        print(
+                            f"[TargetSwitch] reason={selection_reason}, from={prev_master_id}, to={master_id}, "
+                            f"score={best_eval['threat_score']:.2f}, candidates={candidates_text}"
+                        )
+                    else:
+                        print(
+                            f"[TargetKeep] reason={selection_reason}, master_id={master_id}, "
+                            f"score={best_eval['threat_score']:.2f}, candidates={candidates_text}"
+                        )
             # --- 5. 状态机：物理执行与测距 (LOCKED) ---
             if master_track is not None:
                 lock_timer -= dt
