@@ -9,17 +9,22 @@
 - [x] 按手册检查并补强 SDDM 激光驱动的数据帧校验
 - [x] 完成真实硬件联调：云台 `COM3`，激光 `COM8`
 - [x] 完成 15 秒 `linear` 长测：真实激光成功触发 19 次，`[Laser] No valid laser distance` 为 0
+- [x] 完成 Linux 接收端 `10.72.2.28:8888` 的多轮 `linear` 实机复测，发送参数保持 `15FPS / 15s / cx=700 -> 3686.67 / cy=1080 / mono=320m`
+- [x] 通过 `logs/main_tracking_v9_20260414_161730.log` 确认：出现“全程 No valid laser distance”时，并不等价于主流程没触发激光；该次运行中激光线程和连续测量命令都已正常启动
+- [x] 通过 `logs/main_tracking_v9_20260414_162745.log` 确认：将激光指向更远目标后恢复稳定真实测距，统计为 `GimbalSettled=22`、`GimbalTimeout=0`、`Laser Triggered=22`、`Laser No valid=0`
 
 ### 当前结论
 - 主程序已经真正使用真实激光，而不是继续只用 mono distance。
 - 当激光回包有效时，`[Laser] Triggered ... dist=...m` 会在 `GimbalSettled` 后打印。
 - 真实激光返回的是当前物理环境中的反射目标距离，最近一轮长测约为 `4.7m ~ 6.5m`；这与发送脚本中模拟的 `320m` 不矛盾。
+- 室内联调时，“持续 `[Laser] No valid laser distance`” 当前优先解释为目标距离/反射条件不满足；在接收端初始化正常且目标改为更远目标后，激光已恢复稳定返回 `6.2m ~ 7.9m` 的真实值。
 
 ### 下一步优先级
 1. 固定一个明确的真实反射目标，验证激光距离是否与该实物距离一致，而不是仅确认“有值”。
-2. 若激光偶发回到无效帧，补抓原始激光回包，确认是盲区、反射条件，还是串口噪声。
-3. 继续复测 `15FPS linear` 场景，记录 `GimbalSettled / GimbalTimeout / Laser Triggered` 的长期稳定性。
-4. 若需要让激光距离更严格地对应当前追踪目标，再评估是否增加更强的“云台稳定窗口”或多次激光采样确认逻辑。
+2. 系统化记录“无效 -> 有效”的目标条件边界：距离、材质、反射面角度、室内/室外光照。
+3. 若激光偶发回到无效帧，补抓原始激光回包，确认是盲区、反射条件，还是串口噪声。
+4. 继续复测 `15FPS linear` 场景，记录 `GimbalSettled / GimbalTimeout / Laser Triggered` 的长期稳定性。
+5. 若需要让激光距离更严格地对应当前追踪目标，再评估是否增加更强的“云台稳定窗口”或多次激光采样确认逻辑。
 
 ## 本文件用途
 给下一位接手者快速了解“已经做了什么、下一步要先验证什么、哪些任务还没开始”。如果需要理解为什么做这些改动，请看 `DECISIONS.md`；如果需要理解系统整体架构，请看 `PROJECT_CONTEXT.md`。
@@ -51,6 +56,7 @@
 3. **参数一刀切**：“快速拉近”和“抑制抖动”仍未完全分离，后续仍需要 Dual-Phase Tracking 参数化。
 4. **边缘横跳 (Thrashing)**：迟滞参数已初步调整，需复测 `preempt` 是否不再在 `0.71~0.74°` 附近频繁触发。
 5. **动力学未解耦**：单一的 `PREDICT_DELAY=0.25` 仍未拆分为方位/俯仰独立提前量。
+6. **激光有效条件边界未量化**：当前已确认同一套代码下，室内目标条件变化可导致“整场无效帧”和“整场稳定有效帧”两种结果，后续需把距离/材质/瞄准条件记录清楚。
 
 ## 推荐的后续核心技术任务 (Recommended next technical tasks)
 - [x] **自适应时间步 (Adaptive Kalman DT)**：已将固定 `MIN_DT=0.08` 改为异常保护值 `0.001`，让 Kalman 使用实际收包间隔；待复测确认速度估算。
@@ -58,7 +64,8 @@
 - [ ] **追踪状态机 (Dual-Phase Tracking)**：区分“首次跟踪 (Acquisition)”与“稳定跟踪 (Stable)”，两阶段应用不同的预测权重和死区参数。
 - [x] **扩大控制迟滞 (Widen Hysteresis)**：已设为 `SETTLE_THRESHOLD=0.3`、`PREEMPT_DEG=1.5`；待硬件复测观察 `GimbalSettled` 与 `GimbalTimeout` 比例。
 - [x] **初始化位姿优化 (Init Posture)**：已在启动时预设云台到 `Az=GIMBAL_AZ_BASE`、`El=0.0°`；待硬件复测确认首捕获延迟。
-- [ ] **集成激光测距 (`sddm_laser.py`)**：确保后台线程稳定及 Checksum 校验。
+- [x] **集成激光测距 (`sddm_laser.py`)**：后台线程、连续测量、校验与主流程绑定已跑通。
+- [ ] **量化激光有效工作区间**：补测近距离、远距离、不同反射目标下的 `Laser Triggered / No valid` 比例。
 
 ## 下一次启动检查清单 (Next startup checklist)
 1. 阅读 `AGENTS`, `PROJECT_CONTEXT`, `TODO_NEXT`, `DECISIONS`。
@@ -67,3 +74,4 @@
 4. 检查当前基线：`MIN_DT=0.001`、`GIMBAL_PREEMPT_DEG=1.5`、`GIMBAL_SETTLE_THRESHOLD=0.3`、启动归位 `Az=GIMBAL_AZ_BASE` / `El=0.0°`。
 5. 运行 `linear` 测试 (320m, 5.1m/s, 15FPS, `cx=700 -> 3686.67`, `cy=1080`)。
 6. 重点观察日志中的：预估速度是否接近 `~0.91°/s`、是否消除了 `0.71~0.74°` 附近的边缘抢占、`GimbalSettled` 是否稳定触发、是否出现更多 `GimbalTimeout`、俯仰角首捕获是否更快。
+7. 若日志已出现 `[Init] Real laser enabled ...`、`[LaserThread]` 与 `[Laser] start_measurement mode=continuous`，但 settled 后仍持续 `No valid laser distance`，先调整激光朝向更远或更强反射目标，再怀疑代码路径问题。

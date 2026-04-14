@@ -12,6 +12,10 @@
   - 短时测试里曾出现只有无效激光帧、主流程退回 mono 距离
   - 15 秒长测中，真实激光已稳定触发 19 次，`[Laser] No valid laser distance` 为 0
   - 真实激光返回的是实物环境距离（约 `4.7m ~ 6.5m`），不是发送脚本里的模拟 `320m`
+- 2026-04-14 Linux 联调补充：
+  - 接收端运行在 `10.72.2.28:8888`，串口为云台 `/dev/ttyUSB0`、激光 `/dev/ttyUSB1`
+  - `logs/main_tracking_v9_20260414_161730.log` 显示：激光线程已启动、连续测量命令已发，但整场测试都只有 `[Laser] No valid laser distance`；该现象当前优先解释为室内目标距离/反射条件不满足，而不是主流程未触发
+  - `logs/main_tracking_v9_20260414_162745.log` 显示：将激光指向更远目标后恢复稳定真实测距，`GimbalSettled=22`、`GimbalTimeout=0`、`Laser Triggered=22`、`Laser No valid=0`，实测距离约 `6.2m ~ 7.9m`
 
 ## 本文件用途
 这是给 AI/新接手工程师的项目守则。先读本文件了解硬约束和安全边界，再读 `PROJECT_CONTEXT.md` 建立架构全貌，读 `TODO_NEXT.md` 看当前进度，读 `DECISIONS.md` 理解决策原因。
@@ -95,6 +99,7 @@ UI 输出格式、GT06Z 串口协议与坐标系约定必须保持一致。
 - **安全修复模式**: 处理异常时必须优雅降级，严禁导致主循环崩溃。
 - **控制调优模式**: 调整控制逻辑时，必须区分“首次跟踪 (Initial Acquisition)”和“稳定跟踪 (Stable Tracking)”的不同需求；必须确保控制死区和抢占阈值之间有足够的“迟滞 (Hysteresis)”。
 - **重构模式**: 仅在明确要求时才执行此操作。
+- **激光联调模式**: 如果日志里已出现 `[Init] Real laser enabled ...`、`[LaserThread]`、`[Laser] start_measurement mode=continuous`，但持续没有有效距离，先检查目标距离、反射条件与瞄准方向，再怀疑主流程代码回归。
 
 ---
 

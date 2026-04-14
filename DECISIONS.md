@@ -1,6 +1,34 @@
 # DECISIONS.md
 
 ## 2026-04-14
+### 决策：室内出现“持续无有效激光距离”时，优先检查目标条件而不是立即怀疑主流程故障
+**为什么**
+- 在 Linux 接收端 `10.72.2.28:8888` 的重复 `linear` 联调中，`main_tracking_v9.py` 已明确打印 `[Init] Real laser enabled on /dev/ttyUSB1`、`[LaserThread]` 和 `[Laser] start_measurement mode=continuous`，说明激光初始化与后台线程都已启动。
+- 但 `logs/main_tracking_v9_20260414_161730.log` 中，尽管每次 `GimbalSettled` 后都尝试取激光缓存，整场测试仍只有 `[Laser] No valid laser distance, use mono distance`。
+- 随后仅将激光指向更远目标，不改代码、不改串口配置，`logs/main_tracking_v9_20260414_162745.log` 就恢复了连续真实测距，说明问题主要受目标距离/反射条件影响。
+
+**影响**
+- 激光联调排障顺序调整为：
+  1. 先确认激光线程、连续测量命令和 settled 触发都存在
+  2. 再检查目标距离、材质、反射面角度与瞄准方向
+  3. 最后才怀疑主流程代码或串口协议回归
+- 保持当前“连续测量 + settled 时消费最新缓存值”的结构不变。
+- 保持当前“无有效激光值时退回 mono distance”的降级策略不变。
+
+**验证**
+- `logs/main_tracking_v9_20260414_161730.log`：
+  - 激光线程已启动，连续测量命令已发送
+  - 整场测试中 settled 后均退回 mono distance
+- `logs/main_tracking_v9_20260414_162745.log`：
+  - 在更远目标条件下恢复 `GimbalSettled=22`
+  - `GimbalTimeout=0`
+  - `Laser Triggered=22`
+  - `Laser No valid=0`
+  - 真实激光距离约 `6.2m ~ 7.9m`
+
+---
+
+## 2026-04-14
 ### 决策：真实激光接入主流程，并保留 `USE_MOCK_LASER` 作为统一切换开关
 **为什么**
 - 原先主程序虽然有 `LASER_PORT`、`SharedHardwareState.raw_laser_dist` 和 `sddm_laser.py`，但没有任何后台线程把真实激光数据写入共享状态，导致主流程实际一直退回 mono distance。

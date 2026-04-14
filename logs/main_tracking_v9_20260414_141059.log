@@ -1,0 +1,5 @@
+[Log] stdout/stderr -> logs/main_tracking_v9_20260414_141059.log
+[Config][Warn] GIMBAL_PORT=/dev/ttyUSB0 当前不存在。请确认设备节点或 udev 映射是否正确。
+[Init] Connecting to Gimbal at /dev/ttyUSB0...
+[GT06Z] Open fail: [Errno 2] could not open port /dev/ttyUSB0: [Errno 2] No such file or directory: '/dev/ttyUSB0'
+[Error] Failed to connect gimbal.

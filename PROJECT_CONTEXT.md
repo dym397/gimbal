@@ -21,6 +21,11 @@
   - 15 秒 `linear` 场景下，云台 `GimbalSettled=19`、`GimbalTimeout=0`
   - 同场景下，真实激光 `Laser Triggered=19`、`Laser No valid=0`
   - 激光测到的是现实场景距离 `4.7m ~ 6.5m`，说明代码已使用真实激光；发送脚本中的 `320m` 只代表视觉输入，不代表激光会返回 320m
+- 2026-04-14 Linux 追加联调结果：
+  - 发送端对 `10.72.2.28:8888` 反复执行 `15FPS / 15s / linear / cx=700 -> 3686.67 / cy=1080 / mono=320m`
+  - `logs/main_tracking_v9_20260414_161730.log` 中，激光线程和连续测量均正常启动，但所有 settled 均退回 mono distance，说明“主流程未拿到有效激光值”可以在室内近距离/弱反射目标条件下出现
+  - `logs/main_tracking_v9_20260414_162745.log` 中，仅调整激光指向更远目标后即恢复 `Laser Triggered=22`、`Laser No valid=0`，实测距离约 `6.2m ~ 7.9m`
+  - 当前可确认：激光链路与主流程绑定逻辑是通的，剩余问题集中在“什么目标条件下会返回有效值”的边界验证
 
 ## 本文件用途
 给第一次接触项目的人快速建立工程全貌：系统做什么、数据如何流动、哪些模块与硬件耦合、当前控制基线是什么。实现细节和待办请继续阅读 `TODO_NEXT.md` 与 `DECISIONS.md`。
@@ -39,7 +44,7 @@
 - 当前代码已支持双平台串口默认值切换：Windows 默认 `COM3` / `COM4` / `COM5`，Linux 默认 `/dev/ttyUSB0` / `/dev/ttyUSB1` / `/dev/ttyUSB2`；实际运行时仍可通过 `GIMBAL_PORT` / `LASER_PORT` / `IMU_PORT` 覆盖。
 - 当前调优依据来自 `logs/main_tracking_v9_20260409_154819.log`：15FPS、320m、5.1m/s、水平匀速直线运动，`cx=700 -> 3686.67`，`cy=1080`。
 - 已完成第一轮小范围控制修正：Kalman `MIN_DT=0.001`、`GIMBAL_PREEMPT_DEG=1.5`、`GIMBAL_SETTLE_THRESHOLD=0.3`、启动时云台归位到 `Az=GIMBAL_AZ_BASE` / `El=0.0°`。
-- 尚未完成：`PREDICT_DELAY` 双轴拆分、首次捕获/稳定跟踪的独立参数状态机、激光测距完整集成验证。
+- 尚未完成：`PREDICT_DELAY` 双轴拆分、首次捕获/稳定跟踪的独立参数状态机、激光有效工作距离/反射条件边界验证。
 
 ---
 
