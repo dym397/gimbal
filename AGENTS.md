@@ -4,7 +4,7 @@
 这是给 AI/新接手工程师的项目守则。先读本文件了解硬约束和安全边界，再读 `PROJECT_CONTEXT.md` 建立架构全貌，读 `TODO_NEXT.md` 看当前进度，读 `DECISIONS.md` 理解决策原因。
 
 ## 项目目标 (Purpose)
-本仓库是一个基于 Linux 的实时云台追踪与测距系统。
+本仓库是一个支持 Windows 调试与 Linux 部署的实时云台追踪与测距系统。
 
 主要职责：
 - 接收来自 RK3588 或发送端脚本的 UDP 目标检测数据
@@ -44,8 +44,8 @@ UI 输出格式、GT06Z 串口协议与坐标系约定必须保持一致。
 ### 3. 尊重云台多轴动力学的不对称性
 水平方位轴 (Pan) 与俯仰轴 (Pitch) 的响应速度不同。在修改预测提前量 (Predictive Lead) 时，必须支持两轴解耦。
 
-### 4. 保留 Linux 部署假设与控制线程所有权
-默认 `/dev/...`，云台指令由单一控制线程统一下发。
+### 4. 保留双平台串口假设与控制线程所有权
+默认串口设备名按平台切换：Windows 使用 `COMx`，Linux 使用 `/dev/ttyUSB*` / `/dev/ttyACM*`；也可通过 `GIMBAL_PORT` / `LASER_PORT` / `IMU_PORT` 显式指定。云台指令由单一控制线程统一下发。
 
 ### 5. 任何影响控制行为的更改都必须说明：
 - 更改了什么 (例如：调整了 `PREEMPT` 或 `SETTLE_THRESHOLD`)
@@ -73,6 +73,7 @@ UI 输出格式、GT06Z 串口协议与坐标系约定必须保持一致。
 - Kalman `MIN_DT=0.001`，仅保留异常极小 `dt` 保护，避免 15FPS 场景被固定下限抬高。
 - `GIMBAL_PREEMPT_DEG=1.5`，`GIMBAL_SETTLE_THRESHOLD=0.3`，用于拉开抢占/到位迟滞区间。
 - 启动时通过 `gimbal_cmd_queue` 投递初始化姿态命令，目标为 `Az=GIMBAL_AZ_BASE`、`El=0.0°`，仍由单一云台控制线程下发。
+- 串口默认值按平台切换：Windows 为 `COM3` / `COM4` / `COM5`，Linux 为 `/dev/ttyUSB0` / `/dev/ttyUSB1` / `/dev/ttyUSB2`。
 - `PREDICT_DELAY` 尚未拆分为 `AZ_PREDICT_DELAY` / `EL_PREDICT_DELAY`；后续如修改预测提前量，仍必须保持 Pan/Pitch 解耦。
 
 ---

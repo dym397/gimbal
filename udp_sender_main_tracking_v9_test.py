@@ -2,7 +2,7 @@
 """
 UDP sender for main_tracking_v9.py.
 
-This script sends test packets to the Linux receiver (default: 172.28.239.28:8888)
+This script sends test packets to the Windows receiver (default: 127.0.0.1:8888)
 using payload shapes that parse_udp_objects() already supports.
 """
 
@@ -99,7 +99,7 @@ def build_packet(board: str, cam: int, seq: int, t: float, payload_mode: str, ta
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="UDP sender for main_tracking_v9.py")
-    parser.add_argument("--ip", default="172.28.239.28", help="Receiver IP")
+    parser.add_argument("--ip", default="127.0.0.1", help="Receiver IP")
     parser.add_argument("--port", type=int, default=8888, help="Receiver UDP port")
     parser.add_argument("--board", default="BOARD_3", help="Board id string")
     parser.add_argument("--cam", type=int, default=2, help="Camera index")

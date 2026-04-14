@@ -26,28 +26,87 @@ except ImportError:
 # ==========================================
 # 配置
 # ==========================================
-# Linux-only deployment: keep defaults aligned with the target runtime.
-_SERIAL_PORT_DEFAULTS = {
-    "gimbal": "/dev/ttyUSB0",
-    "laser": "/dev/ttyUSB1",
-    "imu": "/dev/ttyUSB2",
-}
+# Keep one codepath and switch only the serial defaults by platform.
+def _platform_serial_defaults():
+    if os.name == "nt":
+        return {
+            "gimbal": "COM3",
+            "laser": "COM4",
+            "imu": "COM5",
+        }
+    return {
+        "gimbal": "/dev/ttyUSB0",
+        "laser": "/dev/ttyUSB1",
+        "imu": "/dev/ttyUSB2",
+    }
+
+
+_SERIAL_PORT_DEFAULTS = _platform_serial_defaults()
 
 
 def _serial_port_default(role):
     return _SERIAL_PORT_DEFAULTS[role]
 
 
-def _linux_serial_port(env_name, role):
+def _serial_port(env_name, role):
     port_name = os.getenv(env_name, _serial_port_default(role))
     return port_name.strip() if isinstance(port_name, str) else port_name
 
 
-def _validate_linux_serial_port(label, port_name):
+def _is_windows_com_port(port_name):
+    if not isinstance(port_name, str):
+        return False
+    normalized = port_name.strip().upper()
+    if normalized.startswith("\\\\.\\"):
+        normalized = normalized[4:]
+    return normalized.startswith("COM") and normalized[3:].isdigit() and int(normalized[3:]) > 0
+
+
+def _normalize_windows_com_port(port_name):
+    normalized = port_name.strip().upper()
+    if normalized.startswith("\\\\.\\"):
+        normalized = normalized[4:]
+    return normalized
+
+
+def _is_linux_serial_port(port_name):
+    if not isinstance(port_name, str):
+        return False
+    normalized = port_name.strip()
+    return normalized.startswith((
+        "/dev/ttyUSB",
+        "/dev/ttyACM",
+        "/dev/ttyS",
+        "/dev/serial/by-id/",
+    ))
+
+
+def _validate_serial_port(label, port_name):
     if not isinstance(port_name, str) or not port_name:
-        print(f"[Config][Warn] {label} 未配置有效的 Linux 串口路径。")
+        print(f"[Config][Warn] {label} 未配置有效的串口设备名。")
         return
-    if not port_name.startswith("/dev/"):
+
+    if os.name == "nt":
+        if not _is_windows_com_port(port_name):
+            print(
+                f"[Config][Warn] {label}={port_name} 不是 Windows 串口设备名。"
+                "请改为 COM3、COM4 或 \\\\.\\COM10 这类格式。"
+            )
+            return
+        try:
+            from serial.tools import list_ports
+        except Exception:
+            return
+        available_ports = {_normalize_windows_com_port(port.device) for port in list_ports.comports()}
+        normalized_port = _normalize_windows_com_port(port_name)
+        if available_ports and normalized_port not in available_ports:
+            print(
+                f"[Config][Warn] {label}={port_name} 未在当前 Windows 串口列表中发现。"
+                f"当前可用端口: {', '.join(sorted(available_ports))}"
+            )
+        return
+
+    if not _is_linux_serial_port(port_name):
         print(
             f"[Config][Warn] {label}={port_name} 不是 Linux 串口设备路径。"
             "请改为 /dev/ttyUSB*、/dev/ttyACM*、/dev/ttyS* 或 /dev/serial/by-id/*。"
@@ -56,7 +115,7 @@ def _validate_linux_serial_port(label, port_name):
     if not os.path.exists(port_name):
         print(
             f"[Config][Warn] {label}={port_name} 当前不存在。"
-            "请确认设备节点或 udev 映射是否正确。"
+            "请确认设备节点、udev 映射或 USB 串口权限。"
         )
 
 
@@ -142,11 +201,11 @@ def _env_flag(name, default=True):
 UI_IP = "192.168.2.200"
 UI_PORT = 9999
 LOCAL_PORT = 8888
-GIMBAL_PORT = _linux_serial_port("GIMBAL_PORT", "gimbal")
-LASER_PORT = _linux_serial_port("LASER_PORT", "laser")
+GIMBAL_PORT = _serial_port("GIMBAL_PORT", "gimbal")
+LASER_PORT = _serial_port("LASER_PORT", "laser")
 USE_MOCK_GIMBAL = False  # True: 使用 mock_gimbal.py; False: 使用真实 GT06Z
 ENABLE_IMU = False      # Manual switch: True to enable IMU read/print
-IMU_PORT = _linux_serial_port("IMU_PORT", "imu")
+IMU_PORT = _serial_port("IMU_PORT", "imu")
 IMU_BAUDRATE = 9600
 IMU_PRINT_INTERVAL = 0.2
 GIMBAL_AZ_BASE = 90.0  # 云台水平基准角（UI绝对方位 0° 映射到控制角的基准）
@@ -1210,9 +1269,9 @@ def main():
 
     sender = UISender(UI_IP, UI_PORT)
     if not USE_MOCK_GIMBAL:
-        _validate_linux_serial_port("GIMBAL_PORT", GIMBAL_PORT)
+        _validate_serial_port("GIMBAL_PORT", GIMBAL_PORT)
     if ENABLE_IMU:
-        _validate_linux_serial_port("IMU_PORT", IMU_PORT)
+        _validate_serial_port("IMU_PORT", IMU_PORT)
     
     if USE_MOCK_GIMBAL:
         if MockGimbalAdapter is None:

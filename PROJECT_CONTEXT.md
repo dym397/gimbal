@@ -4,7 +4,7 @@
 给第一次接触项目的人快速建立工程全貌：系统做什么、数据如何流动、哪些模块与硬件耦合、当前控制基线是什么。实现细节和待办请继续阅读 `TODO_NEXT.md` 与 `DECISIONS.md`。
 
 ## 项目名称
-Linux 端云台目标追踪与测距系统
+支持 Windows 调试与 Linux 部署的云台目标追踪与测距系统
 
 ## 主入口
 - `main_tracking_v9.py`
@@ -14,6 +14,7 @@ Linux 端云台目标追踪与测距系统
 
 ## 当前进度摘要
 - 主流程已在 `main_tracking_v9.py` 集成：UDP 输入、目标归一化、Kalman 追踪、目标选择、云台控制、UI 回传。
+- 当前代码已支持双平台串口默认值切换：Windows 默认 `COM3` / `COM4` / `COM5`，Linux 默认 `/dev/ttyUSB0` / `/dev/ttyUSB1` / `/dev/ttyUSB2`；实际运行时仍可通过 `GIMBAL_PORT` / `LASER_PORT` / `IMU_PORT` 覆盖。
 - 当前调优依据来自 `logs/main_tracking_v9_20260409_154819.log`：15FPS、320m、5.1m/s、水平匀速直线运动，`cx=700 -> 3686.67`，`cy=1080`。
 - 已完成第一轮小范围控制修正：Kalman `MIN_DT=0.001`、`GIMBAL_PREEMPT_DEG=1.5`、`GIMBAL_SETTLE_THRESHOLD=0.3`、启动时云台归位到 `Az=GIMBAL_AZ_BASE` / `El=0.0°`。
 - 尚未完成：`PREDICT_DELAY` 双轴拆分、首次捕获/稳定跟踪的独立参数状态机、激光测距完整集成验证。
@@ -56,4 +57,4 @@ Linux 端云台目标追踪与测距系统
 - `sddm_laser.py` & `hwt905_driver.py`: 独立串口传感器的后台读取线程。
 
 ## 运行环境与架构风格
-Linux 部署环境。硬件调试导向，强调日志覆盖率、显式线程控制与物理真实性。
+双平台运行环境。Windows 调试时串口设备使用 `COMx` 命名；Linux 部署时串口设备使用 `/dev/ttyUSB*` / `/dev/ttyACM*` 命名。默认端口已按平台切换，实际运行前仍需按设备管理器或 Linux 设备节点确认。硬件调试导向，强调日志覆盖率、显式线程控制与物理真实性。

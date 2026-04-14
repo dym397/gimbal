@@ -2,7 +2,7 @@
 """
 Simple UDP sender for main_tracking_v9.py.
 
-Send a few fixed targets in sequence so the Linux side can verify
+Send a few fixed targets in sequence so the Windows side can verify
 basic gimbal response with real hardware.
 """
 
@@ -52,7 +52,7 @@ def build_packet(board: str, cam: int, seq: int, box: List[float], distance_m: f
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Simple UDP sender for main_tracking_v9.py")
-    parser.add_argument("--ip", default="127.0.0.1", help="Receiver IP, e.g. Linux host IP")
+    parser.add_argument("--ip", default="127.0.0.1", help="Receiver IP, e.g. Windows host IP")
     parser.add_argument("--port", type=int, default=8888, help="Receiver UDP port")
     parser.add_argument("--board", default="BOARD_3", help="Board id string")
     parser.add_argument("--cam", type=int, default=2, help="Camera index")

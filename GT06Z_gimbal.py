@@ -232,7 +232,7 @@ class GT06ZGimbal:
 
 
 # if __name__ == "__main__":
-#     PORT_NAME = "/dev/ttyUSB0"
+#     PORT_NAME = "COM3"  # Linux 示例可改为 "/dev/ttyUSB0"
 #     gimbal = GT06ZGimbal(PORT_NAME)
 
 #     if gimbal.open():

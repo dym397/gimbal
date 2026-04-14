@@ -6,8 +6,8 @@ import os
 
 def _default_imu_port():
     if os.name == "nt":
-        return "COM3"
-    return "/dev/ttyUSB0"
+        return "COM5"
+    return "/dev/ttyUSB2"
 
 
 class HWT905:

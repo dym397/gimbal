@@ -10,7 +10,7 @@ class SDDMLaser:
     def __init__(self, port, baudrate=115200, timeout=0.1):
         """
         初始化激光模块
-        :param port: 串口号 (如 '/dev/ttyUSB0' 或 'COM3')
+        :param port: 串口号 (如 'COM4'、'\\\\.\\COM10' 或 '/dev/ttyUSB1')
         :param baudrate: 波特率，默认 115200 
         :param timeout: 读取超时时间
         """

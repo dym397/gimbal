@@ -7,10 +7,11 @@
 基于真实动态场景（如 320m 距离，5.1m/s 速度）的卡尔曼速度估算与云台闭环控制专项调优。
 
 ## 下一步优先级
-1. 先复测已改参数：15FPS `linear` 场景，确认速度估计、抢占次数、到位/超时比例、俯仰首捕获时间。
-2. 如果速度估计正常但跟随仍滞后，再做 `PREDICT_DELAY` 双轴拆分。
-3. 如果低速/高速目标需求冲突明显，再实现 Dual-Phase Tracking，把首次捕获和稳定跟踪参数分离。
-4. 激光测距集成排在控制闭环稳定之后，除非当前测试必须依赖真实激光距离。
+1. 先完成目标运行平台的串口配置复核：Windows 下确认 `COMx` 端口，Linux 下确认 `/dev/ttyUSB*` / `/dev/ttyACM*` 设备节点，并同步到 `GIMBAL_PORT` / `LASER_PORT` / `IMU_PORT`。
+2. 再复测已改参数：15FPS `linear` 场景，确认速度估计、抢占次数、到位/超时比例、俯仰首捕获时间。
+3. 如果速度估计正常但跟随仍滞后，再做 `PREDICT_DELAY` 双轴拆分。
+4. 如果低速/高速目标需求冲突明显，再实现 Dual-Phase Tracking，把首次捕获和稳定跟踪参数分离。
+5. 激光测距集成排在控制闭环稳定之后，除非当前测试必须依赖真实激光距离。
 
 ## 已完成 (Done)
 - [x] 完成主运行程序及多模块集成的基础搭建。
@@ -21,6 +22,7 @@
 - [x] 已在 `main_tracking_v9.py` 将 `MIN_DT` 调整为 `0.001`，仅保留异常极小 `dt` 保护。
 - [x] 已将迟滞参数调整为 `GIMBAL_PREEMPT_DEG=1.5`、`GIMBAL_SETTLE_THRESHOLD=0.3`。
 - [x] 已新增启动位姿初始化：系统启动后先通过云台控制队列下发 `Az=GIMBAL_AZ_BASE`、`El=0.0°`，保持单一控制线程所有权。
+- [x] 文档和代码运行背景已调整为双平台；串口默认值和校验逻辑已支持 Windows `COMx` 与 Linux `/dev/...`。
 
 ## 当前关注的痛点/问题 (Current concerns)
 1. **俯仰初始化慢**：已通过启动位姿初始化部分缓解，但需要真实硬件复测确认首次锁定时间是否明显缩短。
@@ -40,6 +42,7 @@
 ## 下一次启动检查清单 (Next startup checklist)
 1. 阅读 `AGENTS`, `PROJECT_CONTEXT`, `TODO_NEXT`, `DECISIONS`。
 2. 打开 `main_tracking_v9.py`。
-3. 检查当前基线：`MIN_DT=0.001`、`GIMBAL_PREEMPT_DEG=1.5`、`GIMBAL_SETTLE_THRESHOLD=0.3`、启动归位 `Az=GIMBAL_AZ_BASE` / `El=0.0°`。
-4. 运行 `linear` 测试 (320m, 5.1m/s, 15FPS, `cx=700 -> 3686.67`, `cy=1080`)。
-5. 重点观察日志中的：预估速度是否接近 `~0.91°/s`、是否消除了 `0.71~0.74°` 附近的边缘抢占、`GimbalSettled` 是否稳定触发、是否出现更多 `GimbalTimeout`、俯仰角首捕获是否更快。
+3. 在目标平台确认 GT06Z、激光、IMU 的串口设备名，并同步到 `GIMBAL_PORT` / `LASER_PORT` / `IMU_PORT` 配置。
+4. 检查当前基线：`MIN_DT=0.001`、`GIMBAL_PREEMPT_DEG=1.5`、`GIMBAL_SETTLE_THRESHOLD=0.3`、启动归位 `Az=GIMBAL_AZ_BASE` / `El=0.0°`。
+5. 运行 `linear` 测试 (320m, 5.1m/s, 15FPS, `cx=700 -> 3686.67`, `cy=1080`)。
+6. 重点观察日志中的：预估速度是否接近 `~0.91°/s`、是否消除了 `0.71~0.74°` 附近的边缘抢占、`GimbalSettled` 是否稳定触发、是否出现更多 `GimbalTimeout`、俯仰角首捕获是否更快。
