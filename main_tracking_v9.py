@@ -23,6 +23,10 @@ try:
     from mock_gimbal import MockGimbalAdapter
 except ImportError:
     MockGimbalAdapter = None
+try:
+    from sddm_laser import SDDMLaser
+except ImportError:
+    SDDMLaser = None
 # ==========================================
 # 配置
 # ==========================================
@@ -204,6 +208,7 @@ LOCAL_PORT = 8888
 GIMBAL_PORT = _serial_port("GIMBAL_PORT", "gimbal")
 LASER_PORT = _serial_port("LASER_PORT", "laser")
 USE_MOCK_GIMBAL = False  # True: 使用 mock_gimbal.py; False: 使用真实 GT06Z
+USE_MOCK_LASER = False   # True: 激光通道使用 mono 模拟值; False: 使用真实 SDDM 激光
 ENABLE_IMU = False      # Manual switch: True to enable IMU read/print
 IMU_PORT = _serial_port("IMU_PORT", "imu")
 IMU_BAUDRATE = 9600
@@ -349,6 +354,7 @@ class SharedHardwareState:
     def __init__(self):
         self.lock = threading.Lock()
         self.raw_laser_dist = None
+        self.raw_laser_ts = 0.0
         self.valid_laser_dist = None
         self.latest_dist = None
         self.laser_ts = 0.0
@@ -445,7 +451,17 @@ def drain_latest_gimbal_cmd():
 def read_laser_distance():
     with shared_state.lock:
         dist = shared_state.raw_laser_dist
+        dist_ts = shared_state.raw_laser_ts
+    if (time.time() - dist_ts) > LASER_DIST_TTL:
+        return None
     return _parse_positive_float(dist)
+
+
+def update_mock_laser_distance(dist, ts):
+    parsed = _parse_positive_float(dist)
+    with shared_state.lock:
+        shared_state.raw_laser_dist = parsed
+        shared_state.raw_laser_ts = float(ts) if parsed is not None else 0.0
 
 
 def _parse_positive_float(value):
@@ -456,6 +472,24 @@ def _parse_positive_float(value):
     except (TypeError, ValueError):
         pass
     return None
+
+
+def laser_reader_thread(laser, stop_event):
+    print("[LaserThread] 激光读取线程已启动")
+    try:
+        laser.start_measurement(continuous=True)
+    except Exception as e:
+        print(f"[Laser][Fatal] 启动连续测量失败: {e}")
+        return
+
+    while not stop_event.is_set():
+        dist = laser.read_distance()
+        if dist is None:
+            continue
+        now_t = time.time()
+        with shared_state.lock:
+            shared_state.raw_laser_dist = dist
+            shared_state.raw_laser_ts = now_t
 
 
 def parse_udp_objects(raw_objs):
@@ -1270,6 +1304,8 @@ def main():
     sender = UISender(UI_IP, UI_PORT)
     if not USE_MOCK_GIMBAL:
         _validate_serial_port("GIMBAL_PORT", GIMBAL_PORT)
+    if not USE_MOCK_LASER:
+        _validate_serial_port("LASER_PORT", LASER_PORT)
     if ENABLE_IMU:
         _validate_serial_port("IMU_PORT", IMU_PORT)
     
@@ -1288,6 +1324,27 @@ def main():
     
     if not gimbal.wait_ready():
         print("[Warning] Gimbal not ready instantly, wait...")
+
+    laser = None
+    laser_stop_event = None
+    if USE_MOCK_LASER:
+        print("[Init] Laser source: mock mono distance")
+    else:
+        if SDDMLaser is None:
+            print("[Laser][Warn] sddm_laser.py import failed, fallback to mono distance only.")
+        else:
+            try:
+                laser = SDDMLaser(LASER_PORT)
+                laser_stop_event = threading.Event()
+                threading.Thread(
+                    target=laser_reader_thread,
+                    args=(laser, laser_stop_event),
+                    daemon=True,
+                ).start()
+                print(f"[Init] Real laser enabled on {LASER_PORT}")
+            except Exception as e:
+                print(f"[Laser][Warn] Init failed on {LASER_PORT}: {e}")
+                laser = None
 
     # start background threads for network and gimbal control
     push_latest_gimbal_cmd({
@@ -1494,6 +1551,14 @@ def main():
             # --- 5. 状态机：物理执行与测距 (LOCKED) ---
             if master_track is not None:
                 lock_timer -= dt
+
+                if USE_MOCK_LASER:
+                    mock_laser_dist = (
+                        master_track.last_mono_dist
+                        if (master_track.last_mono_dist is not None and (curr_time - master_track.mono_ts) <= MONO_DIST_TTL)
+                        else None
+                    )
+                    update_mock_laser_distance(mock_laser_dist, curr_time)
                 
                 # A. 提取提前量预测角度
                 fut_az, fut_el = master_track.get_future_position(dt_delay=PREDICT_DELAY)
@@ -1538,6 +1603,8 @@ def main():
                     )
                     ui_send_total += 1
                     ui_send_counter[int(t.id)] += 1
+            elif USE_MOCK_LASER:
+                update_mock_laser_distance(None, curr_time)
 
             if (curr_time - stats_last_print) >= STATS_PRINT_INTERVAL:
                 top_id_text = "none"
@@ -1558,6 +1625,11 @@ def main():
 
     if imu:
         imu.close()
+    if laser_stop_event is not None:
+        laser_stop_event.set()
+        time.sleep(0.05)
+    if laser is not None:
+        laser.close()
     if 'gimbal' in locals():
         gimbal.close()
     final_id_text = "none"

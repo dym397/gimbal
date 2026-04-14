@@ -12,6 +12,8 @@ class GT06ZGimbal:
 
         self.last_sent_el = None
         self.last_sent_az = None
+        self.last_feedback_el = None
+        self.last_feedback_az = None
 
         self.epsilon = 0.2
         self.min_interval = 0.1
@@ -214,21 +216,19 @@ class GT06ZGimbal:
         raw_el = self._read_specific_response(expected_cmd_byte=0x5B)
         if raw_el is not None:
             if raw_el <= 1800:
-                self.last_sent_el = -(raw_el / 10.0)
+                self.last_feedback_el = -(raw_el / 10.0)
             else:
-                self.last_sent_el = (3600 - raw_el) / 10.0
+                self.last_feedback_el = (3600 - raw_el) / 10.0
 
         self._send_frame(0x00, 0x51, 0)
         raw_az = self._read_specific_response(expected_cmd_byte=0x59)
         if raw_az is not None:
-            self.last_sent_az = raw_az / 10.0
+            self.last_feedback_az = raw_az / 10.0
 
-        if self.last_sent_el is None:
-            self.last_sent_el = 0.0
-        if self.last_sent_az is None:
-            self.last_sent_az = 0.0
+        if self.last_feedback_el is None or self.last_feedback_az is None:
+            return None
 
-        return (self.last_sent_el, self.last_sent_az)
+        return (self.last_feedback_el, self.last_feedback_az)
 
 
 # if __name__ == "__main__":

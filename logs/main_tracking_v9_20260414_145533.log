@@ -1,0 +1,12 @@
+[Log] stdout/stderr -> logs\main_tracking_v9_20260414_145533.log
+[Init] Connecting to Gimbal at COM3...
+[GT06Z] Driver Ready on COM3.
+[Adapter] GT06Z 云台已连接: COM3
+[Init] Queue gimbal initial posture: Az=90.00°, El=0.00°
+[GimbalThread] 控制线程已启动
+=== System V9.0 (Predictive Tracking & Scheduling) Running ===[Net] Listening RK3588 on 8888...
+
+[GimbalCmd] cmd_id=0, track_id=-1, target_ctrl=(Az=90.00°, El=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=0.395s, actual_ctrl=(Az=89.90°, El=-0.00°), actual_ui=(Az=359.90°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.10°, dEl=0.00°)
+[GimbalSettled] cmd_id=0, track_id=-1, settle_time=0.395s, actual_ctrl=(Az=89.90°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.10°, dEl=0.00°)
+[Laser] No valid laser distance, use mono distance

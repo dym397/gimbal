@@ -1,0 +1,4 @@
+[Log] stdout/stderr -> logs\main_tracking_v9_20260414_145521.log
+[Init] Connecting to Gimbal at COM3...
+[GT06Z] Open fail: could not open port 'COM3': PermissionError(13, '拒绝访问。', None, 5)
+[Error] Failed to connect gimbal.

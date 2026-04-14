@@ -1,0 +1,4 @@
+[Log] stdout/stderr -> logs\main_tracking_v9_20260414_154545.log
+[Init] Connecting to Gimbal at COM3...
+[GT06Z] Open fail: could not open port 'COM3': FileNotFoundError(2, '系统找不到指定的文件。', None, 2)
+[Error] Failed to connect gimbal.
