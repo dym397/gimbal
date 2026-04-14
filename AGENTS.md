@@ -1,5 +1,18 @@
 # AGENTS.md
 
+## 2026-04-14 增量说明
+- 激光链路已从“只有接口、未接主流程”升级为“真实可运行”状态：`main_tracking_v9.py` 现会在 `USE_MOCK_LASER=False` 时启动 `SDDMLaser` 后台线程，持续读取真实激光并写入 `SharedHardwareState.raw_laser_dist`。
+- 已新增 `USE_MOCK_LASER`，语义与 `USE_MOCK_GIMBAL` 一致：
+  - `True`: 激光通道使用当前主目标的 mono 距离做模拟输入
+  - `False`: 激光通道使用真实 SDDM 激光串口
+- 当前真实硬件基线端口：云台 `COM3`，激光 `COM8`。部署到 Linux 时仍优先通过 `GIMBAL_PORT` / `LASER_PORT` / `IMU_PORT` 覆盖。
+- SDDM 激光当前采用“连续测量”而不是“单次测量”。原因是主流程是在 `GimbalSettled` 后读取一份最新缓存值，连续测量更符合现有非阻塞控制结构。
+- `sddm_laser.py` 已按手册补强帧校验：除 CRC 外，还校验了数据帧 `MsgCode=0x03` 与 `PayloadLen=0x04`。
+- 最新实测结论：
+  - 短时测试里曾出现只有无效激光帧、主流程退回 mono 距离
+  - 15 秒长测中，真实激光已稳定触发 19 次，`[Laser] No valid laser distance` 为 0
+  - 真实激光返回的是实物环境距离（约 `4.7m ~ 6.5m`），不是发送脚本里的模拟 `320m`
+
 ## 本文件用途
 这是给 AI/新接手工程师的项目守则。先读本文件了解硬约束和安全边界，再读 `PROJECT_CONTEXT.md` 建立架构全貌，读 `TODO_NEXT.md` 看当前进度，读 `DECISIONS.md` 理解决策原因。
 

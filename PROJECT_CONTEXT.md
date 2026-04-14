@@ -1,5 +1,27 @@
 # PROJECT_CONTEXT.md
 
+## 2026-04-14 最新进展
+- 真实激光已正式接入主流程，不再只是保留 `LASER_PORT`、`raw_laser_dist` 和驱动文件但没有数据源。
+- 当前激光数据路径：
+  1. `main_tracking_v9.py` 在 `USE_MOCK_LASER=False` 时实例化 `SDDMLaser`
+  2. 启动后台线程发送连续测量命令
+  3. 后台线程循环读取真实串口数据并更新 `SharedHardwareState.raw_laser_dist`
+  4. 云台 `GimbalSettled` 后读取最新激光缓存，并绑定到当前 `laser_track_id`
+- 当前保留两种激光模式：
+  - 真实激光：`USE_MOCK_LASER=False`
+  - 模拟激光：`USE_MOCK_LASER=True`，使用当前主目标的新鲜 mono 距离模拟激光输入
+- `sddm_laser.py` 已根据手册确认协议正确，当前实现使用：
+  - 串口 `115200 / 8N1`
+  - 连续测量命令 `MeaType=1, MeaTimes=0`
+  - 数据帧头 `0xFB`
+  - 距离单位 `dm -> m`
+  - 附加校验：`MsgCode=0x03`、`PayloadLen=0x04`
+- 最新实机验证结果：
+  - 真实云台 `COM3` 与真实激光 `COM8` 已可同时启动
+  - 15 秒 `linear` 场景下，云台 `GimbalSettled=19`、`GimbalTimeout=0`
+  - 同场景下，真实激光 `Laser Triggered=19`、`Laser No valid=0`
+  - 激光测到的是现实场景距离 `4.7m ~ 6.5m`，说明代码已使用真实激光；发送脚本中的 `320m` 只代表视觉输入，不代表激光会返回 320m
+
 ## 本文件用途
 给第一次接触项目的人快速建立工程全貌：系统做什么、数据如何流动、哪些模块与硬件耦合、当前控制基线是什么。实现细节和待办请继续阅读 `TODO_NEXT.md` 与 `DECISIONS.md`。
 
