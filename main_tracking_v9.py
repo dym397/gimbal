@@ -217,7 +217,8 @@ GIMBAL_AZ_BASE = 90.0  # 云台水平基准角（UI绝对方位 0° 映射到控
 GIMBAL_INIT_EL = 0.0  # 启动时俯仰归位角，目标通常从该方向进入
 GIMBAL_CMD_DEADBAND_AZ = 0.20
 GIMBAL_CMD_DEADBAND_EL = 0.12
-GIMBAL_PREEMPT_DEG = 1.5  # 新指令与当前指令的最小抢占角度差，单位：度
+AZ_PREEMPT_DEG = 0.5      # 方位轴抢占阈值，单位：度
+EL_PREEMPT_DEG = 0.8      # 俯仰轴抢占阈值，单位：度
 GIMBAL_SETTLE_THRESHOLD = 0.3
 GIMBAL_SETTLE_TIMEOUT = 2.5
 GIMBAL_THREAD_SLEEP = 0.02
@@ -699,32 +700,46 @@ def gimbal_control_thread(gimbal):
             newer_cmd = drain_latest_gimbal_cmd()
             if newer_cmd is not None:
                 new_az = float(newer_cmd["az"])#新指令的方位角
-                new_el = float(newer_cmd["el"])#新指令的俯仰角  
+                new_el = float(newer_cmd["el"])#新指令的俯仰角
+                new_track_id = int(newer_cmd.get("track_id", -1))
+                curr_track_id = int(active_cmd.get("track_id", -1))
                 #计算新指令与当前指令的角度差
                 d_az = abs(angular_diff(new_az, target_az))
                 d_el = abs(new_el - target_el)
                 d_total = math.hypot(d_az, d_el)
-                #如果角度差>预设的抢占阈值，则立即执行新指令
-                if d_total > GIMBAL_PREEMPT_DEG:
-                    target_az = new_az
-                    target_el = new_el
+
+                # 目标切换时必须整条命令替换，避免“新方位 + 旧俯仰”混合指向。
+                full_replace = (new_track_id != curr_track_id)
+                update_az = full_replace or (d_az > AZ_PREEMPT_DEG)
+                update_el = full_replace or (d_el > EL_PREEMPT_DEG)
+
+                if update_az or update_el:
+                    if update_az:
+                        target_az = new_az
+                    if update_el:
+                        target_el = new_el
                     active_cmd = newer_cmd
                     cmd_start_t = now_t
                     last_progress_log_t = 0.0
                     gimbal.set_attitude(elevation=target_el, azimuth=target_az)
                     with shared_state.lock:
                         shared_state.active_cmd_id = int(active_cmd["cmd_id"])
-                        shared_state.active_track_id = int(active_cmd.get("track_id", -1))
+                        shared_state.active_track_id = new_track_id
                         shared_state.is_settled = False
+
+                    update_mode = "track_switch" if full_replace else "axis_update"
+                    updated_axes = []
+                    if update_az:
+                        updated_axes.append("Az")
+                    if update_el:
+                        updated_axes.append("El")
+                    updated_axes_text = "+".join(updated_axes) if updated_axes else "none"
                     print(
                         f"[GimbalCmd] preempt cmd_id={int(active_cmd['cmd_id'])}, "
-                        f"track_id={int(active_cmd.get('track_id', -1))}, "
+                        f"track_id={new_track_id}, mode={update_mode}, axes={updated_axes_text}, "
                         f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°), "
-                        f"delta={d_total:.2f}°"
+                        f"delta=(dAz={d_az:.2f}°, dEl={d_el:.2f}°, total={d_total:.2f}°)"
                     )
-                # 如果角度差<=抢占阈值，视为同一位置，直接丢弃新指令
-                else:
-                    pass
 
             real_att = gimbal.get_attitude()
             if real_att:
