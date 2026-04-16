@@ -1,0 +1,20 @@
+[Log] stdout/stderr -> logs/main_tracking_v9_20260415_202111.log
+[Init] Connecting to Gimbal at /dev/ttyUSB0...
+[GT06Z] Driver Ready on /dev/ttyUSB0.
+[Adapter] GT06Z 云台已连接: /dev/ttyUSB0
+[Init] Laser source: mock mono distance
+[Init] Queue gimbal initial posture: Az=90.00°, El=0.00°
+=== System V9.0 (Predictive Tracking & Scheduling) Running ===
+[GimbalThread] 控制线程已启动
+[Net] Listening RK3588 on 8888...
+[GimbalCmd] cmd_id=0, track_id=-1, target_ctrl=(Az=90.00°, El=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=0.368s, actual_ctrl=(Az=89.90°, El=-24.20°), actual_ui=(Az=359.90°, El=-24.20°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.10°, dEl=24.20°)
+[GimbalAtt] cmd_id=0, elapsed=0.630s, actual_ctrl=(Az=89.90°, El=-21.80°), actual_ui=(Az=359.90°, El=-21.80°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.10°, dEl=21.80°)
+[GimbalAtt] cmd_id=0, elapsed=0.892s, actual_ctrl=(Az=89.90°, El=-18.50°), actual_ui=(Az=359.90°, El=-18.50°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.10°, dEl=18.50°)
+[GimbalAtt] cmd_id=0, elapsed=1.158s, actual_ctrl=(Az=89.90°, El=-14.50°), actual_ui=(Az=359.90°, El=-14.50°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.10°, dEl=14.50°)
+[GimbalAtt] cmd_id=0, elapsed=1.420s, actual_ctrl=(Az=89.90°, El=-10.50°), actual_ui=(Az=359.90°, El=-10.50°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.10°, dEl=10.50°)
+[GimbalAtt] cmd_id=0, elapsed=1.682s, actual_ctrl=(Az=89.90°, El=-6.50°), actual_ui=(Az=359.90°, El=-6.50°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.10°, dEl=6.50°)
+[GimbalAtt] cmd_id=0, elapsed=1.944s, actual_ctrl=(Az=89.90°, El=0.40°), actual_ui=(Az=359.90°, El=0.40°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.10°, dEl=0.40°)
+[GimbalAtt] cmd_id=0, elapsed=2.265s, actual_ctrl=(Az=89.90°, El=-0.00°), actual_ui=(Az=359.90°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.10°, dEl=0.00°)
+[GimbalSettled] cmd_id=0, track_id=-1, settle_time=2.265s, actual_ctrl=(Az=89.90°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.10°, dEl=0.00°)
+[Laser] No valid laser distance, use mono distance
