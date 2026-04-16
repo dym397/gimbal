@@ -1,0 +1,442 @@
+[Log] stdout/stderr -> logs/main_tracking_v9_20260416_123438.log
+[Init] Connecting to Gimbal at /dev/ttyUSB0...
+[GT06Z] Driver Ready on /dev/ttyUSB0.
+[Adapter] GT06Z 云台已连接: /dev/ttyUSB0
+[Init] Real laser enabled on /dev/ttyUSB1
+[Init] Queue gimbal initial posture: Az=90.00°, El=0.00°
+[LaserThread] 激光读取线程已启动[GimbalThread] 控制线程已启动
+
+[Net] Listening RK3588 on 8888...
+[Laser] start_measurement mode=continuous=== System V9.0 (Predictive Tracking & Scheduling) Running ===
+
+[GimbalCmd] cmd_id=0, track_id=-1, target_ctrl=(Az=90.00°, El=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=0.041s, actual_ctrl=(Az=98.00°, El=28.60°), actual_ui=(Az=8.00°, El=28.60°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=8.00°, dEl=28.60°)
+[GimbalAtt] cmd_id=0, elapsed=0.302s, actual_ctrl=(Az=94.20°, El=27.60°), actual_ui=(Az=4.20°, El=27.60°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=4.20°, dEl=27.60°)
+[GimbalAtt] cmd_id=0, elapsed=0.564s, actual_ctrl=(Az=94.20°, El=25.50°), actual_ui=(Az=4.20°, El=25.50°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=4.20°, dEl=25.50°)
+[GimbalAtt] cmd_id=0, elapsed=0.929s, actual_ctrl=(Az=90.00°, El=21.00°), actual_ui=(Az=0.00°, El=21.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=21.00°)
+[GimbalAtt] cmd_id=0, elapsed=1.190s, actual_ctrl=(Az=90.00°, El=17.00°), actual_ui=(Az=0.00°, El=17.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=17.00°)
+[GimbalAtt] cmd_id=0, elapsed=1.452s, actual_ctrl=(Az=90.00°, El=13.00°), actual_ui=(Az=0.00°, El=13.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=13.00°)
+[GimbalAtt] cmd_id=0, elapsed=1.714s, actual_ctrl=(Az=90.00°, El=9.00°), actual_ui=(Az=0.00°, El=9.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=9.00°)
+[GimbalAtt] cmd_id=0, elapsed=1.976s, actual_ctrl=(Az=90.00°, El=5.00°), actual_ui=(Az=0.00°, El=5.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=5.00°)
+[GimbalAtt] cmd_id=0, elapsed=2.238s, actual_ctrl=(Az=90.00°, El=1.70°), actual_ui=(Az=0.00°, El=1.70°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=1.70°)
+[GimbalAtt] cmd_id=0, elapsed=2.449s, actual_ctrl=(Az=90.00°, El=1.70°), actual_ui=(Az=0.00°, El=1.70°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=1.70°)
+[GimbalAtt] cmd_id=0, elapsed=2.731s, actual_ctrl=(Az=90.00°, El=-0.00°), actual_ui=(Az=0.00°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=0.00°)
+[GimbalSettled] cmd_id=0, track_id=-1, settle_time=2.731s, actual_ctrl=(Az=90.00°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=0.00°)
+[Laser] Triggered cmd_id=0, track_id=-1, dist=4.50m, interval=first
+
+[Phase 1: 视觉解析] 收到目标 cx=700.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=354.44°, El=28.50°
+[Stats] recv_objs_total=1, recv_unique_boxes=1 | ui_send_total=0, ui_unique_ids=0, ui_id_counts=none
+
+[Phase 1: 视觉解析] 收到目标 cx=733.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=354.59°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=766.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=354.74°, El=28.50°
+[TargetAcquire] reason=initial_acquire, master_id=1, score=-27.54, candidates=id=1, score=-27.54, speed=0.18deg/s, dist=29.01deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=354.61°, 速度=0.18°/s
+                   -> 打提前量(0.25s后)Az=354.65°, El=28.50° | 下发云台指令: Az=84.65°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=800.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=354.90°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=354.72°, 速度=0.39°/s
+                   -> 打提前量(0.25s后)Az=354.82°, El=28.50° | 下发云台指令: Az=84.82°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=833.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=355.05°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=354.85°, 速度=0.65°/s
+                   -> 打提前量(0.25s后)Az=355.02°, El=28.50° | 下发云台指令: Az=85.02°, El=28.50°
+[GimbalCmd] cmd_id=1, track_id=1, target_ctrl=(Az=84.65°, El=28.50°)
+
+[Phase 1: 视觉解析] 收到目标 cx=866.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=355.20°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=355.00°, 速度=0.92°/s
+                   -> 打提前量(0.25s后)Az=355.23°, El=28.50° | 下发云台指令: Az=85.23°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=900.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=355.35°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=355.18°, 速度=1.16°/s
+                   -> 打提前量(0.25s后)Az=355.47°, El=28.50° | 下发云台指令: Az=85.47°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=933.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=355.50°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=355.34°, 速度=1.36°/s
+                   -> 打提前量(0.25s后)Az=355.68°, El=28.50° | 下发云台指令: Az=85.68°, El=28.50°
+[GimbalAtt] cmd_id=1, elapsed=0.041s, actual_ctrl=(Az=89.30°, El=0.10°), actual_ui=(Az=359.30°, El=0.10°), target_ctrl=(Az=84.65°, El=28.50°), err=(dAz=4.65°, dEl=28.40°)
+
+[Phase 1: 视觉解析] 收到目标 cx=966.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=355.66°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=355.52°, 速度=1.52°/s
+                   -> 打提前量(0.25s后)Az=355.90°, El=28.50° | 下发云台指令: Az=85.90°, El=28.50°
+[GimbalCmd] preempt cmd_id=6, track_id=1, mode=axis_update, axes=Az, target_ctrl=(Az=85.90°, El=28.50°), delta=(dAz=1.25°, dEl=0.00°, total=1.25°)
+
+[Phase 1: 视觉解析] 收到目标 cx=1000.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=355.81°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=355.68°, 速度=1.65°/s
+                   -> 打提前量(0.25s后)Az=356.09°, El=28.50° | 下发云台指令: Az=86.09°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1033.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=355.96°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=355.84°, 速度=1.76°/s
+                   -> 打提前量(0.25s后)Az=356.28°, El=28.50° | 下发云台指令: Az=86.28°, El=28.50°
+[GimbalAtt] cmd_id=6, elapsed=0.000s, actual_ctrl=(Az=85.80°, El=1.20°), actual_ui=(Az=355.80°, El=1.20°), target_ctrl=(Az=85.90°, El=28.50°), err=(dAz=0.10°, dEl=27.30°)
+
+[Phase 1: 视觉解析] 收到目标 cx=1066.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=356.11°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=356.00°, 速度=1.85°/s
+                   -> 打提前量(0.25s后)Az=356.46°, El=28.50° | 下发云台指令: Az=86.46°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1100.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=356.26°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=356.16°, 速度=1.92°/s
+                   -> 打提前量(0.25s后)Az=356.64°, El=28.50° | 下发云台指令: Az=86.64°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1133.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=356.41°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=356.33°, 速度=1.99°/s
+                   -> 打提前量(0.25s后)Az=356.82°, El=28.50° | 下发云台指令: Az=86.82°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1166.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=356.57°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=356.50°, 速度=2.03°/s
+                   -> 打提前量(0.25s后)Az=357.00°, El=28.50° | 下发云台指令: Az=87.00°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1200.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=356.72°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=356.65°, 速度=2.08°/s
+                   -> 打提前量(0.25s后)Az=357.17°, El=28.50° | 下发云台指令: Az=87.17°, El=28.50°
+[GimbalAtt] cmd_id=6, elapsed=0.201s, actual_ctrl=(Az=85.70°, El=1.20°), actual_ui=(Az=355.70°, El=1.20°), target_ctrl=(Az=85.90°, El=28.50°), err=(dAz=0.20°, dEl=27.30°)
+[GimbalCmd] preempt cmd_id=9, track_id=1, mode=axis_update, axes=Az, target_ctrl=(Az=87.00°, El=28.50°), delta=(dAz=1.10°, dEl=0.00°, total=1.10°)
+
+[Phase 1: 视觉解析] 收到目标 cx=1233.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=356.87°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=356.83°, 速度=2.10°/s
+                   -> 打提前量(0.25s后)Az=357.35°, El=28.50° | 下发云台指令: Az=87.35°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1266.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=357.02°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=356.98°, 速度=2.13°/s
+                   -> 打提前量(0.25s后)Az=357.51°, El=28.50° | 下发云台指令: Az=87.51°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1300.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=357.17°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=357.13°, 速度=2.15°/s
+                   -> 打提前量(0.25s后)Az=357.67°, El=28.50° | 下发云台指令: Az=87.67°, El=28.50°
+[GimbalAtt] cmd_id=9, elapsed=0.000s, actual_ctrl=(Az=86.50°, El=5.80°), actual_ui=(Az=356.50°, El=5.80°), target_ctrl=(Az=87.00°, El=28.50°), err=(dAz=0.50°, dEl=22.70°)
+[GimbalCmd] preempt cmd_id=11, track_id=1, mode=axis_update, axes=Az, target_ctrl=(Az=87.67°, El=28.50°), delta=(dAz=0.67°, dEl=0.00°, total=0.67°)
+
+[Phase 1: 视觉解析] 收到目标 cx=1333.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=357.33°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=357.30°, 速度=2.17°/s
+                   -> 打提前量(0.25s后)Az=357.84°, El=28.50° | 下发云台指令: Az=87.84°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1366.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=357.48°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=357.44°, 速度=2.19°/s
+                   -> 打提前量(0.25s后)Az=357.99°, El=28.50° | 下发云台指令: Az=87.99°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1400.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=357.63°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=357.64°, 速度=2.18°/s
+                   -> 打提前量(0.25s后)Az=358.19°, El=28.50° | 下发云台指令: Az=88.19°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1433.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=357.78°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=357.74°, 速度=2.20°/s
+                   -> 打提前量(0.25s后)Az=358.29°, El=28.50° | 下发云台指令: Az=88.29°, El=28.50°
+[GimbalAtt] cmd_id=11, elapsed=0.000s, actual_ctrl=(Az=86.90°, El=5.80°), actual_ui=(Az=356.90°, El=5.80°), target_ctrl=(Az=87.67°, El=28.50°), err=(dAz=0.77°, dEl=22.70°)
+
+[Phase 1: 视觉解析] 收到目标 cx=1466.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=357.93°, El=28.50°
+[GimbalCmd] preempt cmd_id=13, track_id=1, mode=axis_update, axes=Az, target_ctrl=(Az=88.29°, El=28.50°), delta=(dAz=0.62°, dEl=0.00°, total=0.62°)
+[Phase 3: 预测控制] 目标当前估算Az=357.91°, 速度=2.21°/s
+                   -> 打提前量(0.25s后)Az=358.47°, El=28.50° | 下发云台指令: Az=88.47°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1500.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=358.09°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=358.06°, 速度=2.23°/s
+                   -> 打提前量(0.25s后)Az=358.61°, El=28.50° | 下发云台指令: Az=88.61°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1533.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=358.24°, El=28.50°
+[TargetKeep] reason=lock_timer_expired, master_id=1, score=-18.20, candidates=id=1, score=-18.20, speed=2.24deg/s, dist=22.74deg, hits=26, stab=2.44, hold=1.15x
+[Phase 3: 预测控制] 目标当前估算Az=358.22°, 速度=2.24°/s
+                   -> 打提前量(0.25s后)Az=358.78°, El=28.50° | 下发云台指令: Az=88.78°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1566.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=358.39°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=358.37°, 速度=2.25°/s
+                   -> 打提前量(0.25s后)Az=358.93°, El=28.50° | 下发云台指令: Az=88.93°, El=28.50°
+[GimbalAtt] cmd_id=13, elapsed=0.000s, actual_ctrl=(Az=87.70°, El=13.30°), actual_ui=(Az=357.70°, El=13.30°), target_ctrl=(Az=88.29°, El=28.50°), err=(dAz=0.59°, dEl=15.20°)
+[GimbalCmd] preempt cmd_id=15, track_id=1, mode=axis_update, axes=Az, target_ctrl=(Az=88.93°, El=28.50°), delta=(dAz=0.64°, dEl=0.00°, total=0.64°)
+
+[Phase 1: 视觉解析] 收到目标 cx=1600.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=358.54°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=358.53°, 速度=2.25°/s
+                   -> 打提前量(0.25s后)Az=359.09°, El=28.50° | 下发云台指令: Az=89.09°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1633.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=358.69°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=358.68°, 速度=2.26°/s
+                   -> 打提前量(0.25s后)Az=359.25°, El=28.50° | 下发云台指令: Az=89.25°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1666.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=358.85°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=358.87°, 速度=2.25°/s
+                   -> 打提前量(0.25s后)Az=359.43°, El=28.50° | 下发云台指令: Az=89.43°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1700.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=359.00°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=358.99°, 速度=2.25°/s
+                   -> 打提前量(0.25s后)Az=359.56°, El=28.50° | 下发云台指令: Az=89.56°, El=28.50°
+[Stats] recv_objs_total=31, recv_unique_boxes=31 | ui_send_total=29, ui_unique_ids=1, ui_id_counts=1:29
+[GimbalAtt] cmd_id=15, elapsed=0.000s, actual_ctrl=(Az=88.10°, El=13.30°), actual_ui=(Az=358.10°, El=13.30°), target_ctrl=(Az=88.93°, El=28.50°), err=(dAz=0.83°, dEl=15.20°)
+[GimbalCmd] preempt cmd_id=17, track_id=1, mode=axis_update, axes=Az, target_ctrl=(Az=89.56°, El=28.50°), delta=(dAz=0.63°, dEl=0.00°, total=0.63°)
+
+[Phase 1: 视觉解析] 收到目标 cx=1733.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=359.15°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=359.13°, 速度=2.26°/s
+                   -> 打提前量(0.25s后)Az=359.70°, El=28.50° | 下发云台指令: Az=89.70°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1766.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=359.30°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=359.29°, 速度=2.26°/s
+                   -> 打提前量(0.25s后)Az=359.86°, El=28.50° | 下发云台指令: Az=89.86°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1800.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=359.45°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=359.44°, 速度=2.27°/s
+                   -> 打提前量(0.25s后)Az=0.01°, El=28.50° | 下发云台指令: Az=90.01°, El=28.50°
+[GimbalAtt] cmd_id=17, elapsed=0.000s, actual_ctrl=(Az=88.90°, El=20.90°), actual_ui=(Az=358.90°, El=20.90°), target_ctrl=(Az=89.56°, El=28.50°), err=(dAz=0.66°, dEl=7.60°)
+
+[Phase 1: 视觉解析] 收到目标 cx=1833.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=359.61°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=359.59°, 速度=2.27°/s
+                   -> 打提前量(0.25s后)Az=0.16°, El=28.50° | 下发云台指令: Az=90.16°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1866.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=359.76°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=359.75°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=0.32°, El=28.50° | 下发云台指令: Az=90.32°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1900.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=359.91°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=359.91°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=0.48°, El=28.50° | 下发云台指令: Az=90.48°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=1933.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=0.06°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=0.07°, 速度=2.27°/s
+                   -> 打提前量(0.25s后)Az=0.64°, El=28.50° | 下发云台指令: Az=90.64°, El=28.50°
+[GimbalAtt] cmd_id=17, elapsed=0.222s, actual_ctrl=(Az=89.50°, El=20.90°), actual_ui=(Az=359.50°, El=20.90°), target_ctrl=(Az=89.56°, El=28.50°), err=(dAz=0.06°, dEl=7.60°)
+
+[Phase 1: 视觉解析] 收到目标 cx=1966.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=0.21°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=0.20°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=0.77°, El=28.50° | 下发云台指令: Az=90.77°, El=28.50°
+[GimbalCmd] preempt cmd_id=21, track_id=1, mode=axis_update, axes=Az, target_ctrl=(Az=90.77°, El=28.50°), delta=(dAz=1.22°, dEl=0.00°, total=1.22°)
+
+[Phase 1: 视觉解析] 收到目标 cx=2000.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=0.36°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=0.36°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=0.93°, El=28.50° | 下发云台指令: Az=90.93°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2033.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=0.52°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=0.51°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=1.08°, El=28.50° | 下发云台指令: Az=91.08°, El=28.50°
+[GimbalAtt] cmd_id=21, elapsed=0.000s, actual_ctrl=(Az=89.50°, El=27.60°), actual_ui=(Az=359.50°, El=27.60°), target_ctrl=(Az=90.77°, El=28.50°), err=(dAz=1.27°, dEl=0.90°)
+
+[Phase 1: 视觉解析] 收到目标 cx=2066.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=0.67°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=0.68°, 速度=2.27°/s
+                   -> 打提前量(0.25s后)Az=1.25°, El=28.50° | 下发云台指令: Az=91.25°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2100.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=0.82°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=0.83°, 速度=2.27°/s
+                   -> 打提前量(0.25s后)Az=1.40°, El=28.50° | 下发云台指令: Az=91.40°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2133.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=0.97°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=0.98°, 速度=2.27°/s
+                   -> 打提前量(0.25s后)Az=1.55°, El=28.50° | 下发云台指令: Az=91.55°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2166.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=1.12°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=1.12°, 速度=2.27°/s
+                   -> 打提前量(0.25s后)Az=1.68°, El=28.50° | 下发云台指令: Az=91.68°, El=28.50°
+[GimbalAtt] cmd_id=21, elapsed=0.184s, actual_ctrl=(Az=90.70°, El=27.60°), actual_ui=(Az=0.70°, El=27.60°), target_ctrl=(Az=90.77°, El=28.50°), err=(dAz=0.07°, dEl=0.90°)
+
+[Phase 1: 视觉解析] 收到目标 cx=2200.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=1.28°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=1.27°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=1.83°, El=28.50° | 下发云台指令: Az=91.83°, El=28.50°
+[GimbalCmd] preempt cmd_id=24, track_id=1, mode=axis_update, axes=Az, target_ctrl=(Az=91.68°, El=28.50°), delta=(dAz=0.91°, dEl=0.00°, total=0.91°)
+
+[Phase 1: 视觉解析] 收到目标 cx=2233.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=1.43°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=1.42°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=1.99°, El=28.50° | 下发云台指令: Az=91.99°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2266.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=1.58°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=1.57°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=2.14°, El=28.50° | 下发云台指令: Az=92.14°, El=28.50°
+[GimbalAtt] cmd_id=24, elapsed=0.000s, actual_ctrl=(Az=91.40°, El=28.60°), actual_ui=(Az=1.40°, El=28.60°), target_ctrl=(Az=91.68°, El=28.50°), err=(dAz=0.28°, dEl=0.10°)
+[GimbalSettled] cmd_id=24, track_id=1, settle_time=0.000s, actual_ctrl=(Az=91.40°, El=28.60°), target_ctrl=(Az=91.68°, El=28.50°), err=(dAz=0.28°, dEl=0.10°)
+[Laser] Triggered cmd_id=24, track_id=1, dist=4.60m, interval=69.854s
+[GimbalCmd] cmd_id=25, track_id=1, target_ctrl=(Az=91.99°, El=28.50°)
+
+[Phase 1: 视觉解析] 收到目标 cx=2300.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=1.73°, El=28.50°
+[TargetKeep] reason=lock_timer_expired, master_id=1, score=7.67, candidates=id=1, score=7.67, speed=2.29deg/s, dist=0.34deg, hits=49, stab=2.44, hold=1.15x
+[Phase 3: 预测控制] 目标当前估算Az=1.72°, 速度=2.29°/s
+                   -> 打提前量(0.25s后)Az=2.29°, El=28.50° | 下发云台指令: Az=92.29°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2333.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=1.88°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=1.88°, 速度=2.29°/s
+                   -> 打提前量(0.25s后)Az=2.45°, El=28.50° | 下发云台指令: Az=92.45°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2366.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=2.04°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=2.03°, 速度=2.29°/s
+                   -> 打提前量(0.25s后)Az=2.60°, El=28.50° | 下发云台指令: Az=92.60°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2400.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=2.19°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=2.20°, 速度=2.29°/s
+                   -> 打提前量(0.25s后)Az=2.77°, El=28.50° | 下发云台指令: Az=92.77°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2433.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=2.34°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=2.34°, 速度=2.29°/s
+                   -> 打提前量(0.25s后)Az=2.91°, El=28.50° | 下发云台指令: Az=92.91°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2466.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=2.49°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=2.49°, 速度=2.29°/s
+                   -> 打提前量(0.25s后)Az=3.06°, El=28.50° | 下发云台指令: Az=93.06°, El=28.50°
+[GimbalAtt] cmd_id=25, elapsed=0.000s, actual_ctrl=(Az=91.60°, El=28.60°), actual_ui=(Az=1.60°, El=28.60°), target_ctrl=(Az=91.99°, El=28.50°), err=(dAz=0.39°, dEl=0.10°)
+[GimbalCmd] preempt cmd_id=28, track_id=1, mode=axis_update, axes=Az, target_ctrl=(Az=92.91°, El=28.50°), delta=(dAz=0.92°, dEl=0.00°, total=0.92°)
+
+[Phase 1: 视觉解析] 收到目标 cx=2500.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=2.64°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=2.65°, 速度=2.29°/s
+                   -> 打提前量(0.25s后)Az=3.22°, El=28.50° | 下发云台指令: Az=93.22°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2533.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=2.80°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=2.80°, 速度=2.29°/s
+                   -> 打提前量(0.25s后)Az=3.37°, El=28.50° | 下发云台指令: Az=93.37°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2566.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=2.95°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=2.96°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=3.53°, El=28.50° | 下发云台指令: Az=93.53°, El=28.50°
+[GimbalAtt] cmd_id=28, elapsed=0.000s, actual_ctrl=(Az=92.30°, El=28.60°), actual_ui=(Az=2.30°, El=28.60°), target_ctrl=(Az=92.91°, El=28.50°), err=(dAz=0.61°, dEl=0.10°)
+[GimbalCmd] preempt cmd_id=30, track_id=1, mode=axis_update, axes=Az, target_ctrl=(Az=93.53°, El=28.50°), delta=(dAz=0.62°, dEl=0.00°, total=0.62°)
+
+[Phase 1: 视觉解析] 收到目标 cx=2600.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=3.10°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=3.10°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=3.67°, El=28.50° | 下发云台指令: Az=93.67°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2633.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=3.25°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=3.25°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=3.82°, El=28.50° | 下发云台指令: Az=93.82°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2666.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=3.40°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=3.40°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=3.97°, El=28.50° | 下发云台指令: Az=93.97°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2700.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=3.55°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=3.56°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=4.13°, El=28.50° | 下发云台指令: Az=94.13°, El=28.50°
+[GimbalAtt] cmd_id=30, elapsed=0.000s, actual_ctrl=(Az=92.80°, El=28.60°), actual_ui=(Az=2.80°, El=28.60°), target_ctrl=(Az=93.53°, El=28.50°), err=(dAz=0.73°, dEl=0.10°)
+[GimbalCmd] preempt cmd_id=32, track_id=1, mode=axis_update, axes=Az, target_ctrl=(Az=94.13°, El=28.50°), delta=(dAz=0.59°, dEl=0.00°, total=0.59°)
+
+[Phase 1: 视觉解析] 收到目标 cx=2733.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=3.71°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=3.74°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=4.31°, El=28.50° | 下发云台指令: Az=94.31°, El=28.50°
+[Stats] recv_objs_total=62, recv_unique_boxes=62 | ui_send_total=60, ui_unique_ids=1, ui_id_counts=1:60
+
+[Phase 1: 视觉解析] 收到目标 cx=2766.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=3.86°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=3.85°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=4.42°, El=28.50° | 下发云台指令: Az=94.42°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2800.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=4.01°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=4.02°, 速度=2.27°/s
+                   -> 打提前量(0.25s后)Az=4.59°, El=28.50° | 下发云台指令: Az=94.59°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2833.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=4.16°, El=28.50°
+[GimbalAtt] cmd_id=32, elapsed=0.000s, actual_ctrl=(Az=93.60°, El=28.60°), actual_ui=(Az=3.60°, El=28.60°), target_ctrl=(Az=94.13°, El=28.50°), err=(dAz=0.53°, dEl=0.10°)
+[Phase 3: 预测控制] 目标当前估算Az=4.17°, 速度=2.27°/s
+                   -> 打提前量(0.25s后)Az=4.73°, El=28.50° | 下发云台指令: Az=94.73°, El=28.50°
+[GimbalCmd] preempt cmd_id=34, track_id=1, mode=axis_update, axes=Az, target_ctrl=(Az=94.73°, El=28.50°), delta=(dAz=0.61°, dEl=0.00°, total=0.61°)
+
+[Phase 1: 视觉解析] 收到目标 cx=2866.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=4.31°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=4.31°, 速度=2.27°/s
+                   -> 打提前量(0.25s后)Az=4.88°, El=28.50° | 下发云台指令: Az=94.88°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2900.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=4.47°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=4.50°, 速度=2.27°/s
+                   -> 打提前量(0.25s后)Az=5.07°, El=28.50° | 下发云台指令: Az=95.07°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2933.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=4.62°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=4.62°, 速度=2.27°/s
+                   -> 打提前量(0.25s后)Az=5.19°, El=28.50° | 下发云台指令: Az=95.19°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=2966.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=4.77°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=4.76°, 速度=2.27°/s
+                   -> 打提前量(0.25s后)Az=5.32°, El=28.50° | 下发云台指令: Az=95.32°, El=28.50°
+[GimbalAtt] cmd_id=34, elapsed=0.000s, actual_ctrl=(Az=94.00°, El=28.60°), actual_ui=(Az=4.00°, El=28.60°), target_ctrl=(Az=94.73°, El=28.50°), err=(dAz=0.73°, dEl=0.10°)
+[GimbalCmd] preempt cmd_id=36, track_id=1, mode=axis_update, axes=Az, target_ctrl=(Az=95.32°, El=28.50°), delta=(dAz=0.59°, dEl=0.00°, total=0.59°)
+
+[Phase 1: 视觉解析] 收到目标 cx=3000.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=4.92°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=4.91°, 速度=2.27°/s
+                   -> 打提前量(0.25s后)Az=5.47°, El=28.50° | 下发云台指令: Az=95.47°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=3033.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=5.07°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=5.06°, 速度=2.27°/s
+                   -> 打提前量(0.25s后)Az=5.63°, El=28.50° | 下发云台指令: Az=95.63°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=3066.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=5.23°, El=28.50°
+[TargetKeep] reason=lock_timer_expired, master_id=1, score=6.64, candidates=id=1, score=6.64, speed=2.28deg/s, dist=1.22deg, hits=72, stab=2.44, hold=1.15x
+[Phase 3: 预测控制] 目标当前估算Az=5.21°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=5.78°, El=28.50° | 下发云台指令: Az=95.78°, El=28.50°
+[GimbalAtt] cmd_id=36, elapsed=0.000s, actual_ctrl=(Az=94.80°, El=28.60°), actual_ui=(Az=4.80°, El=28.60°), target_ctrl=(Az=95.32°, El=28.50°), err=(dAz=0.52°, dEl=0.10°)
+
+[Phase 1: 视觉解析] 收到目标 cx=3100.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=5.38°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=5.37°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=5.94°, El=28.50° | 下发云台指令: Az=95.94°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=3133.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=5.53°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=5.53°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=6.10°, El=28.50° | 下发云台指令: Az=96.10°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=3166.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=5.68°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=5.67°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=6.24°, El=28.50° | 下发云台指令: Az=96.24°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=3200.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=5.83°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=5.84°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=6.41°, El=28.50° | 下发云台指令: Az=96.41°, El=28.50°
+[GimbalAtt] cmd_id=36, elapsed=0.214s, actual_ctrl=(Az=95.30°, El=28.60°), actual_ui=(Az=5.30°, El=28.60°), target_ctrl=(Az=95.32°, El=28.50°), err=(dAz=0.02°, dEl=0.10°)
+[GimbalSettled] cmd_id=36, track_id=1, settle_time=0.214s, actual_ctrl=(Az=95.30°, El=28.60°), target_ctrl=(Az=95.32°, El=28.50°), err=(dAz=0.02°, dEl=0.10°)
+[Laser] No valid laser distance, use mono distance
+[GimbalCmd] cmd_id=39, track_id=1, target_ctrl=(Az=96.24°, El=28.50°)
+
+[Phase 1: 视觉解析] 收到目标 cx=3233.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=5.99°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=5.99°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=6.56°, El=28.50° | 下发云台指令: Az=96.56°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=3266.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=6.14°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=6.13°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=6.70°, El=28.50° | 下发云台指令: Az=96.70°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=3300.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=6.29°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=6.28°, 速度=2.29°/s
+                   -> 打提前量(0.25s后)Az=6.85°, El=28.50° | 下发云台指令: Az=96.85°, El=28.50°
+[GimbalAtt] cmd_id=39, elapsed=0.000s, actual_ctrl=(Az=96.00°, El=28.60°), actual_ui=(Az=6.00°, El=28.60°), target_ctrl=(Az=96.24°, El=28.50°), err=(dAz=0.24°, dEl=0.10°)
+[GimbalSettled] cmd_id=39, track_id=1, settle_time=0.000s, actual_ctrl=(Az=96.00°, El=28.60°), target_ctrl=(Az=96.24°, El=28.50°), err=(dAz=0.24°, dEl=0.10°)
+[Laser] No valid laser distance, use mono distance
+[GimbalCmd] cmd_id=41, track_id=1, target_ctrl=(Az=96.85°, El=28.50°)
+
+[Phase 1: 视觉解析] 收到目标 cx=3333.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=6.44°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=6.45°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=7.02°, El=28.50° | 下发云台指令: Az=97.02°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=3366.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=6.59°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=6.60°, 速度=2.27°/s
+                   -> 打提前量(0.25s后)Az=7.17°, El=28.50° | 下发云台指令: Az=97.17°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=3400.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=6.74°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=6.73°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=7.30°, El=28.50° | 下发云台指令: Az=97.30°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=3433.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=6.90°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=6.90°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=7.47°, El=28.50° | 下发云台指令: Az=97.47°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=3466.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=7.05°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=7.04°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=7.61°, El=28.50° | 下发云台指令: Az=97.61°, El=28.50°
+[GimbalAtt] cmd_id=41, elapsed=0.000s, actual_ctrl=(Az=96.20°, El=28.60°), actual_ui=(Az=6.20°, El=28.60°), target_ctrl=(Az=96.85°, El=28.50°), err=(dAz=0.65°, dEl=0.10°)
+
+[Phase 1: 视觉解析] 收到目标 cx=3500.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=7.20°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=7.20°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=7.77°, El=28.50° | 下发云台指令: Az=97.77°, El=28.50°
+[GimbalCmd] preempt cmd_id=44, track_id=1, mode=axis_update, axes=Az, target_ctrl=(Az=97.77°, El=28.50°), delta=(dAz=0.92°, dEl=0.00°, total=0.92°)
+
+[Phase 1: 视觉解析] 收到目标 cx=3533.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=7.35°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=7.36°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=7.93°, El=28.50° | 下发云台指令: Az=97.93°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=3566.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=7.50°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=7.51°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=8.08°, El=28.50° | 下发云台指令: Az=98.08°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=3600.0, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=7.66°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=7.65°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=8.22°, El=28.50° | 下发云台指令: Az=98.22°, El=28.50°
+[GimbalAtt] cmd_id=44, elapsed=0.000s, actual_ctrl=(Az=96.90°, El=28.60°), actual_ui=(Az=6.90°, El=28.60°), target_ctrl=(Az=97.77°, El=28.50°), err=(dAz=0.87°, dEl=0.10°)
+
+[Phase 1: 视觉解析] 收到目标 cx=3633.3, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=7.81°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=7.82°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=8.39°, El=28.50° | 下发云台指令: Az=98.39°, El=28.50°
+
+[Phase 1: 视觉解析] 收到目标 cx=3666.7, cy=1080.0, mono=320.0m -> 解算绝对角度: Az=7.96°, El=28.50°
+[Phase 3: 预测控制] 目标当前估算Az=7.95°, 速度=2.28°/s
+                   -> 打提前量(0.25s后)Az=8.52°, El=28.50° | 下发云台指令: Az=98.52°, El=28.50°
+[GimbalAtt] cmd_id=44, elapsed=0.242s, actual_ctrl=(Az=97.60°, El=28.60°), actual_ui=(Az=7.60°, El=28.60°), target_ctrl=(Az=97.77°, El=28.50°), err=(dAz=0.17°, dEl=0.10°)
+[GimbalSettled] cmd_id=44, track_id=1, settle_time=0.242s, actual_ctrl=(Az=97.60°, El=28.60°), target_ctrl=(Az=97.77°, El=28.50°), err=(dAz=0.17°, dEl=0.10°)
+[Laser] No valid laser distance, use mono distance
+[GimbalCmd] cmd_id=46, track_id=1, target_ctrl=(Az=98.39°, El=28.50°)
+[GimbalAtt] cmd_id=46, elapsed=0.000s, actual_ctrl=(Az=97.60°, El=28.60°), actual_ui=(Az=7.60°, El=28.60°), target_ctrl=(Az=98.39°, El=28.50°), err=(dAz=0.79°, dEl=0.10°)
+[GimbalAtt] cmd_id=46, elapsed=0.182s, actual_ctrl=(Az=98.30°, El=28.60°), actual_ui=(Az=8.30°, El=28.60°), target_ctrl=(Az=98.39°, El=28.50°), err=(dAz=0.09°, dEl=0.10°)
+[GimbalSettled] cmd_id=46, track_id=1, settle_time=0.182s, actual_ctrl=(Az=98.30°, El=28.60°), target_ctrl=(Az=98.39°, El=28.50°), err=(dAz=0.09°, dEl=0.10°)
+[Laser] No valid laser distance, use mono distance
