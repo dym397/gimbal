@@ -1,0 +1,2461 @@
+[Log] stdout/stderr -> logs/main_tracking_v9_20260416_202838.log
+[Init] Connecting to Gimbal at /dev/ttyUSB0...
+[GT06Z] Driver Ready on /dev/ttyUSB0.
+[Adapter] GT06Z 云台已连接: /dev/ttyUSB0
+[Init] Real laser enabled on /dev/ttyUSB1
+[Init] Queue gimbal initial posture: Az=90.00°, El=0.00°
+[GimbalThread] 控制线程已启动
+[LaserThread] 激光读取线程已启动
+=== System V9.0 (Predictive Tracking & Scheduling) Running ===[Laser] start_measurement mode=continuous
+[Net] Listening RK3588 on 8888...
+
+[GimbalCmd] cmd_id=0, track_id=-1, target_ctrl=(Az=90.00°, El=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=0.042s, actual_ctrl=(Az=61.30°, El=6.40°), actual_ui=(Az=331.30°, El=6.40°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=28.70°, dEl=6.40°)
+[GimbalAtt] cmd_id=0, elapsed=0.304s, actual_ctrl=(Az=65.20°, El=5.40°), actual_ui=(Az=335.20°, El=5.40°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=24.80°, dEl=5.40°)
+[GimbalAtt] cmd_id=0, elapsed=0.566s, actual_ctrl=(Az=72.00°, El=3.40°), actual_ui=(Az=342.00°, El=3.40°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=18.00°, dEl=3.40°)
+[GimbalAtt] cmd_id=0, elapsed=0.827s, actual_ctrl=(Az=72.00°, El=0.80°), actual_ui=(Az=342.00°, El=0.80°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=18.00°, dEl=0.80°)
+[GimbalAtt] cmd_id=0, elapsed=1.109s, actual_ctrl=(Az=89.60°, El=-0.00°), actual_ui=(Az=359.60°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.40°, dEl=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=1.309s, actual_ctrl=(Az=90.00°, El=-0.00°), actual_ui=(Az=0.00°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=0.00°)
+[GimbalSettled] cmd_id=0, track_id=-1, settle_time=1.309s, actual_ctrl=(Az=90.00°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=0.00°)
+[Laser] Triggered cmd_id=0, track_id=-1, dist=4.50m, interval=first
+
+[Phase 1: 视觉解析] 收到目标 cx=2924.0, cy=337.0, mono=25.1m -> 解算绝对角度: Az=330.29°, El=12.91°
+[Stats] recv_objs_total=1, recv_unique_boxes=1 | ui_send_total=0, ui_unique_ids=0, ui_id_counts=none
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=899.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.33°
+[Stats] recv_objs_total=2, recv_unique_boxes=2 | ui_send_total=0, ui_unique_ids=0, ui_id_counts=none
+
+[Phase 1: 视觉解析] 收到目标 cx=2883.0, cy=340.0, mono=25.1m -> 解算绝对角度: Az=330.10°, El=12.89°
+[Stats] recv_objs_total=3, recv_unique_boxes=3 | ui_send_total=0, ui_unique_ids=0, ui_id_counts=none
+
+[Phase 1: 视觉解析] 收到目标 cx=774.5, cy=2030.5, mono=159.9m -> 解算绝对角度: Az=11.92°, El=5.14°
+
+[Phase 1: 视觉解析] 收到目标 cx=3505.0, cy=1785.0, mono=25.1m -> 解算绝对角度: Az=332.94°, El=6.27°
+[Stats] recv_objs_total=5, recv_unique_boxes=5 | ui_send_total=0, ui_unique_ids=0, ui_id_counts=none
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=782.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.87°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=878.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.43°
+[Stats] recv_objs_total=7, recv_unique_boxes=7 | ui_send_total=0, ui_unique_ids=0, ui_id_counts=none
+
+[Phase 1: 视觉解析] 收到目标 cx=3301.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=332.01°, El=11.55°
+[Stats] recv_objs_total=8, recv_unique_boxes=8 | ui_send_total=0, ui_unique_ids=0, ui_id_counts=none
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.88°
+[Stats] recv_objs_total=10, recv_unique_boxes=10 | ui_send_total=0, ui_unique_ids=0, ui_id_counts=none
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=802.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.77°
+[Stats] recv_objs_total=11, recv_unique_boxes=11 | ui_send_total=0, ui_unique_ids=0, ui_id_counts=none
+
+[Phase 1: 视觉解析] 收到目标 cx=2788.0, cy=72.0, mono=25.1m -> 解算绝对角度: Az=329.67°, El=14.12°
+[Stats] recv_objs_total=12, recv_unique_boxes=12 | ui_send_total=0, ui_unique_ids=0, ui_id_counts=none
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+
+[Phase 1: 视觉解析] 收到目标 cx=72.0, cy=968.0, mono=25.1m -> 解算绝对角度: Az=317.29°, El=10.01°
+
+[Phase 1: 视觉解析] 收到目标 cx=19.5, cy=964.0, mono=47.6m -> 解算绝对角度: Az=317.05°, El=10.03°
+[Stats] recv_objs_total=15, recv_unique_boxes=15 | ui_send_total=0, ui_unique_ids=0, ui_id_counts=none
+
+[Phase 1: 视觉解析] 收到目标 cx=504.0, cy=820.0, mono=25.1m -> 解算绝对角度: Az=319.26°, El=10.69°
+[TargetAcquire] reason=initial_acquire, master_id=4, score=-40.99, candidates=id=4, score=-40.99, speed=0.33deg/s, dist=42.77deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=318.53°, 速度=-0.25°/s
+                   -> 打提前量(0.25s后)Az=318.47°, El=10.44° | 下发云台指令: Az=48.47°, El=10.44°
+[GimbalCmd] cmd_id=1, track_id=4, target_ctrl=(Az=48.47°, El=10.44°)
+[GimbalAtt] cmd_id=1, elapsed=0.041s, actual_ctrl=(Az=89.20°, El=0.10°), actual_ui=(Az=359.20°, El=0.10°), target_ctrl=(Az=48.47°, El=10.44°), err=(dAz=40.73°, dEl=10.34°)
+[GimbalAtt] cmd_id=1, elapsed=0.302s, actual_ctrl=(Az=85.40°, El=1.10°), actual_ui=(Az=355.40°, El=1.10°), target_ctrl=(Az=48.47°, El=10.44°), err=(dAz=36.93°, dEl=9.34°)
+[GimbalAtt] cmd_id=1, elapsed=0.564s, actual_ctrl=(Az=78.60°, El=3.10°), actual_ui=(Az=348.60°, El=3.10°), target_ctrl=(Az=48.47°, El=10.44°), err=(dAz=30.13°, dEl=7.34°)
+[GimbalAtt] cmd_id=1, elapsed=0.826s, actual_ctrl=(Az=68.90°, El=6.10°), actual_ui=(Az=338.90°, El=6.10°), target_ctrl=(Az=48.47°, El=10.44°), err=(dAz=20.43°, dEl=4.34°)
+[GimbalAtt] cmd_id=1, elapsed=1.088s, actual_ctrl=(Az=57.80°, El=9.20°), actual_ui=(Az=327.80°, El=9.20°), target_ctrl=(Az=48.47°, El=10.44°), err=(dAz=9.33°, dEl=1.24°)
+[GimbalAtt] cmd_id=1, elapsed=1.288s, actual_ctrl=(Az=50.60°, El=9.20°), actual_ui=(Az=320.60°, El=9.20°), target_ctrl=(Az=48.47°, El=10.44°), err=(dAz=2.13°, dEl=1.24°)
+[GimbalAtt] cmd_id=1, elapsed=1.556s, actual_ctrl=(Az=48.40°, El=9.20°), actual_ui=(Az=318.40°, El=9.20°), target_ctrl=(Az=48.47°, El=10.44°), err=(dAz=0.07°, dEl=1.24°)
+[GimbalAtt] cmd_id=1, elapsed=1.838s, actual_ctrl=(Az=48.40°, El=10.50°), actual_ui=(Az=318.40°, El=10.50°), target_ctrl=(Az=48.47°, El=10.44°), err=(dAz=0.07°, dEl=0.06°)
+[GimbalSettled] cmd_id=1, track_id=4, settle_time=1.838s, actual_ctrl=(Az=48.40°, El=10.50°), target_ctrl=(Az=48.47°, El=10.44°), err=(dAz=0.07°, dEl=0.06°)
+[Laser] Triggered cmd_id=1, track_id=4, dist=4.70m, interval=216.479s
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=897.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.34°
+[Phase 3: 预测控制] 目标当前估算Az=318.44°, 速度=-0.26°/s
+                   -> 打提前量(0.25s后)Az=318.38°, El=10.33° | 下发云台指令: Az=48.38°, El=10.33°
+[Stats] recv_objs_total=17, recv_unique_boxes=17 | ui_send_total=2, ui_unique_ids=1, ui_id_counts=4:2
+
+[Phase 1: 视觉解析] 收到目标 cx=376.0, cy=780.0, mono=25.1m -> 解算绝对角度: Az=318.68°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=318.47°, 速度=-0.21°/s
+                   -> 打提前量(0.25s后)Az=318.42°, El=10.52° | 下发云台指令: Az=48.42°, El=10.52°
+[Stats] recv_objs_total=18, recv_unique_boxes=18 | ui_send_total=3, ui_unique_ids=1, ui_id_counts=4:3
+
+[Phase 1: 视觉解析] 收到目标 cx=88.0, cy=973.0, mono=25.1m -> 解算绝对角度: Az=317.37°, El=9.99°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=19, recv_unique_boxes=19 | ui_send_total=3, ui_unique_ids=1, ui_id_counts=4:3
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=903.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.31°
+[Phase 3: 预测控制] 目标当前估算Az=318.61°, 速度=-0.08°/s
+                   -> 打提前量(0.25s后)Az=318.59°, El=10.70° | 下发云台指令: Az=48.59°, El=10.70°
+[Stats] recv_objs_total=21, recv_unique_boxes=21 | ui_send_total=4, ui_unique_ids=1, ui_id_counts=4:4
+[GimbalCmd] cmd_id=2, track_id=4, target_ctrl=(Az=48.59°, El=10.70°)
+[GimbalAtt] cmd_id=2, elapsed=0.000s, actual_ctrl=(Az=48.40°, El=10.50°), actual_ui=(Az=318.40°, El=10.50°), target_ctrl=(Az=48.59°, El=10.70°), err=(dAz=0.19°, dEl=0.20°)
+[GimbalSettled] cmd_id=2, track_id=4, settle_time=0.000s, actual_ctrl=(Az=48.40°, El=10.50°), target_ctrl=(Az=48.59°, El=10.70°), err=(dAz=0.19°, dEl=0.20°)
+[Laser] Triggered cmd_id=2, track_id=4, dist=4.70m, interval=32.257s
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=876.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.44°
+
+[Phase 1: 视觉解析] 收到目标 cx=440.0, cy=780.0, mono=25.1m -> 解算绝对角度: Az=318.97°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=318.72°, 速度=-0.02°/s
+                   -> 打提前量(0.25s后)Az=318.71°, El=10.80° | 下发云台指令: Az=48.71°, El=10.80°
+[Stats] recv_objs_total=23, recv_unique_boxes=23 | ui_send_total=6, ui_unique_ids=2, ui_id_counts=4:5, 2:1
+
+[Phase 1: 视觉解析] 收到目标 cx=168.0, cy=878.0, mono=25.1m -> 解算绝对角度: Az=317.73°, El=10.43°
+
+[Phase 1: 视觉解析] 收到目标 cx=408.0, cy=782.0, mono=25.1m -> 解算绝对角度: Az=318.82°, El=10.87°
+[Phase 3: 预测控制] 目标当前估算Az=318.75°, 速度=0.00°/s
+                   -> 打提前量(0.25s后)Az=318.75°, El=10.86° | 下发云台指令: Az=48.75°, El=10.86°
+[GimbalCmd] cmd_id=3, track_id=4, target_ctrl=(Az=48.75°, El=10.86°)
+[GimbalAtt] cmd_id=3, elapsed=0.000s, actual_ctrl=(Az=48.40°, El=10.80°), actual_ui=(Az=318.40°, El=10.80°), target_ctrl=(Az=48.75°, El=10.86°), err=(dAz=0.35°, dEl=0.06°)
+[GimbalAtt] cmd_id=3, elapsed=0.336s, actual_ctrl=(Az=48.60°, El=10.80°), actual_ui=(Az=318.60°, El=10.80°), target_ctrl=(Az=48.75°, El=10.86°), err=(dAz=0.15°, dEl=0.06°)
+[GimbalSettled] cmd_id=3, track_id=4, settle_time=0.336s, actual_ctrl=(Az=48.60°, El=10.80°), target_ctrl=(Az=48.75°, El=10.86°), err=(dAz=0.15°, dEl=0.06°)
+[Laser] Triggered cmd_id=3, track_id=4, dist=4.60m, interval=5.700s
+
+[Phase 1: 视觉解析] 收到目标 cx=3121.0, cy=568.0, mono=25.1m -> 解算绝对角度: Az=331.19°, El=11.85°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=26, recv_unique_boxes=26 | ui_send_total=8, ui_unique_ids=2, ui_id_counts=4:6, 2:2
+
+[Phase 1: 视觉解析] 收到目标 cx=3305.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=332.03°, El=11.55°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=3110.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.14°, El=11.55°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[1]
+[TargetSwitch] reason=master_lost, from=4, to=1, score=-11.19, candidates=id=1, score=-11.19, speed=0.30deg/s, dist=12.89deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=331.46°, 速度=0.14°/s
+                   -> 打提前量(0.25s后)Az=331.50°, El=11.61° | 下发云台指令: Az=61.50°, El=11.61°
+[Stats] recv_objs_total=28, recv_unique_boxes=28 | ui_send_total=9, ui_unique_ids=3, ui_id_counts=4:6, 2:2, 1:1
+[GimbalCmd] cmd_id=4, track_id=1, target_ctrl=(Az=61.50°, El=11.61°)
+[GimbalAtt] cmd_id=4, elapsed=0.041s, actual_ctrl=(Az=49.30°, El=10.80°), actual_ui=(Az=319.30°, El=10.80°), target_ctrl=(Az=61.50°, El=11.61°), err=(dAz=12.20°, dEl=0.81°)
+[GimbalAtt] cmd_id=4, elapsed=0.302s, actual_ctrl=(Az=49.30°, El=10.80°), actual_ui=(Az=319.30°, El=10.80°), target_ctrl=(Az=61.50°, El=11.61°), err=(dAz=12.20°, dEl=0.81°)
+[GimbalAtt] cmd_id=4, elapsed=0.604s, actual_ctrl=(Az=60.10°, El=11.60°), actual_ui=(Az=330.10°, El=11.60°), target_ctrl=(Az=61.50°, El=11.61°), err=(dAz=1.40°, dEl=0.01°)
+[GimbalAtt] cmd_id=4, elapsed=0.835s, actual_ctrl=(Az=61.40°, El=11.60°), actual_ui=(Az=331.40°, El=11.60°), target_ctrl=(Az=61.50°, El=11.61°), err=(dAz=0.10°, dEl=0.01°)
+[GimbalSettled] cmd_id=4, track_id=1, settle_time=0.835s, actual_ctrl=(Az=61.40°, El=11.60°), target_ctrl=(Az=61.50°, El=11.61°), err=(dAz=0.10°, dEl=0.01°)
+[Laser] Triggered cmd_id=4, track_id=1, dist=4.00m, interval=7.585s
+
+[Phase 1: 视觉解析] 收到目标 cx=440.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=318.97°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=872.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.45°
+[TargetLost] master_id=1 不再满足锁定条件: valid_ids=[4]
+[TargetSwitch] reason=master_lost, from=1, to=4, score=-10.91, candidates=id=4, score=-10.91, speed=0.11deg/s, dist=12.57deg, hits=5, stab=1.43
+[Phase 3: 预测控制] 目标当前估算Az=318.85°, 速度=0.05°/s
+                   -> 打提前量(0.25s后)Az=318.87°, El=10.93° | 下发云台指令: Az=48.87°, El=10.93°
+[Stats] recv_objs_total=30, recv_unique_boxes=30 | ui_send_total=10, ui_unique_ids=3, ui_id_counts=4:7, 2:2, 1:1
+[GimbalCmd] cmd_id=5, track_id=4, target_ctrl=(Az=48.87°, El=10.93°)
+[GimbalAtt] cmd_id=5, elapsed=0.041s, actual_ctrl=(Az=60.60°, El=11.60°), actual_ui=(Az=330.60°, El=11.60°), target_ctrl=(Az=48.87°, El=10.93°), err=(dAz=11.73°, dEl=0.67°)
+[GimbalAtt] cmd_id=5, elapsed=0.282s, actual_ctrl=(Az=56.80°, El=11.60°), actual_ui=(Az=326.80°, El=11.60°), target_ctrl=(Az=48.87°, El=10.93°), err=(dAz=7.93°, dEl=0.67°)
+[GimbalAtt] cmd_id=5, elapsed=0.564s, actual_ctrl=(Az=50.70°, El=10.90°), actual_ui=(Az=320.70°, El=10.90°), target_ctrl=(Az=48.87°, El=10.93°), err=(dAz=1.83°, dEl=0.03°)
+[GimbalAtt] cmd_id=5, elapsed=0.826s, actual_ctrl=(Az=48.80°, El=10.90°), actual_ui=(Az=318.80°, El=10.90°), target_ctrl=(Az=48.87°, El=10.93°), err=(dAz=0.07°, dEl=0.03°)
+[GimbalSettled] cmd_id=5, track_id=4, settle_time=0.826s, actual_ctrl=(Az=48.80°, El=10.90°), target_ctrl=(Az=48.87°, El=10.93°), err=(dAz=0.07°, dEl=0.03°)
+[Laser] Triggered cmd_id=5, track_id=4, dist=4.60m, interval=6.892s
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=883.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.40°
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=899.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.33°
+[Phase 3: 预测控制] 目标当前估算Az=318.68°, 速度=-0.03°/s
+                   -> 打提前量(0.25s后)Az=318.67°, El=10.62° | 下发云台指令: Az=48.67°, El=10.62°
+[Stats] recv_objs_total=32, recv_unique_boxes=31 | ui_send_total=12, ui_unique_ids=3, ui_id_counts=4:8, 2:3, 1:1
+[GimbalCmd] cmd_id=6, track_id=4, target_ctrl=(Az=48.67°, El=10.62°)
+[GimbalAtt] cmd_id=6, elapsed=0.000s, actual_ctrl=(Az=48.80°, El=10.90°), actual_ui=(Az=318.80°, El=10.90°), target_ctrl=(Az=48.67°, El=10.62°), err=(dAz=0.13°, dEl=0.28°)
+[GimbalSettled] cmd_id=6, track_id=4, settle_time=0.000s, actual_ctrl=(Az=48.80°, El=10.90°), target_ctrl=(Az=48.67°, El=10.62°), err=(dAz=0.13°, dEl=0.28°)
+[Laser] Triggered cmd_id=6, track_id=4, dist=4.60m, interval=1.888s
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=318.80°, 速度=0.02°/s
+                   -> 打提前量(0.25s后)Az=318.80°, El=10.73° | 下发云台指令: Az=48.80°, El=10.73°
+[Stats] recv_objs_total=33, recv_unique_boxes=31 | ui_send_total=13, ui_unique_ids=3, ui_id_counts=4:9, 2:3, 1:1
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=784.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.86°
+
+[Phase 1: 视觉解析] 收到目标 cx=232.0, cy=816.0, mono=25.1m -> 解算绝对角度: Az=318.02°, El=10.71°
+[Phase 3: 预测控制] 目标当前估算Az=318.68°, 速度=-0.04°/s
+                   -> 打提前量(0.25s后)Az=318.67°, El=10.79° | 下发云台指令: Az=48.67°, El=10.79°
+[Stats] recv_objs_total=35, recv_unique_boxes=33 | ui_send_total=15, ui_unique_ids=3, ui_id_counts=4:10, 2:4, 1:1
+[GimbalCmd] cmd_id=7, track_id=4, target_ctrl=(Az=48.67°, El=10.79°)
+[GimbalAtt] cmd_id=7, elapsed=0.000s, actual_ctrl=(Az=48.80°, El=10.70°), actual_ui=(Az=318.80°, El=10.70°), target_ctrl=(Az=48.67°, El=10.79°), err=(dAz=0.13°, dEl=0.09°)
+[GimbalSettled] cmd_id=7, track_id=4, settle_time=0.000s, actual_ctrl=(Az=48.80°, El=10.70°), target_ctrl=(Az=48.67°, El=10.79°), err=(dAz=0.13°, dEl=0.09°)
+[Laser] Triggered cmd_id=7, track_id=4, dist=4.60m, interval=55.883s
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=318.59°, 速度=-0.08°/s
+                   -> 打提前量(0.25s后)Az=318.57°, El=10.84° | 下发云台指令: Az=48.57°, El=10.84°
+[Stats] recv_objs_total=36, recv_unique_boxes=34 | ui_send_total=16, ui_unique_ids=3, ui_id_counts=4:11, 2:4, 1:1
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=772.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.91°
+
+[Phase 1: 视觉解析] 收到目标 cx=232.0, cy=820.0, mono=25.1m -> 解算绝对角度: Az=318.02°, El=10.69°
+[Phase 3: 预测控制] 目标当前估算Az=318.52°, 速度=-0.11°/s
+                   -> 打提前量(0.25s后)Az=318.49°, El=10.89° | 下发云台指令: Az=48.49°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=2938.0, cy=336.0, mono=25.1m -> 解算绝对角度: Az=330.35°, El=12.91°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=39, recv_unique_boxes=37 | ui_send_total=18, ui_unique_ids=3, ui_id_counts=4:12, 2:5, 1:1
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=773.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.91°
+[TargetKeep] reason=lock_timer_expired, master_id=4, score=2.09, candidates=id=4, score=2.09, speed=0.08deg/s, dist=0.25deg, hits=10, stab=1.92, hold=1.15x
+[Phase 3: 预测控制] 目标当前估算Az=318.66°, 速度=-0.00°/s
+                   -> 打提前量(0.25s后)Az=318.66°, El=10.93° | 下发云台指令: Az=48.66°, El=10.93°
+[Stats] recv_objs_total=40, recv_unique_boxes=38 | ui_send_total=19, ui_unique_ids=3, ui_id_counts=4:13, 2:5, 1:1
+[GimbalCmd] cmd_id=8, track_id=4, target_ctrl=(Az=48.66°, El=10.93°)
+[GimbalAtt] cmd_id=8, elapsed=0.041s, actual_ctrl=(Az=48.80°, El=10.80°), actual_ui=(Az=318.80°, El=10.80°), target_ctrl=(Az=48.66°, El=10.93°), err=(dAz=0.14°, dEl=0.13°)
+[GimbalSettled] cmd_id=8, track_id=4, settle_time=0.041s, actual_ctrl=(Az=48.80°, El=10.80°), target_ctrl=(Az=48.66°, El=10.93°), err=(dAz=0.14°, dEl=0.13°)
+[Laser] Triggered cmd_id=8, track_id=4, dist=4.60m, interval=50.206s
+
+[Phase 1: 视觉解析] 收到目标 cx=280.0, cy=780.0, mono=25.1m -> 解算绝对角度: Az=318.24°, El=10.88°
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=812.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.73°
+[Phase 3: 预测控制] 目标当前估算Az=318.53°, 速度=-0.07°/s
+                   -> 打提前量(0.25s后)Az=318.51°, El=10.92° | 下发云台指令: Az=48.51°, El=10.92°
+[Stats] recv_objs_total=42, recv_unique_boxes=40 | ui_send_total=20, ui_unique_ids=3, ui_id_counts=4:14, 2:5, 1:1
+
+[Phase 1: 视觉解析] 收到目标 cx=2912.0, cy=342.0, mono=25.1m -> 解算绝对角度: Az=330.23°, El=12.88°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=43, recv_unique_boxes=41 | ui_send_total=20, ui_unique_ids=3, ui_id_counts=4:14, 2:5, 1:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3117.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.17°, El=11.55°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=44, recv_unique_boxes=42 | ui_send_total=20, ui_unique_ids=3, ui_id_counts=4:14, 2:5, 1:1
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=894.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.35°
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=798.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.79°
+[Phase 3: 预测控制] 目标当前估算Az=318.44°, 速度=-0.09°/s
+                   -> 打提前量(0.25s后)Az=318.41°, El=10.56° | 下发云台指令: Az=48.41°, El=10.56°
+[Stats] recv_objs_total=46, recv_unique_boxes=44 | ui_send_total=21, ui_unique_ids=3, ui_id_counts=4:15, 2:5, 1:1
+[GimbalCmd] cmd_id=9, track_id=4, target_ctrl=(Az=48.41°, El=10.56°)
+[GimbalAtt] cmd_id=9, elapsed=0.041s, actual_ctrl=(Az=48.60°, El=10.80°), actual_ui=(Az=318.60°, El=10.80°), target_ctrl=(Az=48.41°, El=10.56°), err=(dAz=0.19°, dEl=0.24°)
+[GimbalSettled] cmd_id=9, track_id=4, settle_time=0.041s, actual_ctrl=(Az=48.60°, El=10.80°), target_ctrl=(Az=48.41°, El=10.56°), err=(dAz=0.19°, dEl=0.24°)
+[Laser] Triggered cmd_id=9, track_id=4, dist=4.70m, interval=47.831s
+
+[Phase 1: 视觉解析] 收到目标 cx=2860.0, cy=72.0, mono=25.1m -> 解算绝对角度: Az=330.00°, El=14.12°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=47, recv_unique_boxes=45 | ui_send_total=21, ui_unique_ids=3, ui_id_counts=4:15, 2:5, 1:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3304.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=332.02°, El=11.55°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[1]
+[TargetSwitch] reason=master_lost, from=4, to=1, score=-11.50, candidates=id=1, score=-11.50, speed=0.06deg/s, dist=12.73deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=330.88°, 速度=0.00°/s
+                   -> 打提前量(0.25s后)Az=330.88°, El=12.61° | 下发云台指令: Az=60.88°, El=12.61°
+[Stats] recv_objs_total=48, recv_unique_boxes=46 | ui_send_total=22, ui_unique_ids=3, ui_id_counts=4:15, 2:5, 1:2
+[GimbalCmd] cmd_id=10, track_id=1, target_ctrl=(Az=60.88°, El=12.61°)
+[GimbalAtt] cmd_id=10, elapsed=0.041s, actual_ctrl=(Az=49.10°, El=10.70°), actual_ui=(Az=319.10°, El=10.70°), target_ctrl=(Az=60.88°, El=12.61°), err=(dAz=11.78°, dEl=1.91°)
+[GimbalAtt] cmd_id=10, elapsed=0.303s, actual_ctrl=(Az=52.90°, El=11.70°), actual_ui=(Az=322.90°, El=11.70°), target_ctrl=(Az=60.88°, El=12.61°), err=(dAz=7.98°, dEl=0.91°)
+[GimbalAtt] cmd_id=10, elapsed=0.518s, actual_ctrl=(Az=58.40°, El=11.70°), actual_ui=(Az=328.40°, El=11.70°), target_ctrl=(Az=60.88°, El=12.61°), err=(dAz=2.48°, dEl=0.91°)
+[GimbalAtt] cmd_id=10, elapsed=0.799s, actual_ctrl=(Az=58.40°, El=11.70°), actual_ui=(Az=328.40°, El=11.70°), target_ctrl=(Az=60.88°, El=12.61°), err=(dAz=2.48°, dEl=0.91°)
+[GimbalAtt] cmd_id=10, elapsed=1.101s, actual_ctrl=(Az=60.70°, El=12.60°), actual_ui=(Az=330.70°, El=12.60°), target_ctrl=(Az=60.88°, El=12.61°), err=(dAz=0.18°, dEl=0.01°)
+[GimbalSettled] cmd_id=10, track_id=1, settle_time=1.101s, actual_ctrl=(Az=60.70°, El=12.60°), target_ctrl=(Az=60.88°, El=12.61°), err=(dAz=0.18°, dEl=0.01°)
+[Laser] Triggered cmd_id=10, track_id=1, dist=4.00m, interval=71.324s
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=881.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.41°
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=801.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.78°
+
+[Phase 1: 视觉解析] 收到目标 cx=440.0, cy=785.0, mono=25.1m -> 解算绝对角度: Az=318.97°, El=10.85°
+[TargetLost] master_id=1 不再满足锁定条件: valid_ids=[4]
+[TargetSwitch] reason=master_lost, from=1, to=4, score=-10.37, candidates=id=4, score=-10.37, speed=0.29deg/s, dist=12.79deg, hits=9, stab=1.84
+[Phase 3: 预测控制] 目标当前估算Az=318.10°, 速度=-0.22°/s
+                   -> 打提前量(0.25s后)Az=318.04°, El=10.39° | 下发云台指令: Az=48.04°, El=10.39°
+[Stats] recv_objs_total=51, recv_unique_boxes=49 | ui_send_total=23, ui_unique_ids=3, ui_id_counts=4:16, 2:5, 1:2
+[GimbalCmd] cmd_id=11, track_id=4, target_ctrl=(Az=48.04°, El=10.39°)
+[GimbalAtt] cmd_id=11, elapsed=0.041s, actual_ctrl=(Az=59.90°, El=12.50°), actual_ui=(Az=329.90°, El=12.50°), target_ctrl=(Az=48.04°, El=10.39°), err=(dAz=11.86°, dEl=2.11°)
+[GimbalAtt] cmd_id=11, elapsed=0.303s, actual_ctrl=(Az=56.10°, El=11.50°), actual_ui=(Az=326.10°, El=11.50°), target_ctrl=(Az=48.04°, El=10.39°), err=(dAz=8.06°, dEl=1.11°)
+[GimbalAtt] cmd_id=11, elapsed=0.547s, actual_ctrl=(Az=49.80°, El=11.50°), actual_ui=(Az=319.80°, El=11.50°), target_ctrl=(Az=48.04°, El=10.39°), err=(dAz=1.76°, dEl=1.11°)
+[GimbalAtt] cmd_id=11, elapsed=0.829s, actual_ctrl=(Az=48.00°, El=11.50°), actual_ui=(Az=318.00°, El=11.50°), target_ctrl=(Az=48.04°, El=10.39°), err=(dAz=0.04°, dEl=1.11°)
+[GimbalAtt] cmd_id=11, elapsed=1.111s, actual_ctrl=(Az=48.00°, El=10.40°), actual_ui=(Az=318.00°, El=10.40°), target_ctrl=(Az=48.04°, El=10.39°), err=(dAz=0.04°, dEl=0.01°)
+[GimbalSettled] cmd_id=11, track_id=4, settle_time=1.111s, actual_ctrl=(Az=48.00°, El=10.40°), target_ctrl=(Az=48.04°, El=10.39°), err=(dAz=0.04°, dEl=0.01°)
+[Laser] Triggered cmd_id=11, track_id=4, dist=4.70m, interval=3.062s
+
+[Phase 1: 视觉解析] 收到目标 cx=3157.0, cy=312.0, mono=25.1m -> 解算绝对角度: Az=331.35°, El=13.02°
+
+[Phase 1: 视觉解析] 收到目标 cx=3157.0, cy=168.0, mono=25.1m -> 解算绝对角度: Az=331.35°, El=13.68°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[1]
+[TargetSwitch] reason=master_lost, from=4, to=1, score=-11.72, candidates=id=1, score=-11.72, speed=0.22deg/s, dist=13.28deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=331.05°, 速度=0.09°/s
+                   -> 打提前量(0.25s后)Az=331.08°, El=12.87° | 下发云台指令: Az=61.08°, El=12.87°
+[Stats] recv_objs_total=53, recv_unique_boxes=51 | ui_send_total=24, ui_unique_ids=3, ui_id_counts=4:16, 2:5, 1:3
+[GimbalCmd] cmd_id=12, track_id=1, target_ctrl=(Az=61.08°, El=12.87°)
+[GimbalAtt] cmd_id=12, elapsed=0.041s, actual_ctrl=(Az=48.80°, El=10.50°), actual_ui=(Az=318.80°, El=10.50°), target_ctrl=(Az=61.08°, El=12.87°), err=(dAz=12.28°, dEl=2.37°)
+[GimbalAtt] cmd_id=12, elapsed=0.302s, actual_ctrl=(Az=52.60°, El=11.50°), actual_ui=(Az=322.60°, El=11.50°), target_ctrl=(Az=61.08°, El=12.87°), err=(dAz=8.48°, dEl=1.37°)
+[GimbalAtt] cmd_id=12, elapsed=0.564s, actual_ctrl=(Az=52.60°, El=11.50°), actual_ui=(Az=322.60°, El=11.50°), target_ctrl=(Az=61.08°, El=12.87°), err=(dAz=8.48°, dEl=1.37°)
+[GimbalAtt] cmd_id=12, elapsed=0.967s, actual_ctrl=(Az=60.90°, El=12.80°), actual_ui=(Az=330.90°, El=12.80°), target_ctrl=(Az=61.08°, El=12.87°), err=(dAz=0.18°, dEl=0.07°)
+[GimbalSettled] cmd_id=12, track_id=1, settle_time=0.967s, actual_ctrl=(Az=60.90°, El=12.80°), target_ctrl=(Az=61.08°, El=12.87°), err=(dAz=0.18°, dEl=0.07°)
+[Laser] Triggered cmd_id=12, track_id=1, dist=4.50m, interval=9.403s
+
+[Phase 1: 视觉解析] 收到目标 cx=3306.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=332.03°, El=11.55°
+[Phase 3: 预测控制] 目标当前估算Az=331.39°, 速度=0.25°/s
+                   -> 打提前量(0.25s后)Az=331.45°, El=12.26° | 下发云台指令: Az=61.45°, El=12.26°
+[Stats] recv_objs_total=54, recv_unique_boxes=52 | ui_send_total=25, ui_unique_ids=3, ui_id_counts=4:16, 2:5, 1:4
+[GimbalCmd] cmd_id=13, track_id=1, target_ctrl=(Az=61.45°, El=12.26°)
+[GimbalAtt] cmd_id=13, elapsed=0.041s, actual_ctrl=(Az=60.90°, El=12.70°), actual_ui=(Az=330.90°, El=12.70°), target_ctrl=(Az=61.45°, El=12.26°), err=(dAz=0.55°, dEl=0.44°)
+[GimbalAtt] cmd_id=13, elapsed=0.372s, actual_ctrl=(Az=61.30°, El=12.30°), actual_ui=(Az=331.30°, El=12.30°), target_ctrl=(Az=61.45°, El=12.26°), err=(dAz=0.15°, dEl=0.04°)
+[GimbalSettled] cmd_id=13, track_id=1, settle_time=0.372s, actual_ctrl=(Az=61.30°, El=12.30°), target_ctrl=(Az=61.45°, El=12.26°), err=(dAz=0.15°, dEl=0.04°)
+[Laser] No valid laser distance, use mono distance
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=874.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.44°
+
+[Phase 1: 视觉解析] 收到目标 cx=440.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=318.97°, El=10.88°
+[TargetLost] master_id=1 不再满足锁定条件: valid_ids=[4]
+[TargetSwitch] reason=master_lost, from=1, to=4, score=-11.25, candidates=id=4, score=-11.25, speed=0.28deg/s, dist=13.57deg, hits=8, stab=1.76
+[Phase 3: 预测控制] 目标当前估算Az=317.87°, 速度=-0.25°/s
+                   -> 打提前量(0.25s后)Az=317.81°, El=10.35° | 下发云台指令: Az=47.81°, El=10.35°
+[Stats] recv_objs_total=56, recv_unique_boxes=54 | ui_send_total=26, ui_unique_ids=3, ui_id_counts=4:17, 2:5, 1:4
+[GimbalCmd] cmd_id=14, track_id=4, target_ctrl=(Az=47.81°, El=10.35°)
+[GimbalAtt] cmd_id=14, elapsed=0.041s, actual_ctrl=(Az=60.60°, El=12.20°), actual_ui=(Az=330.60°, El=12.20°), target_ctrl=(Az=47.81°, El=10.35°), err=(dAz=12.79°, dEl=1.85°)
+[GimbalAtt] cmd_id=14, elapsed=0.303s, actual_ctrl=(Az=56.70°, El=11.20°), actual_ui=(Az=326.70°, El=11.20°), target_ctrl=(Az=47.81°, El=10.35°), err=(dAz=8.89°, dEl=0.85°)
+[GimbalAtt] cmd_id=14, elapsed=0.506s, actual_ctrl=(Az=51.30°, El=11.20°), actual_ui=(Az=321.30°, El=11.20°), target_ctrl=(Az=47.81°, El=10.35°), err=(dAz=3.49°, dEl=0.85°)
+[GimbalAtt] cmd_id=14, elapsed=0.788s, actual_ctrl=(Az=51.30°, El=10.30°), actual_ui=(Az=321.30°, El=10.30°), target_ctrl=(Az=47.81°, El=10.35°), err=(dAz=3.49°, dEl=0.05°)
+[GimbalAtt] cmd_id=14, elapsed=1.108s, actual_ctrl=(Az=47.80°, El=10.30°), actual_ui=(Az=317.80°, El=10.30°), target_ctrl=(Az=47.81°, El=10.35°), err=(dAz=0.01°, dEl=0.05°)
+[GimbalSettled] cmd_id=14, track_id=4, settle_time=1.108s, actual_ctrl=(Az=47.80°, El=10.30°), target_ctrl=(Az=47.81°, El=10.35°), err=(dAz=0.01°, dEl=0.05°)
+[Laser] Triggered cmd_id=14, track_id=4, dist=4.70m, interval=13.231s
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=883.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.40°
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=803.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.77°
+
+[Phase 1: 视觉解析] 收到目标 cx=504.0, cy=819.0, mono=25.1m -> 解算绝对角度: Az=319.26°, El=10.70°
+[Phase 3: 预测控制] 目标当前估算Az=317.81°, 速度=-0.25°/s
+                   -> 打提前量(0.25s后)Az=317.74°, El=10.35° | 下发云台指令: Az=47.74°, El=10.35°
+[Stats] recv_objs_total=59, recv_unique_boxes=57 | ui_send_total=27, ui_unique_ids=3, ui_id_counts=4:18, 2:5, 1:4
+
+[Phase 1: 视觉解析] 收到目标 cx=248.0, cy=865.0, mono=25.1m -> 解算绝对角度: Az=318.09°, El=10.49°
+[Phase 3: 预测控制] 目标当前估算Az=317.86°, 速度=-0.19°/s
+                   -> 打提前量(0.25s后)Az=317.81°, El=10.38° | 下发云台指令: Az=47.81°, El=10.38°
+[Stats] recv_objs_total=60, recv_unique_boxes=58 | ui_send_total=28, ui_unique_ids=3, ui_id_counts=4:19, 2:5, 1:4
+
+[Phase 1: 视觉解析] 收到目标 cx=392.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=318.75°, El=10.89°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=61, recv_unique_boxes=59 | ui_send_total=28, ui_unique_ids=3, ui_id_counts=4:19, 2:5, 1:4
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=782.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.87°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[5]
+[TargetSwitch] reason=master_lost, from=4, to=5, score=-0.17, candidates=id=5, score=-0.17, speed=0.01deg/s, dist=1.31deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=318.99°, 速度=-0.00°/s
+                   -> 打提前量(0.25s后)Az=318.99°, El=10.85° | 下发云台指令: Az=48.99°, El=10.85°
+[Stats] recv_objs_total=62, recv_unique_boxes=59 | ui_send_total=29, ui_unique_ids=4, ui_id_counts=4:19, 2:5, 1:4, 5:1
+[GimbalCmd] cmd_id=15, track_id=5, target_ctrl=(Az=48.99°, El=10.85°)
+[GimbalAtt] cmd_id=15, elapsed=0.041s, actual_ctrl=(Az=48.60°, El=10.40°), actual_ui=(Az=318.60°, El=10.40°), target_ctrl=(Az=48.99°, El=10.85°), err=(dAz=0.39°, dEl=0.45°)
+[GimbalAtt] cmd_id=15, elapsed=0.241s, actual_ctrl=(Az=48.60°, El=10.40°), actual_ui=(Az=318.60°, El=10.40°), target_ctrl=(Az=48.99°, El=10.85°), err=(dAz=0.39°, dEl=0.45°)
+[GimbalAtt] cmd_id=15, elapsed=0.584s, actual_ctrl=(Az=48.80°, El=10.80°), actual_ui=(Az=318.80°, El=10.80°), target_ctrl=(Az=48.99°, El=10.85°), err=(dAz=0.19°, dEl=0.05°)
+[GimbalSettled] cmd_id=15, track_id=5, settle_time=0.584s, actual_ctrl=(Az=48.80°, El=10.80°), target_ctrl=(Az=48.99°, El=10.85°), err=(dAz=0.19°, dEl=0.05°)
+[Laser] Triggered cmd_id=15, track_id=5, dist=4.60m, interval=37.356s
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.89°
+[Phase 3: 预测控制] 目标当前估算Az=319.01°, 速度=0.01°/s
+                   -> 打提前量(0.25s后)Az=319.01°, El=10.88° | 下发云台指令: Az=49.01°, El=10.88°
+[Stats] recv_objs_total=63, recv_unique_boxes=60 | ui_send_total=30, ui_unique_ids=4, ui_id_counts=4:19, 2:5, 1:4, 5:2
+
+[Phase 1: 视觉解析] 收到目标 cx=3152.0, cy=168.0, mono=25.1m -> 解算绝对角度: Az=331.33°, El=13.68°
+
+[Phase 1: 视觉解析] 收到目标 cx=3152.0, cy=312.0, mono=25.1m -> 解算绝对角度: Az=331.33°, El=13.02°
+
+[Phase 1: 视觉解析] 收到目标 cx=3152.0, cy=88.0, mono=25.1m -> 解算绝对角度: Az=331.33°, El=14.05°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=66, recv_unique_boxes=63 | ui_send_total=30, ui_unique_ids=4, ui_id_counts=4:19, 2:5, 1:4, 5:2
+
+[Phase 1: 视觉解析] 收到目标 cx=3150.0, cy=104.0, mono=25.1m -> 解算绝对角度: Az=331.32°, El=13.97°
+
+[Phase 1: 视觉解析] 收到目标 cx=3150.0, cy=200.0, mono=25.1m -> 解算绝对角度: Az=331.32°, El=13.53°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=408.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=318.82°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=318.93°, 速度=-0.03°/s
+                   -> 打提前量(0.25s后)Az=318.92°, El=10.89° | 下发云台指令: Az=48.92°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=318.96°, 速度=-0.01°/s
+                   -> 打提前量(0.25s后)Az=318.96°, El=10.89° | 下发云台指令: Az=48.96°, El=10.89°
+[Stats] recv_objs_total=70, recv_unique_boxes=66 | ui_send_total=32, ui_unique_ids=4, ui_id_counts=4:19, 2:5, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=1449.5, cy=1910.5, mono=159.9m -> 解算绝对角度: Az=15.00°, El=5.69°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=71, recv_unique_boxes=67 | ui_send_total=32, ui_unique_ids=4, ui_id_counts=4:19, 2:5, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=884.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.40°
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=804.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.77°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[4]
+[TargetSwitch] reason=master_lost, from=5, to=4, score=0.12, candidates=id=4, score=0.12, speed=0.10deg/s, dist=1.18deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=317.70°, 速度=-0.09°/s
+                   -> 打提前量(0.25s后)Az=317.68°, El=10.37° | 下发云台指令: Az=47.68°, El=10.37°
+[Stats] recv_objs_total=73, recv_unique_boxes=69 | ui_send_total=33, ui_unique_ids=4, ui_id_counts=4:20, 2:5, 1:4, 5:4
+[GimbalCmd] cmd_id=16, track_id=4, target_ctrl=(Az=47.68°, El=10.37°)
+[GimbalAtt] cmd_id=16, elapsed=0.041s, actual_ctrl=(Az=48.00°, El=10.80°), actual_ui=(Az=318.00°, El=10.80°), target_ctrl=(Az=47.68°, El=10.37°), err=(dAz=0.32°, dEl=0.43°)
+[GimbalAtt] cmd_id=16, elapsed=0.241s, actual_ctrl=(Az=48.00°, El=10.80°), actual_ui=(Az=318.00°, El=10.80°), target_ctrl=(Az=47.68°, El=10.37°), err=(dAz=0.32°, dEl=0.43°)
+[GimbalAtt] cmd_id=16, elapsed=0.585s, actual_ctrl=(Az=47.60°, El=10.40°), actual_ui=(Az=317.60°, El=10.40°), target_ctrl=(Az=47.68°, El=10.37°), err=(dAz=0.08°, dEl=0.03°)
+[GimbalSettled] cmd_id=16, track_id=4, settle_time=0.585s, actual_ctrl=(Az=47.60°, El=10.40°), target_ctrl=(Az=47.68°, El=10.37°), err=(dAz=0.08°, dEl=0.03°)
+[Laser] Triggered cmd_id=16, track_id=4, dist=4.70m, interval=103.244s
+
+[Phase 1: 视觉解析] 收到目标 cx=2909.0, cy=248.0, mono=25.1m -> 解算绝对角度: Az=330.22°, El=13.31°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=74, recv_unique_boxes=70 | ui_send_total=33, ui_unique_ids=4, ui_id_counts=4:20, 2:5, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=801.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.78°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=881.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.41°
+[Phase 3: 预测控制] 目标当前估算Az=317.73°, 速度=-0.07°/s
+                   -> 打提前量(0.25s后)Az=317.71°, El=10.39° | 下发云台指令: Az=47.71°, El=10.39°
+[Stats] recv_objs_total=76, recv_unique_boxes=70 | ui_send_total=34, ui_unique_ids=4, ui_id_counts=4:21, 2:5, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=877.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.43°
+
+[Phase 1: 视觉解析] 收到目标 cx=440.0, cy=781.0, mono=25.1m -> 解算绝对角度: Az=318.97°, El=10.87°
+[Phase 3: 预测控制] 目标当前估算Az=317.75°, 速度=-0.05°/s
+                   -> 打提前量(0.25s后)Az=317.74°, El=10.41° | 下发云台指令: Az=47.74°, El=10.41°
+[Stats] recv_objs_total=78, recv_unique_boxes=72 | ui_send_total=35, ui_unique_ids=4, ui_id_counts=4:22, 2:5, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=877.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.43°
+
+[Phase 1: 视觉解析] 收到目标 cx=440.0, cy=781.0, mono=25.1m -> 解算绝对角度: Az=318.97°, El=10.87°
+[Phase 3: 预测控制] 目标当前估算Az=317.76°, 速度=-0.04°/s
+                   -> 打提前量(0.25s后)Az=317.75°, El=10.42° | 下发云台指令: Az=47.75°, El=10.42°
+[Stats] recv_objs_total=80, recv_unique_boxes=72 | ui_send_total=36, ui_unique_ids=4, ui_id_counts=4:23, 2:5, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=3097.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.08°, El=11.55°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=81, recv_unique_boxes=73 | ui_send_total=36, ui_unique_ids=4, ui_id_counts=4:23, 2:5, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=155.5, cy=1190.5, mono=159.9m -> 解算绝对角度: Az=330.78°, El=56.49°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=82, recv_unique_boxes=74 | ui_send_total=36, ui_unique_ids=4, ui_id_counts=4:23, 2:5, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=3145.0, cy=88.0, mono=25.1m -> 解算绝对角度: Az=331.30°, El=14.05°
+
+[Phase 1: 视觉解析] 收到目标 cx=3145.0, cy=152.0, mono=25.1m -> 解算绝对角度: Az=331.30°, El=13.75°
+
+[Phase 1: 视觉解析] 收到目标 cx=3145.0, cy=280.0, mono=25.1m -> 解算绝对角度: Az=331.30°, El=13.17°
+
+[Phase 1: 视觉解析] 收到目标 cx=3145.0, cy=216.0, mono=52.0m -> 解算绝对角度: Az=331.30°, El=13.46°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=86, recv_unique_boxes=78 | ui_send_total=36, ui_unique_ids=4, ui_id_counts=4:23, 2:5, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=3111.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.14°, El=11.55°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=87, recv_unique_boxes=79 | ui_send_total=36, ui_unique_ids=4, ui_id_counts=4:23, 2:5, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=3151.0, cy=104.0, mono=25.1m -> 解算绝对角度: Az=331.32°, El=13.97°
+
+[Phase 1: 视觉解析] 收到目标 cx=3151.0, cy=200.0, mono=25.1m -> 解算绝对角度: Az=331.32°, El=13.53°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=780.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=90, recv_unique_boxes=82 | ui_send_total=36, ui_unique_ids=4, ui_id_counts=4:23, 2:5, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=91, recv_unique_boxes=82 | ui_send_total=36, ui_unique_ids=4, ui_id_counts=4:23, 2:5, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=3135.0, cy=168.0, mono=25.1m -> 解算绝对角度: Az=331.25°, El=13.68°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=92, recv_unique_boxes=83 | ui_send_total=36, ui_unique_ids=4, ui_id_counts=4:23, 2:5, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=879.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.42°
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=799.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.79°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=94, recv_unique_boxes=85 | ui_send_total=36, ui_unique_ids=4, ui_id_counts=4:23, 2:5, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=879.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.42°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=783.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.86°
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=799.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.79°
+
+[Phase 1: 视觉解析] 收到目标 cx=328.0, cy=815.0, mono=25.1m -> 解算绝对角度: Az=318.46°, El=10.71°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=98, recv_unique_boxes=88 | ui_send_total=36, ui_unique_ids=4, ui_id_counts=4:23, 2:5, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=896.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.34°
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=800.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.78°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=784.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.86°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[2]
+[TargetSwitch] reason=master_lost, from=4, to=2, score=0.53, candidates=id=2, score=0.53, speed=0.01deg/s, dist=0.60deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=317.14°, 速度=0.01°/s
+                   -> 打提前量(0.25s后)Az=317.14°, El=10.79° | 下发云台指令: Az=47.14°, El=10.79°
+[GimbalCmd] cmd_id=17, track_id=2, target_ctrl=(Az=47.14°, El=10.79°)
+[GimbalAtt] cmd_id=17, elapsed=0.041s, actual_ctrl=(Az=47.60°, El=10.50°), actual_ui=(Az=317.60°, El=10.50°), target_ctrl=(Az=47.14°, El=10.79°), err=(dAz=0.46°, dEl=0.29°)
+[GimbalAtt] cmd_id=17, elapsed=0.223s, actual_ctrl=(Az=47.60°, El=10.50°), actual_ui=(Az=317.60°, El=10.50°), target_ctrl=(Az=47.14°, El=10.79°), err=(dAz=0.46°, dEl=0.29°)
+[GimbalAtt] cmd_id=17, elapsed=0.625s, actual_ctrl=(Az=47.00°, El=10.80°), actual_ui=(Az=317.00°, El=10.80°), target_ctrl=(Az=47.14°, El=10.79°), err=(dAz=0.14°, dEl=0.01°)
+[GimbalSettled] cmd_id=17, track_id=2, settle_time=0.625s, actual_ctrl=(Az=47.00°, El=10.80°), target_ctrl=(Az=47.14°, El=10.79°), err=(dAz=0.14°, dEl=0.01°)
+[Laser] Triggered cmd_id=17, track_id=2, dist=4.60m, interval=293.098s
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[TargetLost] master_id=2 不再满足锁定条件: valid_ids=[11]
+[TargetSwitch] reason=master_lost, from=2, to=11, score=-0.89, candidates=id=11, score=-0.89, speed=0.02deg/s, dist=2.04deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=319.04°, 速度=0.00°/s
+                   -> 打提前量(0.25s后)Az=319.04°, El=10.88° | 下发云台指令: Az=49.04°, El=10.88°
+[GimbalCmd] cmd_id=18, track_id=11, target_ctrl=(Az=49.04°, El=10.88°)[Stats] recv_objs_total=102, recv_unique_boxes=91 | ui_send_total=38, ui_unique_ids=5, ui_id_counts=4:23, 2:6, 1:4, 5:4, 11:1
+
+[GimbalAtt] cmd_id=18, elapsed=0.001s, actual_ctrl=(Az=47.80°, El=10.80°), actual_ui=(Az=317.80°, El=10.80°), target_ctrl=(Az=49.04°, El=10.88°), err=(dAz=1.24°, dEl=0.08°)
+[GimbalAtt] cmd_id=18, elapsed=0.262s, actual_ctrl=(Az=48.90°, El=10.80°), actual_ui=(Az=318.90°, El=10.80°), target_ctrl=(Az=49.04°, El=10.88°), err=(dAz=0.14°, dEl=0.08°)
+[GimbalSettled] cmd_id=18, track_id=11, settle_time=0.262s, actual_ctrl=(Az=48.90°, El=10.80°), target_ctrl=(Az=49.04°, El=10.88°), err=(dAz=0.14°, dEl=0.08°)
+[Laser] Triggered cmd_id=18, track_id=11, dist=4.60m, interval=20.121s
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=802.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.77°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=882.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.41°
+[TargetLost] master_id=11 不再满足锁定条件: valid_ids=[2]
+[TargetSwitch] reason=master_lost, from=11, to=2, score=-0.63, candidates=id=2, score=-0.63, speed=0.01deg/s, dist=1.76deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=317.14°, 速度=0.01°/s
+                   -> 打提前量(0.25s后)Az=317.15°, El=10.78° | 下发云台指令: Az=47.15°, El=10.78°
+[Stats] recv_objs_total=104, recv_unique_boxes=92 | ui_send_total=39, ui_unique_ids=5, ui_id_counts=4:23, 2:7, 1:4, 5:4, 11:1
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=774.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=806.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.76°
+[Phase 3: 预测控制] 目标当前估算Az=317.15°, 速度=0.01°/s
+                   -> 打提前量(0.25s后)Az=317.15°, El=10.77° | 下发云台指令: Az=47.15°, El=10.77°
+[GimbalCmd] cmd_id=19, track_id=2, target_ctrl=(Az=47.15°, El=10.78°)
+[GimbalAtt] cmd_id=19, elapsed=0.000s, actual_ctrl=(Az=48.10°, El=10.80°), actual_ui=(Az=318.10°, El=10.80°), target_ctrl=(Az=47.15°, El=10.78°), err=(dAz=0.95°, dEl=0.02°)
+
+[Phase 1: 视觉解析] 收到目标 cx=472.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=319.12°, El=10.88°
+[TargetLost] master_id=2 不再满足锁定条件: valid_ids=[11]
+[TargetSwitch] reason=master_lost, from=2, to=11, score=0.39, candidates=id=11, score=0.39, speed=0.04deg/s, dist=0.98deg, hits=4, stab=1.29
+[Phase 3: 预测控制] 目标当前估算Az=319.07°, 速度=0.03°/s
+                   -> 打提前量(0.25s后)Az=319.08°, El=10.90° | 下发云台指令: Az=49.08°, El=10.90°
+[GimbalAtt] cmd_id=19, elapsed=0.262s, actual_ctrl=(Az=47.10°, El=10.80°), actual_ui=(Az=317.10°, El=10.80°), target_ctrl=(Az=47.15°, El=10.78°), err=(dAz=0.05°, dEl=0.02°)
+[GimbalSettled] cmd_id=19, track_id=2, settle_time=0.262s, actual_ctrl=(Az=47.10°, El=10.80°), target_ctrl=(Az=47.15°, El=10.78°), err=(dAz=0.05°, dEl=0.02°)
+[Laser] Triggered cmd_id=19, track_id=2, dist=4.60m, interval=96.104s
+[GimbalCmd] cmd_id=20, track_id=11, target_ctrl=(Az=49.08°, El=10.90°)
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=802.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.77°
+
+[Phase 1: 视觉解析] 收到目标 cx=504.0, cy=818.0, mono=25.1m -> 解算绝对角度: Az=319.26°, El=10.70°
+[Phase 3: 预测控制] 目标当前估算Az=319.15°, 速度=0.08°/s
+                   -> 打提前量(0.25s后)Az=319.17°, El=10.80° | 下发云台指令: Az=49.17°, El=10.80°
+[GimbalAtt] cmd_id=20, elapsed=0.000s, actual_ctrl=(Az=47.90°, El=10.80°), actual_ui=(Az=317.90°, El=10.80°), target_ctrl=(Az=49.08°, El=10.90°), err=(dAz=1.18°, dEl=0.10°)
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.89°
+[Phase 3: 预测控制] 目标当前估算Az=319.12°, 速度=0.05°/s
+                   -> 打提前量(0.25s后)Az=319.14°, El=10.83° | 下发云台指令: Az=49.14°, El=10.83°
+[GimbalAtt] cmd_id=20, elapsed=0.262s, actual_ctrl=(Az=48.90°, El=10.80°), actual_ui=(Az=318.90°, El=10.80°), target_ctrl=(Az=49.08°, El=10.90°), err=(dAz=0.18°, dEl=0.10°)
+[GimbalSettled] cmd_id=20, track_id=11, settle_time=0.262s, actual_ctrl=(Az=48.90°, El=10.80°), target_ctrl=(Az=49.08°, El=10.90°), err=(dAz=0.18°, dEl=0.10°)
+[Laser] Triggered cmd_id=20, track_id=11, dist=4.60m, interval=0.524s
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=319.10°, 速度=0.03°/s
+                   -> 打提前量(0.25s后)Az=319.11°, El=10.86° | 下发云台指令: Az=49.11°, El=10.86°
+[Stats] recv_objs_total=113, recv_unique_boxes=97 | ui_send_total=46, ui_unique_ids=5, ui_id_counts=4:23, 2:9, 11:6, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=408.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=318.82°, El=10.90°
+[TargetLost] master_id=11 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=168.0, cy=883.0, mono=25.1m -> 解算绝对角度: Az=317.73°, El=10.40°
+
+[Phase 1: 视觉解析] 收到目标 cx=440.0, cy=819.0, mono=25.1m -> 解算绝对角度: Az=318.97°, El=10.70°
+[Phase 3: 预测控制] 目标当前估算Az=319.06°, 速度=-0.00°/s
+                   -> 打提前量(0.25s后)Az=319.06°, El=10.77° | 下发云台指令: Az=49.06°, El=10.77°
+
+[Phase 1: 视觉解析] 收到目标 cx=408.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=318.82°, El=10.89°
+[TargetLost] master_id=11 不再满足锁定条件: valid_ids=[]
+[GimbalCmd] cmd_id=21, track_id=11, target_ctrl=(Az=49.06°, El=10.77°)
+[GimbalAtt] cmd_id=21, elapsed=0.000s, actual_ctrl=(Az=48.90°, El=10.80°), actual_ui=(Az=318.90°, El=10.80°), target_ctrl=(Az=49.06°, El=10.77°), err=(dAz=0.16°, dEl=0.03°)
+[GimbalSettled] cmd_id=21, track_id=11, settle_time=0.000s, actual_ctrl=(Az=48.90°, El=10.80°), target_ctrl=(Az=49.06°, El=10.77°), err=(dAz=0.16°, dEl=0.03°)
+[Laser] Triggered cmd_id=21, track_id=11, dist=4.60m, interval=2.635s
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=877.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.43°
+
+[Phase 1: 视觉解析] 收到目标 cx=504.0, cy=813.0, mono=25.1m -> 解算绝对角度: Az=319.26°, El=10.72°
+[Phase 3: 预测控制] 目标当前估算Az=319.14°, 速度=0.04°/s
+                   -> 打提前量(0.25s后)Az=319.15°, El=10.73° | 下发云台指令: Az=49.15°, El=10.73°
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=896.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.34°
+
+[Phase 1: 视觉解析] 收到目标 cx=520.0, cy=816.0, mono=25.1m -> 解算绝对角度: Az=319.33°, El=10.71°
+[Phase 3: 预测控制] 目标当前估算Az=319.20°, 速度=0.07°/s
+                   -> 打提前量(0.25s后)Az=319.22°, El=10.71° | 下发云台指令: Az=49.22°, El=10.71°
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.89°
+[TargetLost] master_id=11 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=392.0, cy=782.0, mono=25.1m -> 解算绝对角度: Az=318.75°, El=10.87°
+
+[Phase 1: 视觉解析] 收到目标 cx=168.0, cy=878.0, mono=25.1m -> 解算绝对角度: Az=317.73°, El=10.43°
+[TargetLost] master_id=11 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=124, recv_unique_boxes=105 | ui_send_total=49, ui_unique_ids=5, ui_id_counts=4:23, 2:9, 11:9, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=800.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.78°
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=896.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.34°
+[TargetLost] master_id=11 不再满足锁定条件: valid_ids=[4]
+[TargetSwitch] reason=master_lost, from=11, to=4, score=0.41, candidates=id=4, score=0.41, speed=0.11deg/s, dist=0.92deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=318.08°, 速度=0.11°/s
+                   -> 打提前量(0.25s后)Az=318.11°, El=10.37° | 下发云台指令: Az=48.11°, El=10.37°
+[Stats] recv_objs_total=126, recv_unique_boxes=105 | ui_send_total=50, ui_unique_ids=5, ui_id_counts=4:24, 2:9, 11:9, 1:4, 5:4
+[GimbalCmd] cmd_id=22, track_id=4, target_ctrl=(Az=48.11°, El=10.37°)
+[GimbalAtt] cmd_id=22, elapsed=0.041s, actual_ctrl=(Az=48.10°, El=10.70°), actual_ui=(Az=318.10°, El=10.70°), target_ctrl=(Az=48.11°, El=10.37°), err=(dAz=0.01°, dEl=0.33°)
+[GimbalAtt] cmd_id=22, elapsed=0.241s, actual_ctrl=(Az=48.10°, El=10.70°), actual_ui=(Az=318.10°, El=10.70°), target_ctrl=(Az=48.11°, El=10.37°), err=(dAz=0.01°, dEl=0.33°)
+[GimbalAtt] cmd_id=22, elapsed=0.523s, actual_ctrl=(Az=48.10°, El=10.30°), actual_ui=(Az=318.10°, El=10.30°), target_ctrl=(Az=48.11°, El=10.37°), err=(dAz=0.01°, dEl=0.07°)
+[GimbalSettled] cmd_id=22, track_id=4, settle_time=0.523s, actual_ctrl=(Az=48.10°, El=10.30°), target_ctrl=(Az=48.11°, El=10.37°), err=(dAz=0.01°, dEl=0.07°)
+[Laser] Triggered cmd_id=22, track_id=4, dist=4.70m, interval=28.764s
+
+[Phase 1: 视觉解析] 收到目标 cx=3117.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.17°, El=11.55°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=127, recv_unique_boxes=105 | ui_send_total=50, ui_unique_ids=5, ui_id_counts=4:24, 2:9, 11:9, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=3310.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=332.05°, El=11.55°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=128, recv_unique_boxes=106 | ui_send_total=50, ui_unique_ids=5, ui_id_counts=4:24, 2:9, 11:9, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=781.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.87°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=129, recv_unique_boxes=107 | ui_send_total=50, ui_unique_ids=5, ui_id_counts=4:24, 2:9, 11:9, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=895.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.35°
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=879.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.42°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=131, recv_unique_boxes=108 | ui_send_total=50, ui_unique_ids=5, ui_id_counts=4:24, 2:9, 11:9, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=877.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.43°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=132, recv_unique_boxes=109 | ui_send_total=50, ui_unique_ids=5, ui_id_counts=4:24, 2:9, 11:9, 1:4, 5:4
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=801.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.78°
+[TargetLost] master_id=4 不再满足锁定条件: valid_ids=[2]
+[TargetSwitch] reason=master_lost, from=4, to=2, score=0.76, candidates=id=2, score=0.76, speed=0.13deg/s, dist=0.60deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=317.57°, 速度=0.11°/s
+                   -> 打提前量(0.25s后)Az=317.60°, El=10.56° | 下发云台指令: Az=47.60°, El=10.56°
+[GimbalCmd] cmd_id=23, track_id=2, target_ctrl=(Az=47.60°, El=10.56°)
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=803.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.77°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=883.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.40°
+[Phase 3: 预测控制] 目标当前估算Az=317.46°, 速度=0.05°/s
+                   -> 打提前量(0.25s后)Az=317.47°, El=10.64° | 下发云台指令: Az=47.47°, El=10.64°
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=902.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.32°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=774.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+[TargetLost] master_id=2 不再满足锁定条件: valid_ids=[]
+[GimbalAtt] cmd_id=23, elapsed=0.000s, actual_ctrl=(Az=48.10°, El=10.30°), actual_ui=(Az=318.10°, El=10.30°), target_ctrl=(Az=47.60°, El=10.56°), err=(dAz=0.50°, dEl=0.26°)
+[GimbalAtt] cmd_id=23, elapsed=0.283s, actual_ctrl=(Az=47.40°, El=10.30°), actual_ui=(Az=317.40°, El=10.30°), target_ctrl=(Az=47.60°, El=10.56°), err=(dAz=0.20°, dEl=0.26°)
+[GimbalSettled] cmd_id=23, track_id=2, settle_time=0.283s, actual_ctrl=(Az=47.40°, El=10.30°), target_ctrl=(Az=47.60°, El=10.56°), err=(dAz=0.20°, dEl=0.26°)
+[Laser] Triggered cmd_id=23, track_id=2, dist=4.70m, interval=123.543s
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.89°
+[TargetLost] master_id=2 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=904.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.31°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.89°
+[TargetLost] master_id=2 不再满足锁定条件: valid_ids=[5]
+[TargetSwitch] reason=master_lost, from=2, to=5, score=-0.50, candidates=id=5, score=-0.50, speed=0.05deg/s, dist=1.72deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=319.01°, 速度=0.05°/s
+                   -> 打提前量(0.25s后)Az=319.02°, El=10.90° | 下发云台指令: Az=49.02°, El=10.90°
+[Stats] recv_objs_total=140, recv_unique_boxes=111 | ui_send_total=53, ui_unique_ids=5, ui_id_counts=4:24, 2:11, 11:9, 5:5, 1:4
+[GimbalCmd] cmd_id=24, track_id=5, target_ctrl=(Az=49.02°, El=10.90°)
+[GimbalAtt] cmd_id=24, elapsed=0.041s, actual_ctrl=(Az=48.20°, El=10.40°), actual_ui=(Az=318.20°, El=10.40°), target_ctrl=(Az=49.02°, El=10.90°), err=(dAz=0.82°, dEl=0.50°)
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.89°
+[Phase 3: 预测控制] 目标当前估算Az=318.98°, 速度=0.03°/s
+                   -> 打提前量(0.25s后)Az=318.99°, El=10.90° | 下发云台指令: Az=48.99°, El=10.90°
+[GimbalAtt] cmd_id=24, elapsed=0.244s, actual_ctrl=(Az=48.20°, El=10.40°), actual_ui=(Az=318.20°, El=10.40°), target_ctrl=(Az=49.02°, El=10.90°), err=(dAz=0.82°, dEl=0.50°)
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=879.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.42°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=783.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.86°
+[Phase 3: 预测控制] 目标当前估算Az=319.01°, 速度=0.04°/s
+                   -> 打提前量(0.25s后)Az=319.02°, El=10.88° | 下发云台指令: Az=49.02°, El=10.88°
+[GimbalAtt] cmd_id=24, elapsed=0.587s, actual_ctrl=(Az=48.90°, El=10.80°), actual_ui=(Az=318.90°, El=10.80°), target_ctrl=(Az=49.02°, El=10.90°), err=(dAz=0.12°, dEl=0.10°)
+[GimbalSettled] cmd_id=24, track_id=5, settle_time=0.587s, actual_ctrl=(Az=48.90°, El=10.80°), target_ctrl=(Az=49.02°, El=10.90°), err=(dAz=0.12°, dEl=0.10°)
+[Laser] Triggered cmd_id=24, track_id=5, dist=4.60m, interval=1.877s
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=773.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.91°
+[Phase 3: 预测控制] 目标当前估算Az=319.02°, 速度=0.05°/s
+                   -> 打提前量(0.25s后)Az=319.04°, El=10.89° | 下发云台指令: Az=49.04°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=803.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.77°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=882.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.41°
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=802.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.77°
+
+[Phase 1: 视觉解析] 收到目标 cx=488.0, cy=818.0, mono=25.1m -> 解算绝对角度: Az=319.19°, El=10.70°
+[Phase 3: 预测控制] 目标当前估算Az=319.10°, 速度=0.07°/s
+                   -> 打提前量(0.25s后)Az=319.11°, El=10.78° | 下发云台指令: Az=49.11°, El=10.78°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=883.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.40°
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=803.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.77°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[2]
+[TargetSwitch] reason=master_lost, from=5, to=2, score=-0.29, candidates=id=2, score=-0.29, speed=0.12deg/s, dist=1.63deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=317.27°, 速度=-0.09°/s
+                   -> 打提前量(0.25s后)Az=317.25°, El=10.76° | 下发云台指令: Az=47.25°, El=10.76°
+[Stats] recv_objs_total=150, recv_unique_boxes=112 | ui_send_total=58, ui_unique_ids=5, ui_id_counts=4:24, 2:12, 5:9, 11:9, 1:4
+[GimbalCmd] cmd_id=25, track_id=2, target_ctrl=(Az=47.25°, El=10.76°)
+[GimbalAtt] cmd_id=25, elapsed=0.000s, actual_ctrl=(Az=48.10°, El=10.80°), actual_ui=(Az=318.10°, El=10.80°), target_ctrl=(Az=47.25°, El=10.76°), err=(dAz=0.85°, dEl=0.04°)
+[GimbalAtt] cmd_id=25, elapsed=0.262s, actual_ctrl=(Az=47.20°, El=10.80°), actual_ui=(Az=317.20°, El=10.80°), target_ctrl=(Az=47.25°, El=10.76°), err=(dAz=0.05°, dEl=0.04°)
+[GimbalSettled] cmd_id=25, track_id=2, settle_time=0.262s, actual_ctrl=(Az=47.20°, El=10.80°), target_ctrl=(Az=47.25°, El=10.76°), err=(dAz=0.05°, dEl=0.04°)
+[Laser] Triggered cmd_id=25, track_id=2, dist=4.60m, interval=3.255s
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.90°
+[TargetLost] master_id=2 不再满足锁定条件: valid_ids=[5]
+[TargetSwitch] reason=master_lost, from=2, to=5, score=-0.22, candidates=id=5, score=-0.22, speed=0.03deg/s, dist=1.84deg, hits=6, stab=1.56
+[Phase 3: 预测控制] 目标当前估算Az=319.04°, 速度=0.02°/s
+                   -> 打提前量(0.25s后)Az=319.05°, El=10.83° | 下发云台指令: Az=49.05°, El=10.83°
+[Stats] recv_objs_total=151, recv_unique_boxes=113 | ui_send_total=59, ui_unique_ids=5, ui_id_counts=4:24, 2:12, 5:10, 11:9, 1:4
+[GimbalCmd] cmd_id=26, track_id=5, target_ctrl=(Az=49.05°, El=10.83°)
+[GimbalAtt] cmd_id=26, elapsed=0.000s, actual_ctrl=(Az=48.00°, El=10.80°), actual_ui=(Az=318.00°, El=10.80°), target_ctrl=(Az=49.05°, El=10.83°), err=(dAz=1.05°, dEl=0.03°)
+[GimbalAtt] cmd_id=26, elapsed=0.260s, actual_ctrl=(Az=48.90°, El=10.80°), actual_ui=(Az=318.90°, El=10.80°), target_ctrl=(Az=49.05°, El=10.83°), err=(dAz=0.15°, dEl=0.03°)
+[GimbalSettled] cmd_id=26, track_id=5, settle_time=0.260s, actual_ctrl=(Az=48.90°, El=10.80°), target_ctrl=(Az=49.05°, El=10.83°), err=(dAz=0.15°, dEl=0.03°)
+[Laser] Triggered cmd_id=26, track_id=5, dist=4.60m, interval=7.692s
+
+[Phase 1: 视觉解析] 收到目标 cx=3106.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.12°, El=11.55°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=152, recv_unique_boxes=114 | ui_send_total=59, ui_unique_ids=5, ui_id_counts=4:24, 2:12, 5:10, 11:9, 1:4
+
+[Phase 1: 视觉解析] 收到目标 cx=3154.0, cy=216.0, mono=25.1m -> 解算绝对角度: Az=331.34°, El=13.46°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=153, recv_unique_boxes=115 | ui_send_total=59, ui_unique_ids=5, ui_id_counts=4:24, 2:12, 5:10, 11:9, 1:4
+
+[Phase 1: 视觉解析] 收到目标 cx=3149.0, cy=168.0, mono=25.1m -> 解算绝对角度: Az=331.31°, El=13.68°
+
+[Phase 1: 视觉解析] 收到目标 cx=3149.0, cy=88.0, mono=25.1m -> 解算绝对角度: Az=331.31°, El=14.05°
+
+[Phase 1: 视觉解析] 收到目标 cx=3149.0, cy=312.0, mono=25.1m -> 解算绝对角度: Az=331.31°, El=13.02°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[13]
+[TargetSwitch] reason=master_lost, from=5, to=13, score=-8.24, candidates=id=13, score=-8.24, speed=1.58deg/s, dist=12.51deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=331.22°, 速度=0.13°/s
+                   -> 打提前量(0.25s后)Az=331.26°, El=13.36° | 下发云台指令: Az=61.26°, El=13.36°
+[Stats] recv_objs_total=156, recv_unique_boxes=118 | ui_send_total=60, ui_unique_ids=6, ui_id_counts=4:24, 2:12, 5:10, 11:9, 1:4, 13:1
+[GimbalCmd] cmd_id=27, track_id=13, target_ctrl=(Az=61.26°, El=13.36°)
+[GimbalAtt] cmd_id=27, elapsed=0.041s, actual_ctrl=(Az=49.70°, El=10.90°), actual_ui=(Az=319.70°, El=10.90°), target_ctrl=(Az=61.26°, El=13.36°), err=(dAz=11.56°, dEl=2.46°)
+[GimbalAtt] cmd_id=27, elapsed=0.303s, actual_ctrl=(Az=53.50°, El=11.90°), actual_ui=(Az=323.50°, El=11.90°), target_ctrl=(Az=61.26°, El=13.36°), err=(dAz=7.76°, dEl=1.46°)
+[GimbalAtt] cmd_id=27, elapsed=0.564s, actual_ctrl=(Az=53.50°, El=11.90°), actual_ui=(Az=323.50°, El=11.90°), target_ctrl=(Az=61.26°, El=13.36°), err=(dAz=7.76°, dEl=1.46°)
+[GimbalAtt] cmd_id=27, elapsed=1.067s, actual_ctrl=(Az=61.20°, El=13.30°), actual_ui=(Az=331.20°, El=13.30°), target_ctrl=(Az=61.26°, El=13.36°), err=(dAz=0.06°, dEl=0.06°)
+[GimbalSettled] cmd_id=27, track_id=13, settle_time=1.067s, actual_ctrl=(Az=61.20°, El=13.30°), target_ctrl=(Az=61.26°, El=13.36°), err=(dAz=0.06°, dEl=0.06°)
+[Laser] Triggered cmd_id=27, track_id=13, dist=4.60m, interval=47.494s
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.89°
+[TargetLost] master_id=13 不再满足锁定条件: valid_ids=[5]
+[TargetSwitch] reason=master_lost, from=13, to=5, score=-11.06, candidates=id=5, score=-11.06, speed=0.02deg/s, dist=12.39deg, hits=4, stab=1.29
+[Phase 3: 预测控制] 目标当前估算Az=319.05°, 速度=0.02°/s
+                   -> 打提前量(0.25s后)Az=319.06°, El=10.87° | 下发云台指令: Az=49.06°, El=10.87°
+[Stats] recv_objs_total=157, recv_unique_boxes=118 | ui_send_total=61, ui_unique_ids=6, ui_id_counts=4:24, 2:12, 5:11, 11:9, 1:4, 13:1
+[GimbalCmd] cmd_id=28, track_id=5, target_ctrl=(Az=49.06°, El=10.87°)
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=895.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.35°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[GimbalAtt] cmd_id=28, elapsed=0.040s, actual_ctrl=(Az=60.40°, El=13.20°), actual_ui=(Az=330.40°, El=13.20°), target_ctrl=(Az=49.06°, El=10.87°), err=(dAz=11.34°, dEl=2.33°)
+[GimbalAtt] cmd_id=28, elapsed=0.302s, actual_ctrl=(Az=56.60°, El=12.30°), actual_ui=(Az=326.60°, El=12.30°), target_ctrl=(Az=49.06°, El=10.87°), err=(dAz=7.54°, dEl=1.43°)
+[GimbalAtt] cmd_id=28, elapsed=0.563s, actual_ctrl=(Az=56.60°, El=12.30°), actual_ui=(Az=326.60°, El=12.30°), target_ctrl=(Az=49.06°, El=10.87°), err=(dAz=7.54°, dEl=1.43°)
+[GimbalAtt] cmd_id=28, elapsed=0.965s, actual_ctrl=(Az=49.00°, El=10.90°), actual_ui=(Az=319.00°, El=10.90°), target_ctrl=(Az=49.06°, El=10.87°), err=(dAz=0.06°, dEl=0.03°)
+[GimbalSettled] cmd_id=28, track_id=5, settle_time=0.965s, actual_ctrl=(Az=49.00°, El=10.90°), target_ctrl=(Az=49.06°, El=10.87°), err=(dAz=0.06°, dEl=0.03°)
+[Laser] Triggered cmd_id=28, track_id=5, dist=4.60m, interval=37.734s
+
+[Phase 1: 视觉解析] 收到目标 cx=1220.0, cy=1871.5, mono=25.1m -> 解算绝对角度: Az=13.95°, El=5.87°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=159, recv_unique_boxes=119 | ui_send_total=61, ui_unique_ids=6, ui_id_counts=4:24, 2:12, 5:11, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3148.0, cy=216.0, mono=25.1m -> 解算绝对角度: Az=331.31°, El=13.46°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=160, recv_unique_boxes=120 | ui_send_total=61, ui_unique_ids=6, ui_id_counts=4:24, 2:12, 5:11, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=782.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.87°
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=798.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.79°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=162, recv_unique_boxes=120 | ui_send_total=61, ui_unique_ids=6, ui_id_counts=4:24, 2:12, 5:11, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3156.0, cy=168.0, mono=25.1m -> 解算绝对角度: Az=331.35°, El=13.68°
+
+[Phase 1: 视觉解析] 收到目标 cx=3156.0, cy=312.0, mono=25.1m -> 解算绝对角度: Az=331.35°, El=13.02°
+
+[Phase 1: 视觉解析] 收到目标 cx=3156.0, cy=88.0, mono=25.1m -> 解算绝对角度: Az=331.35°, El=14.05°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=165, recv_unique_boxes=123 | ui_send_total=61, ui_unique_ids=6, ui_id_counts=4:24, 2:12, 5:11, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=779.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=166, recv_unique_boxes=124 | ui_send_total=61, ui_unique_ids=6, ui_id_counts=4:24, 2:12, 5:11, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=803.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.77°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=168, recv_unique_boxes=124 | ui_send_total=61, ui_unique_ids=6, ui_id_counts=4:24, 2:12, 5:11, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=360.0, cy=770.0, mono=25.1m -> 解算绝对角度: Az=318.60°, El=10.92°
+
+[Phase 1: 视觉解析] 收到目标 cx=264.0, cy=818.0, mono=25.1m -> 解算绝对角度: Az=318.17°, El=10.70°
+[Phase 3: 预测控制] 目标当前估算Az=318.90°, 速度=-0.07°/s
+                   -> 打提前量(0.25s后)Az=318.88°, El=10.90° | 下发云台指令: Az=48.88°, El=10.90°
+
+[Phase 1: 视觉解析] 收到目标 cx=3146.0, cy=168.0, mono=25.1m -> 解算绝对角度: Az=331.30°, El=13.68°
+
+[Phase 1: 视觉解析] 收到目标 cx=3146.0, cy=88.0, mono=25.1m -> 解算绝对角度: Az=331.30°, El=14.05°
+
+[Phase 1: 视觉解析] 收到目标 cx=3146.0, cy=312.0, mono=25.1m -> 解算绝对角度: Az=331.30°, El=13.02°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=173, recv_unique_boxes=129 | ui_send_total=62, ui_unique_ids=6, ui_id_counts=4:24, 2:12, 5:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=874.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.44°
+
+[Phase 1: 视觉解析] 收到目标 cx=504.0, cy=810.0, mono=25.1m -> 解算绝对角度: Az=319.26°, El=10.74°
+[Phase 3: 预测控制] 目标当前估算Az=319.01°, 速度=0.01°/s
+                   -> 打提前量(0.25s后)Az=319.01°, El=10.81° | 下发云台指令: Az=49.01°, El=10.81°
+[Stats] recv_objs_total=175, recv_unique_boxes=130 | ui_send_total=63, ui_unique_ids=6, ui_id_counts=4:24, 5:13, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=774.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=319.02°, 速度=0.01°/s
+                   -> 打提前量(0.25s后)Az=319.03°, El=10.85° | 下发云台指令: Az=49.03°, El=10.85°
+[Stats] recv_objs_total=176, recv_unique_boxes=130 | ui_send_total=64, ui_unique_ids=6, ui_id_counts=4:24, 5:14, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=873.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.45°
+[Phase 3: 预测控制] 目标当前估算Az=319.03°, 速度=0.01°/s
+                   -> 打提前量(0.25s后)Az=319.03°, El=10.86° | 下发云台指令: Az=49.03°, El=10.86°
+[Stats] recv_objs_total=178, recv_unique_boxes=131 | ui_send_total=65, ui_unique_ids=6, ui_id_counts=4:24, 5:15, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=319.04°, 速度=0.02°/s
+                   -> 打提前量(0.25s后)Az=319.04°, El=10.87° | 下发云台指令: Az=49.04°, El=10.87°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=872.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.45°
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.89°
+[TargetKeep] reason=lock_timer_expired, master_id=5, score=1.92, candidates=id=5, score=1.92, speed=0.01deg/s, dist=0.02deg, hits=7, stab=1.66, hold=1.15x
+[Phase 3: 预测控制] 目标当前估算Az=319.00°, 速度=-0.01°/s
+                   -> 打提前量(0.25s后)Az=319.00°, El=10.88° | 下发云台指令: Az=49.00°, El=10.88°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.89°
+[Phase 3: 预测控制] 目标当前估算Az=319.01°, 速度=-0.00°/s
+                   -> 打提前量(0.25s后)Az=319.01°, El=10.89° | 下发云台指令: Az=49.01°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=878.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.43°
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=798.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.79°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=184, recv_unique_boxes=131 | ui_send_total=68, ui_unique_ids=6, ui_id_counts=4:24, 5:18, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=520.0, cy=812.0, mono=25.1m -> 解算绝对角度: Az=319.33°, El=10.73°
+[Phase 3: 预测控制] 目标当前估算Az=319.11°, 速度=0.06°/s
+                   -> 打提前量(0.25s后)Az=319.13°, El=10.81° | 下发云台指令: Az=49.13°, El=10.81°
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=319.06°, 速度=0.02°/s
+                   -> 打提前量(0.25s后)Az=319.07°, El=10.83° | 下发云台指令: Az=49.07°, El=10.83°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=880.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.42°
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=816.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.71°
+[Phase 3: 预测控制] 目标当前估算Az=318.88°, 速度=-0.08°/s
+                   -> 打提前量(0.25s后)Az=318.86°, El=10.77° | 下发云台指令: Az=48.86°, El=10.77°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=779.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=318.91°, 速度=-0.05°/s
+                   -> 打提前量(0.25s后)Az=318.90°, El=10.80° | 下发云台指令: Az=48.90°, El=10.80°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=884.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.40°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=903.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.31°
+[Phase 3: 预测控制] 目标当前估算Az=318.94°, 速度=-0.02°/s
+                   -> 打提前量(0.25s后)Az=318.93°, El=10.85° | 下发云台指令: Az=48.93°, El=10.85°
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=780.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.88°
+[TargetKeep] reason=lock_timer_expired, master_id=5, score=2.33, candidates=id=5, score=2.33, speed=0.03deg/s, dist=0.09deg, hits=12, stab=2.05, hold=1.15x
+[Phase 3: 预测控制] 目标当前估算Az=318.92°, 速度=-0.03°/s
+                   -> 打提前量(0.25s后)Az=318.91°, El=10.86° | 下发云台指令: Az=48.91°, El=10.86°
+[Stats] recv_objs_total=193, recv_unique_boxes=135 | ui_send_total=74, ui_unique_ids=6, ui_id_counts=4:24, 5:24, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=772.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.91°
+[Phase 3: 预测控制] 目标当前估算Az=318.95°, 速度=-0.01°/s
+                   -> 打提前量(0.25s后)Az=318.95°, El=10.89° | 下发云台指令: Az=48.95°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=779.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=875.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.44°
+[Phase 3: 预测控制] 目标当前估算Az=318.98°, 速度=0.01°/s
+                   -> 打提前量(0.25s后)Az=318.98°, El=10.89° | 下发云台指令: Az=48.98°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=881.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.41°
+
+[Phase 1: 视觉解析] 收到目标 cx=504.0, cy=817.0, mono=25.1m -> 解算绝对角度: Az=319.26°, El=10.71°
+[Phase 3: 预测控制] 目标当前估算Az=319.06°, 速度=0.05°/s
+                   -> 打提前量(0.25s后)Az=319.07°, El=10.82° | 下发云台指令: Az=49.07°, El=10.82°
+[Stats] recv_objs_total=198, recv_unique_boxes=138 | ui_send_total=77, ui_unique_ids=6, ui_id_counts=5:27, 4:24, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=472.0, cy=820.0, mono=25.1m -> 解算绝对角度: Az=319.12°, El=10.69°
+[Phase 3: 预测控制] 目标当前估算Az=319.08°, 速度=0.06°/s
+                   -> 打提前量(0.25s后)Az=319.10°, El=10.75° | 下发云台指令: Az=49.10°, El=10.75°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.89°
+[Phase 3: 预测控制] 目标当前估算Az=319.08°, 速度=0.05°/s
+                   -> 打提前量(0.25s后)Az=319.09°, El=10.80° | 下发云台指令: Az=49.09°, El=10.80°
+
+[Phase 1: 视觉解析] 收到目标 cx=392.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=318.75°, El=10.88°
+
+[Phase 1: 视觉解析] 收到目标 cx=168.0, cy=874.0, mono=25.1m -> 解算绝对角度: Az=317.73°, El=10.44°
+[TargetKeep] reason=lock_timer_expired, master_id=5, score=2.64, candidates=id=5, score=2.64, speed=0.00deg/s, dist=0.07deg, hits=18, stab=2.36, hold=1.15x
+[Phase 3: 预测控制] 目标当前估算Az=319.00°, 速度=-0.00°/s
+                   -> 打提前量(0.25s后)Az=319.00°, El=10.83° | 下发云台指令: Az=49.00°, El=10.83°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=780.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=319.01°, 速度=0.00°/s
+                   -> 打提前量(0.25s后)Az=319.01°, El=10.85° | 下发云台指令: Az=49.01°, El=10.85°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.89°
+[Phase 3: 预测控制] 目标当前估算Az=319.02°, 速度=0.01°/s
+                   -> 打提前量(0.25s后)Az=319.02°, El=10.87° | 下发云台指令: Az=49.02°, El=10.87°
+
+[Phase 1: 视觉解析] 收到目标 cx=280.0, cy=815.0, mono=25.1m -> 解算绝对角度: Az=318.24°, El=10.71°
+
+[Phase 1: 视觉解析] 收到目标 cx=392.0, cy=783.0, mono=25.1m -> 解算绝对角度: Az=318.75°, El=10.86°
+
+[Phase 1: 视觉解析] 收到目标 cx=168.0, cy=879.0, mono=25.1m -> 解算绝对角度: Az=317.73°, El=10.42°
+[Phase 3: 预测控制] 目标当前估算Az=318.95°, 速度=-0.03°/s
+                   -> 打提前量(0.25s后)Az=318.94°, El=10.87° | 下发云台指令: Az=48.94°, El=10.87°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=318.97°, 速度=-0.02°/s
+                   -> 打提前量(0.25s后)Az=318.96°, El=10.89° | 下发云台指令: Az=48.96°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=881.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.41°
+
+[Phase 1: 视觉解析] 收到目标 cx=520.0, cy=817.0, mono=25.1m -> 解算绝对角度: Az=319.33°, El=10.71°
+[Phase 3: 预测控制] 目标当前估算Az=319.06°, 速度=0.04°/s
+                   -> 打提前量(0.25s后)Az=319.07°, El=10.82° | 下发云台指令: Az=49.07°, El=10.82°
+[Stats] recv_objs_total=210, recv_unique_boxes=146 | ui_send_total=85, ui_unique_ids=6, ui_id_counts=5:35, 4:24, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=803.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.77°
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=883.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.40°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=3142.0, cy=88.0, mono=25.1m -> 解算绝对角度: Az=331.28°, El=14.05°
+
+[Phase 1: 视觉解析] 收到目标 cx=3142.0, cy=152.0, mono=25.1m -> 解算绝对角度: Az=331.28°, El=13.75°
+
+[Phase 1: 视觉解析] 收到目标 cx=3142.0, cy=280.0, mono=25.1m -> 解算绝对角度: Az=331.28°, El=13.17°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=215, recv_unique_boxes=149 | ui_send_total=85, ui_unique_ids=6, ui_id_counts=5:35, 4:24, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=2953.0, cy=376.0, mono=25.1m -> 解算绝对角度: Az=330.42°, El=12.73°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=216, recv_unique_boxes=150 | ui_send_total=85, ui_unique_ids=6, ui_id_counts=5:35, 4:24, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=782.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.87°
+[Phase 3: 预测控制] 目标当前估算Az=319.07°, 速度=0.02°/s
+                   -> 打提前量(0.25s后)Az=319.08°, El=10.84° | 下发云台指令: Az=49.08°, El=10.84°
+[Stats] recv_objs_total=217, recv_unique_boxes=150 | ui_send_total=86, ui_unique_ids=6, ui_id_counts=5:36, 4:24, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=773.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.91°
+[TargetKeep] reason=lock_timer_expired, master_id=5, score=2.79, candidates=id=5, score=2.79, speed=0.03deg/s, dist=0.07deg, hits=22, stab=2.44, hold=1.15x
+[Phase 3: 预测控制] 目标当前估算Az=319.07°, 速度=0.02°/s
+                   -> 打提前量(0.25s后)Az=319.07°, El=10.88° | 下发云台指令: Az=49.07°, El=10.88°
+[Stats] recv_objs_total=218, recv_unique_boxes=150 | ui_send_total=87, ui_unique_ids=6, ui_id_counts=5:37, 4:24, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=893.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.36°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=219, recv_unique_boxes=151 | ui_send_total=87, ui_unique_ids=6, ui_id_counts=5:37, 4:24, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3145.0, cy=216.0, mono=25.1m -> 解算绝对角度: Az=331.30°, El=13.46°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=3300.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=332.00°, El=11.55°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=221, recv_unique_boxes=153 | ui_send_total=87, ui_unique_ids=6, ui_id_counts=5:37, 4:24, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=248.0, cy=784.0, mono=25.1m -> 解算绝对角度: Az=318.09°, El=10.86°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=222, recv_unique_boxes=154 | ui_send_total=87, ui_unique_ids=6, ui_id_counts=5:37, 4:24, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3120.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.18°, El=11.55°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=223, recv_unique_boxes=155 | ui_send_total=87, ui_unique_ids=6, ui_id_counts=5:37, 4:24, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=878.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.43°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=224, recv_unique_boxes=156 | ui_send_total=87, ui_unique_ids=6, ui_id_counts=5:37, 4:24, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=883.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.40°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=225, recv_unique_boxes=156 | ui_send_total=87, ui_unique_ids=6, ui_id_counts=5:37, 4:24, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=2957.0, cy=376.0, mono=25.1m -> 解算绝对角度: Az=330.44°, El=12.73°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=360.0, cy=780.0, mono=25.1m -> 解算绝对角度: Az=318.60°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=318.73°, 速度=-0.11°/s
+                   -> 打提前量(0.25s后)Az=318.71°, El=10.88° | 下发云台指令: Az=48.71°, El=10.88°
+[Stats] recv_objs_total=227, recv_unique_boxes=158 | ui_send_total=88, ui_unique_ids=6, ui_id_counts=5:38, 4:24, 2:12, 11:9, 1:4, 13:1
+[GimbalCmd] cmd_id=29, track_id=5, target_ctrl=(Az=48.71°, El=10.88°)
+[GimbalAtt] cmd_id=29, elapsed=0.000s, actual_ctrl=(Az=49.00°, El=10.90°), actual_ui=(Az=319.00°, El=10.90°), target_ctrl=(Az=48.71°, El=10.88°), err=(dAz=0.29°, dEl=0.02°)
+[GimbalSettled] cmd_id=29, track_id=5, settle_time=0.000s, actual_ctrl=(Az=49.00°, El=10.90°), target_ctrl=(Az=48.71°, El=10.88°), err=(dAz=0.29°, dEl=0.02°)
+[Laser] Triggered cmd_id=29, track_id=5, dist=4.60m, interval=324.672s
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=798.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.79°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=228, recv_unique_boxes=158 | ui_send_total=88, ui_unique_ids=6, ui_id_counts=5:38, 4:24, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=895.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.35°
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=879.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.42°
+
+[Phase 1: 视觉解析] 收到目标 cx=520.0, cy=815.0, mono=25.1m -> 解算绝对角度: Az=319.33°, El=10.71°
+[Phase 3: 预测控制] 目标当前估算Az=318.53°, 速度=-0.17°/s
+                   -> 打提前量(0.25s后)Az=318.48°, El=10.52° | 下发云台指令: Az=48.48°, El=10.52°
+[Stats] recv_objs_total=231, recv_unique_boxes=159 | ui_send_total=89, ui_unique_ids=6, ui_id_counts=5:39, 4:24, 2:12, 11:9, 1:4, 13:1
+[GimbalCmd] cmd_id=30, track_id=5, target_ctrl=(Az=48.48°, El=10.52°)
+[GimbalAtt] cmd_id=30, elapsed=0.041s, actual_ctrl=(Az=48.70°, El=10.80°), actual_ui=(Az=318.70°, El=10.80°), target_ctrl=(Az=48.48°, El=10.52°), err=(dAz=0.22°, dEl=0.28°)
+[GimbalSettled] cmd_id=30, track_id=5, settle_time=0.041s, actual_ctrl=(Az=48.70°, El=10.80°), target_ctrl=(Az=48.48°, El=10.52°), err=(dAz=0.22°, dEl=0.28°)
+[Laser] Triggered cmd_id=30, track_id=5, dist=4.70m, interval=27.376s
+
+[Phase 1: 视觉解析] 收到目标 cx=3137.0, cy=168.0, mono=25.1m -> 解算绝对角度: Az=331.26°, El=13.68°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=232, recv_unique_boxes=160 | ui_send_total=89, ui_unique_ids=6, ui_id_counts=5:39, 4:24, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=360.0, cy=780.0, mono=25.1m -> 解算绝对角度: Az=318.60°, El=10.88°
+
+[Phase 1: 视觉解析] 收到目标 cx=264.0, cy=812.0, mono=25.1m -> 解算绝对角度: Az=318.17°, El=10.73°
+[Phase 3: 预测控制] 目标当前估算Az=318.51°, 速度=-0.14°/s
+                   -> 打提前量(0.25s后)Az=318.48°, El=10.69° | 下发云台指令: Az=48.48°, El=10.69°
+[Stats] recv_objs_total=234, recv_unique_boxes=161 | ui_send_total=90, ui_unique_ids=6, ui_id_counts=5:40, 4:24, 2:12, 11:9, 1:4, 13:1
+[GimbalCmd] cmd_id=31, track_id=5, target_ctrl=(Az=48.48°, El=10.69°)
+[GimbalAtt] cmd_id=31, elapsed=0.000s, actual_ctrl=(Az=48.30°, El=10.50°), actual_ui=(Az=318.30°, El=10.50°), target_ctrl=(Az=48.48°, El=10.69°), err=(dAz=0.18°, dEl=0.19°)
+[GimbalSettled] cmd_id=31, track_id=5, settle_time=0.000s, actual_ctrl=(Az=48.30°, El=10.50°), target_ctrl=(Az=48.48°, El=10.69°), err=(dAz=0.18°, dEl=0.19°)
+[Laser] Triggered cmd_id=31, track_id=5, dist=4.70m, interval=71.589s
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=877.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.43°
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=781.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.87°
+[Phase 3: 预测控制] 目标当前估算Az=318.63°, 速度=-0.07°/s
+                   -> 打提前量(0.25s后)Az=318.61°, El=10.77° | 下发云台指令: Az=48.61°, El=10.77°
+[Stats] recv_objs_total=236, recv_unique_boxes=162 | ui_send_total=92, ui_unique_ids=6, ui_id_counts=5:41, 4:25, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3115.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.16°, El=11.55°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=3108.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.13°, El=11.55°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=238, recv_unique_boxes=164 | ui_send_total=92, ui_unique_ids=6, ui_id_counts=5:41, 4:25, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=1212.0, cy=1870.5, mono=25.1m -> 解算绝对角度: Az=13.92°, El=5.88°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=239, recv_unique_boxes=165 | ui_send_total=92, ui_unique_ids=6, ui_id_counts=5:41, 4:25, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=875.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.44°
+
+[Phase 1: 视觉解析] 收到目标 cx=440.0, cy=779.0, mono=25.1m -> 解算绝对角度: Az=318.97°, El=10.88°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=241, recv_unique_boxes=166 | ui_send_total=92, ui_unique_ids=6, ui_id_counts=5:41, 4:25, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3101.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.10°, El=11.55°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=3158.0, cy=152.0, mono=25.1m -> 解算绝对角度: Az=331.36°, El=13.75°
+
+[Phase 1: 视觉解析] 收到目标 cx=3158.0, cy=280.0, mono=25.1m -> 解算绝对角度: Az=331.36°, El=13.17°
+
+[Phase 1: 视觉解析] 收到目标 cx=3158.0, cy=88.0, mono=25.1m -> 解算绝对角度: Az=331.36°, El=14.05°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=245, recv_unique_boxes=170 | ui_send_total=92, ui_unique_ids=6, ui_id_counts=5:41, 4:25, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=903.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.31°
+[Phase 3: 预测控制] 目标当前估算Az=318.43°, 速度=-0.10°/s
+                   -> 打提前量(0.25s后)Az=318.40°, El=10.35° | 下发云台指令: Az=48.40°, El=10.35°
+[Stats] recv_objs_total=246, recv_unique_boxes=170 | ui_send_total=93, ui_unique_ids=6, ui_id_counts=5:42, 4:25, 2:12, 11:9, 1:4, 13:1
+[GimbalCmd] cmd_id=32, track_id=5, target_ctrl=(Az=48.40°, El=10.35°)
+[GimbalAtt] cmd_id=32, elapsed=0.000s, actual_ctrl=(Az=48.30°, El=10.50°), actual_ui=(Az=318.30°, El=10.50°), target_ctrl=(Az=48.40°, El=10.35°), err=(dAz=0.10°, dEl=0.15°)
+[GimbalSettled] cmd_id=32, track_id=5, settle_time=0.000s, actual_ctrl=(Az=48.30°, El=10.50°), target_ctrl=(Az=48.40°, El=10.35°), err=(dAz=0.10°, dEl=0.15°)
+[Laser] Triggered cmd_id=32, track_id=5, dist=4.70m, interval=106.459s
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=885.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.39°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=247, recv_unique_boxes=171 | ui_send_total=93, ui_unique_ids=6, ui_id_counts=5:42, 4:25, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=780.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=248, recv_unique_boxes=171 | ui_send_total=93, ui_unique_ids=6, ui_id_counts=5:42, 4:25, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3151.0, cy=216.0, mono=25.1m -> 解算绝对角度: Az=331.32°, El=13.46°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=249, recv_unique_boxes=172 | ui_send_total=93, ui_unique_ids=6, ui_id_counts=5:42, 4:25, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=780.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=250, recv_unique_boxes=172 | ui_send_total=93, ui_unique_ids=6, ui_id_counts=5:42, 4:25, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=264.0, cy=770.0, mono=25.1m -> 解算绝对角度: Az=318.17°, El=10.92°
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=818.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.70°
+[TargetKeep] reason=lock_timer_expired, master_id=5, score=2.10, candidates=id=5, score=2.10, speed=0.17deg/s, dist=0.27deg, hits=8, stab=1.76, hold=1.15x
+[Phase 3: 预测控制] 目标当前估算Az=318.21°, 速度=-0.13°/s
+                   -> 打提前量(0.25s后)Az=318.18°, El=10.78° | 下发云台指令: Az=48.18°, El=10.78°
+[GimbalCmd] cmd_id=33, track_id=5, target_ctrl=(Az=48.18°, El=10.78°)
+[GimbalAtt] cmd_id=33, elapsed=0.041s, actual_ctrl=(Az=48.30°, El=10.60°), actual_ui=(Az=318.30°, El=10.60°), target_ctrl=(Az=48.18°, El=10.78°), err=(dAz=0.12°, dEl=0.18°)
+[GimbalSettled] cmd_id=33, track_id=5, settle_time=0.041s, actual_ctrl=(Az=48.30°, El=10.60°), target_ctrl=(Az=48.18°, El=10.78°), err=(dAz=0.12°, dEl=0.18°)
+[Laser] Triggered cmd_id=33, track_id=5, dist=4.60m, interval=66.555s
+
+[Phase 1: 视觉解析] 收到目标 cx=2915.0, cy=342.0, mono=25.1m -> 解算绝对角度: Az=330.25°, El=12.88°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=253, recv_unique_boxes=175 | ui_send_total=94, ui_unique_ids=6, ui_id_counts=5:43, 4:25, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3105.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.11°, El=11.55°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=254, recv_unique_boxes=176 | ui_send_total=94, ui_unique_ids=6, ui_id_counts=5:43, 4:25, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3130.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.23°, El=11.55°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=255, recv_unique_boxes=177 | ui_send_total=94, ui_unique_ids=6, ui_id_counts=5:43, 4:25, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=136.0, cy=956.0, mono=25.1m -> 解算绝对角度: Az=317.58°, El=10.07°
+
+[Phase 1: 视觉解析] 收到目标 cx=23.5, cy=956.0, mono=25.2m -> 解算绝对角度: Az=317.07°, El=10.07°
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=956.0, mono=52.0m -> 解算绝对角度: Az=317.88°, El=10.07°
+
+[Phase 1: 视觉解析] 收到目标 cx=72.0, cy=956.0, mono=25.1m -> 解算绝对角度: Az=317.29°, El=10.07°
+
+[Phase 1: 视觉解析] 收到目标 cx=39.5, cy=956.0, mono=52.4m -> 解算绝对角度: Az=317.14°, El=10.07°
+[Phase 3: 预测控制] 目标当前估算Az=317.52°, 速度=-0.35°/s
+                   -> 打提前量(0.25s后)Az=317.44°, El=10.24° | 下发云台指令: Az=47.44°, El=10.24°
+[Stats] recv_objs_total=260, recv_unique_boxes=182 | ui_send_total=95, ui_unique_ids=6, ui_id_counts=5:44, 4:25, 2:12, 11:9, 1:4, 13:1
+[GimbalCmd] cmd_id=34, track_id=5, target_ctrl=(Az=47.44°, El=10.24°)
+[GimbalAtt] cmd_id=34, elapsed=0.041s, actual_ctrl=(Az=48.00°, El=10.70°), actual_ui=(Az=318.00°, El=10.70°), target_ctrl=(Az=47.44°, El=10.24°), err=(dAz=0.56°, dEl=0.46°)
+[GimbalAtt] cmd_id=34, elapsed=0.273s, actual_ctrl=(Az=48.00°, El=10.70°), actual_ui=(Az=318.00°, El=10.70°), target_ctrl=(Az=47.44°, El=10.24°), err=(dAz=0.56°, dEl=0.46°)
+[GimbalAtt] cmd_id=34, elapsed=0.676s, actual_ctrl=(Az=47.30°, El=10.20°), actual_ui=(Az=317.30°, El=10.20°), target_ctrl=(Az=47.44°, El=10.24°), err=(dAz=0.14°, dEl=0.04°)
+[GimbalSettled] cmd_id=34, track_id=5, settle_time=0.676s, actual_ctrl=(Az=47.30°, El=10.20°), target_ctrl=(Az=47.44°, El=10.24°), err=(dAz=0.14°, dEl=0.04°)
+[Laser] Triggered cmd_id=34, track_id=5, dist=4.70m, interval=35.402s
+
+[Phase 1: 视觉解析] 收到目标 cx=2861.0, cy=408.0, mono=25.1m -> 解算绝对角度: Az=330.00°, El=12.58°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=261, recv_unique_boxes=183 | ui_send_total=95, ui_unique_ids=6, ui_id_counts=5:44, 4:25, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.89°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=262, recv_unique_boxes=183 | ui_send_total=95, ui_unique_ids=6, ui_id_counts=5:44, 4:25, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.89°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=804.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.77°
+[Phase 3: 预测控制] 目标当前估算Az=317.16°, 速度=-0.35°/s
+                   -> 打提前量(0.25s后)Az=317.07°, El=10.59° | 下发云台指令: Az=47.07°, El=10.59°
+[GimbalCmd] cmd_id=35, track_id=5, target_ctrl=(Az=47.07°, El=10.59°)
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=891.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.37°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[GimbalAtt] cmd_id=35, elapsed=0.041s, actual_ctrl=(Az=47.30°, El=10.30°), actual_ui=(Az=317.30°, El=10.30°), target_ctrl=(Az=47.07°, El=10.59°), err=(dAz=0.23°, dEl=0.29°)
+[GimbalSettled] cmd_id=35, track_id=5, settle_time=0.041s, actual_ctrl=(Az=47.30°, El=10.30°), target_ctrl=(Az=47.07°, El=10.59°), err=(dAz=0.23°, dEl=0.29°)
+[Laser] Triggered cmd_id=35, track_id=5, dist=4.70m, interval=51.538s
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=895.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.35°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=779.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=875.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.44°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=268, recv_unique_boxes=185 | ui_send_total=96, ui_unique_ids=6, ui_id_counts=5:45, 4:25, 2:12, 11:9, 1:4, 13:1
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=873.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.45°
+[TargetLost] master_id=5 不再满足锁定条件: valid_ids=[25]
+[TargetSwitch] reason=master_lost, from=5, to=25, score=0.42, candidates=id=25, score=0.42, speed=0.26deg/s, dist=1.21deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=318.11°, 速度=0.19°/s
+                   -> 打提前量(0.25s后)Az=318.16°, El=10.51° | 下发云台指令: Az=48.16°, El=10.51°
+[GimbalCmd] cmd_id=36, track_id=25, target_ctrl=(Az=48.16°, El=10.51°)
+[GimbalAtt] cmd_id=36, elapsed=0.000s, actual_ctrl=(Az=47.70°, El=10.50°), actual_ui=(Az=317.70°, El=10.50°), target_ctrl=(Az=48.16°, El=10.51°), err=(dAz=0.46°, dEl=0.01°)
+[GimbalAtt] cmd_id=36, elapsed=0.204s, actual_ctrl=(Az=48.00°, El=10.50°), actual_ui=(Az=318.00°, El=10.50°), target_ctrl=(Az=48.16°, El=10.51°), err=(dAz=0.16°, dEl=0.01°)
+[GimbalSettled] cmd_id=36, track_id=25, settle_time=0.204s, actual_ctrl=(Az=48.00°, El=10.50°), target_ctrl=(Az=48.16°, El=10.51°), err=(dAz=0.16°, dEl=0.01°)
+[Laser] Triggered cmd_id=36, track_id=25, dist=4.70m, interval=2.873s
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.89°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=271, recv_unique_boxes=185 | ui_send_total=97, ui_unique_ids=7, ui_id_counts=5:45, 4:25, 2:12, 11:9, 1:4, 13:1, 25:1
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=880.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.42°
+
+[Phase 1: 视觉解析] 收到目标 cx=488.0, cy=816.0, mono=25.1m -> 解算绝对角度: Az=319.19°, El=10.71°
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=800.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.78°
+[Phase 3: 预测控制] 目标当前估算Az=318.04°, 速度=0.11°/s
+                   -> 打提前量(0.25s后)Az=318.07°, El=10.51° | 下发云台指令: Az=48.07°, El=10.51°
+[Stats] recv_objs_total=274, recv_unique_boxes=186 | ui_send_total=99, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 1:4, 25:2, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=360.0, cy=772.0, mono=25.1m -> 解算绝对角度: Az=318.60°, El=10.91°
+[Phase 3: 预测控制] 目标当前估算Az=318.26°, 速度=0.21°/s
+                   -> 打提前量(0.25s后)Az=318.31°, El=10.75° | 下发云台指令: Az=48.31°, El=10.75°
+[Stats] recv_objs_total=275, recv_unique_boxes=187 | ui_send_total=100, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 1:4, 25:3, 13:1, 26:1[GimbalCmd] cmd_id=37, track_id=25, target_ctrl=(Az=48.31°, El=10.75°)
+
+[GimbalAtt] cmd_id=37, elapsed=0.001s, actual_ctrl=(Az=48.00°, El=10.50°), actual_ui=(Az=318.00°, El=10.50°), target_ctrl=(Az=48.31°, El=10.75°), err=(dAz=0.31°, dEl=0.25°)
+[GimbalAtt] cmd_id=37, elapsed=0.262s, actual_ctrl=(Az=48.00°, El=10.50°), actual_ui=(Az=318.00°, El=10.50°), target_ctrl=(Az=48.31°, El=10.75°), err=(dAz=0.31°, dEl=0.25°)
+[GimbalAtt] cmd_id=37, elapsed=0.524s, actual_ctrl=(Az=48.00°, El=10.50°), actual_ui=(Az=318.00°, El=10.50°), target_ctrl=(Az=48.31°, El=10.75°), err=(dAz=0.31°, dEl=0.25°)
+[GimbalAtt] cmd_id=37, elapsed=0.785s, actual_ctrl=(Az=48.00°, El=10.50°), actual_ui=(Az=318.00°, El=10.50°), target_ctrl=(Az=48.31°, El=10.75°), err=(dAz=0.31°, dEl=0.25°)
+[GimbalAtt] cmd_id=37, elapsed=1.047s, actual_ctrl=(Az=48.00°, El=10.50°), actual_ui=(Az=318.00°, El=10.50°), target_ctrl=(Az=48.31°, El=10.75°), err=(dAz=0.31°, dEl=0.25°)
+[GimbalAtt] cmd_id=37, elapsed=1.309s, actual_ctrl=(Az=48.00°, El=10.50°), actual_ui=(Az=318.00°, El=10.50°), target_ctrl=(Az=48.31°, El=10.75°), err=(dAz=0.31°, dEl=0.25°)
+[GimbalAtt] cmd_id=37, elapsed=1.571s, actual_ctrl=(Az=48.00°, El=10.50°), actual_ui=(Az=318.00°, El=10.50°), target_ctrl=(Az=48.31°, El=10.75°), err=(dAz=0.31°, dEl=0.25°)
+[GimbalAtt] cmd_id=37, elapsed=1.832s, actual_ctrl=(Az=48.00°, El=10.50°), actual_ui=(Az=318.00°, El=10.50°), target_ctrl=(Az=48.31°, El=10.75°), err=(dAz=0.31°, dEl=0.25°)
+[GimbalAtt] cmd_id=37, elapsed=2.094s, actual_ctrl=(Az=48.00°, El=10.50°), actual_ui=(Az=318.00°, El=10.50°), target_ctrl=(Az=48.31°, El=10.75°), err=(dAz=0.31°, dEl=0.25°)
+[GimbalAtt] cmd_id=37, elapsed=2.356s, actual_ctrl=(Az=48.00°, El=10.50°), actual_ui=(Az=318.00°, El=10.50°), target_ctrl=(Az=48.31°, El=10.75°), err=(dAz=0.31°, dEl=0.25°)
+[GimbalAtt] cmd_id=37, elapsed=2.617s, actual_ctrl=(Az=48.00°, El=10.50°), actual_ui=(Az=318.00°, El=10.50°), target_ctrl=(Az=48.31°, El=10.75°), err=(dAz=0.31°, dEl=0.25°)
+[GimbalTimeout] cmd_id=37, track_id=25, elapsed=2.617s, actual_ctrl=(Az=48.00°, El=10.50°), target_ctrl=(Az=48.31°, El=10.75°), err=(dAz=0.31°, dEl=0.25°)
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=877.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.43°
+[Phase 3: 预测控制] 目标当前估算Az=318.17°, 速度=0.13°/s
+                   -> 打提前量(0.25s后)Az=318.20°, El=10.66° | 下发云台指令: Az=48.20°, El=10.66°
+[Stats] recv_objs_total=276, recv_unique_boxes=187 | ui_send_total=101, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 1:4, 25:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=2924.0, cy=376.0, mono=25.1m -> 解算绝对角度: Az=330.29°, El=12.73°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=277, recv_unique_boxes=188 | ui_send_total=101, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 1:4, 25:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3115.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.16°, El=11.55°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=278, recv_unique_boxes=188 | ui_send_total=101, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 1:4, 25:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=941.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.14°
+
+[Phase 1: 视觉解析] 收到目标 cx=72.0, cy=941.0, mono=25.1m -> 解算绝对角度: Az=317.29°, El=10.14°
+[Phase 3: 预测控制] 目标当前估算Az=318.10°, 速度=0.05°/s
+                   -> 打提前量(0.25s后)Az=318.12°, El=10.37° | 下发云台指令: Az=48.12°, El=10.37°
+[Stats] recv_objs_total=280, recv_unique_boxes=190 | ui_send_total=102, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+[GimbalCmd] cmd_id=38, track_id=25, target_ctrl=(Az=48.12°, El=10.37°)
+[GimbalAtt] cmd_id=38, elapsed=0.000s, actual_ctrl=(Az=48.00°, El=10.50°), actual_ui=(Az=318.00°, El=10.50°), target_ctrl=(Az=48.12°, El=10.37°), err=(dAz=0.12°, dEl=0.13°)
+[GimbalSettled] cmd_id=38, track_id=25, settle_time=0.000s, actual_ctrl=(Az=48.00°, El=10.50°), target_ctrl=(Az=48.12°, El=10.37°), err=(dAz=0.12°, dEl=0.13°)
+[Laser] Triggered cmd_id=38, track_id=25, dist=4.70m, interval=452.528s
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=774.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=281, recv_unique_boxes=190 | ui_send_total=102, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3266.5, cy=251.5, mono=159.9m -> 解算绝对角度: Az=330.14°, El=32.30°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=282, recv_unique_boxes=191 | ui_send_total=102, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=2916.0, cy=342.0, mono=25.1m -> 解算绝对角度: Az=330.25°, El=12.88°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=283, recv_unique_boxes=192 | ui_send_total=102, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=2915.0, cy=342.0, mono=25.1m -> 解算绝对角度: Az=330.25°, El=12.88°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=284, recv_unique_boxes=192 | ui_send_total=102, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=412.0, cy=1569.5, mono=47.2m -> 解算绝对角度: Az=10.27°, El=7.26°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=285, recv_unique_boxes=193 | ui_send_total=102, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=408.0, cy=781.0, mono=25.1m -> 解算绝对角度: Az=318.82°, El=10.87°
+
+[Phase 1: 视觉解析] 收到目标 cx=168.0, cy=877.0, mono=25.1m -> 解算绝对角度: Az=317.73°, El=10.43°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=287, recv_unique_boxes=195 | ui_send_total=102, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=877.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.43°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=288, recv_unique_boxes=195 | ui_send_total=102, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3150.0, cy=216.0, mono=25.1m -> 解算绝对角度: Az=331.32°, El=13.46°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=289, recv_unique_boxes=196 | ui_send_total=102, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=880.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.42°
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=896.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.34°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=291, recv_unique_boxes=197 | ui_send_total=102, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=2919.0, cy=376.0, mono=25.1m -> 解算绝对角度: Az=330.27°, El=12.73°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=292, recv_unique_boxes=198 | ui_send_total=102, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3105.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.11°, El=11.55°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=293, recv_unique_boxes=198 | ui_send_total=102, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=802.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.77°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=294, recv_unique_boxes=198 | ui_send_total=102, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3153.0, cy=104.0, mono=25.1m -> 解算绝对角度: Az=331.33°, El=13.97°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=295, recv_unique_boxes=199 | ui_send_total=102, ui_unique_ids=8, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3115.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.16°, El=11.55°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[27]
+[TargetSwitch] reason=master_lost, from=25, to=27, score=-11.58, candidates=id=27, score=-11.58, speed=0.32deg/s, dist=13.32deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=331.15°, 速度=0.24°/s
+                   -> 打提前量(0.25s后)Az=331.21°, El=12.44° | 下发云台指令: Az=61.21°, El=12.44°
+[Stats] recv_objs_total=296, recv_unique_boxes=199 | ui_send_total=103, ui_unique_ids=9, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+[GimbalCmd] cmd_id=39, track_id=27, target_ctrl=(Az=61.21°, El=12.44°)
+[GimbalAtt] cmd_id=39, elapsed=0.041s, actual_ctrl=(Az=48.70°, El=10.50°), actual_ui=(Az=318.70°, El=10.50°), target_ctrl=(Az=61.21°, El=12.44°), err=(dAz=12.51°, dEl=1.94°)
+[GimbalAtt] cmd_id=39, elapsed=0.302s, actual_ctrl=(Az=52.50°, El=11.50°), actual_ui=(Az=322.50°, El=11.50°), target_ctrl=(Az=61.21°, El=12.44°), err=(dAz=8.71°, dEl=0.94°)
+[GimbalAtt] cmd_id=39, elapsed=0.521s, actual_ctrl=(Az=58.30°, El=11.50°), actual_ui=(Az=328.30°, El=11.50°), target_ctrl=(Az=61.21°, El=12.44°), err=(dAz=2.91°, dEl=0.94°)
+[GimbalAtt] cmd_id=39, elapsed=0.803s, actual_ctrl=(Az=58.30°, El=12.40°), actual_ui=(Az=328.30°, El=12.40°), target_ctrl=(Az=61.21°, El=12.44°), err=(dAz=2.91°, dEl=0.04°)
+[GimbalAtt] cmd_id=39, elapsed=1.124s, actual_ctrl=(Az=61.20°, El=12.40°), actual_ui=(Az=331.20°, El=12.40°), target_ctrl=(Az=61.21°, El=12.44°), err=(dAz=0.01°, dEl=0.04°)
+[GimbalSettled] cmd_id=39, track_id=27, settle_time=1.124s, actual_ctrl=(Az=61.20°, El=12.40°), target_ctrl=(Az=61.21°, El=12.44°), err=(dAz=0.01°, dEl=0.04°)
+[Laser] Triggered cmd_id=39, track_id=27, dist=4.60m, interval=1122.448s
+
+[Phase 1: 视觉解析] 收到目标 cx=360.0, cy=772.0, mono=25.1m -> 解算绝对角度: Az=318.60°, El=10.91°
+[TargetLost] master_id=27 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=297, recv_unique_boxes=199 | ui_send_total=103, ui_unique_ids=9, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=878.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.43°
+
+[Phase 1: 视觉解析] 收到目标 cx=440.0, cy=782.0, mono=25.1m -> 解算绝对角度: Az=318.97°, El=10.87°
+[TargetLost] master_id=27 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=299, recv_unique_boxes=200 | ui_send_total=103, ui_unique_ids=9, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=2912.0, cy=341.0, mono=25.1m -> 解算绝对角度: Az=330.23°, El=12.89°
+[TargetLost] master_id=27 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=300, recv_unique_boxes=201 | ui_send_total=103, ui_unique_ids=9, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=879.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.42°
+[TargetLost] master_id=27 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=301, recv_unique_boxes=201 | ui_send_total=103, ui_unique_ids=9, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=3100.0, cy=152.0, mono=25.1m -> 解算绝对角度: Az=331.09°, El=13.75°
+[TargetLost] master_id=27 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=302, recv_unique_boxes=202 | ui_send_total=103, ui_unique_ids=9, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=893.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.36°
+[TargetLost] master_id=27 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=303, recv_unique_boxes=202 | ui_send_total=103, ui_unique_ids=9, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[TargetLost] master_id=27 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=304, recv_unique_boxes=202 | ui_send_total=103, ui_unique_ids=9, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=2838.0, cy=332.0, mono=25.1m -> 解算绝对角度: Az=329.90°, El=12.93°
+[TargetLost] master_id=27 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=305, recv_unique_boxes=203 | ui_send_total=103, ui_unique_ids=9, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=2763.0, cy=72.0, mono=25.1m -> 解算绝对角度: Az=329.56°, El=14.12°
+[TargetLost] master_id=27 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=306, recv_unique_boxes=204 | ui_send_total=103, ui_unique_ids=9, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=899.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.33°
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=803.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.77°
+[TargetLost] master_id=27 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=308, recv_unique_boxes=204 | ui_send_total=103, ui_unique_ids=9, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=898.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.33°
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=802.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.77°
+[TargetLost] master_id=27 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=310, recv_unique_boxes=205 | ui_send_total=103, ui_unique_ids=9, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:5, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=40.0, cy=803.0, mono=25.1m -> 解算绝对角度: Az=317.15°, El=10.77°
+[TargetLost] master_id=27 不再满足锁定条件: valid_ids=[25]
+[TargetSwitch] reason=master_lost, from=27, to=25, score=-12.60, candidates=id=25, score=-12.60, speed=0.21deg/s, dist=14.13deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=317.17°, 速度=-0.17°/s
+                   -> 打提前量(0.25s后)Az=317.12°, El=10.80° | 下发云台指令: Az=47.12°, El=10.80°
+[Stats] recv_objs_total=311, recv_unique_boxes=205 | ui_send_total=104, ui_unique_ids=9, ui_id_counts=5:45, 4:25, 2:12, 11:9, 25:6, 1:4, 13:1, 26:1
+[GimbalCmd] cmd_id=40, track_id=25, target_ctrl=(Az=47.12°, El=10.80°)
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=877.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.43°
+
+[Phase 1: 视觉解析] 收到目标 cx=440.0, cy=781.0, mono=25.1m -> 解算绝对角度: Az=318.97°, El=10.87°
+[Phase 3: 预测控制] 目标当前估算Az=317.34°, 速度=-0.08°/s
+                   -> 打提前量(0.25s后)Az=317.32°, El=10.66° | 下发云台指令: Az=47.32°, El=10.66°
+[GimbalAtt] cmd_id=40, elapsed=0.041s, actual_ctrl=(Az=60.40°, El=12.40°), actual_ui=(Az=330.40°, El=12.40°), target_ctrl=(Az=47.12°, El=10.80°), err=(dAz=13.28°, dEl=1.60°)
+[GimbalAtt] cmd_id=40, elapsed=0.302s, actual_ctrl=(Az=60.40°, El=11.40°), actual_ui=(Az=330.40°, El=11.40°), target_ctrl=(Az=47.12°, El=10.80°), err=(dAz=13.28°, dEl=0.60°)
+
+[Phase 1: 视觉解析] 收到目标 cx=168.0, cy=953.0, mono=25.1m -> 解算绝对角度: Az=317.73°, El=10.08°
+[Phase 3: 预测控制] 目标当前估算Az=317.44°, 速度=-0.02°/s
+                   -> 打提前量(0.25s后)Az=317.43°, El=10.41° | 下发云台指令: Az=47.43°, El=10.41°
+[GimbalAtt] cmd_id=40, elapsed=0.484s, actual_ctrl=(Az=49.20°, El=11.40°), actual_ui=(Az=319.20°, El=11.40°), target_ctrl=(Az=47.12°, El=10.80°), err=(dAz=2.08°, dEl=0.60°)
+
+[Phase 1: 视觉解析] 收到目标 cx=152.0, cy=884.0, mono=25.1m -> 解算绝对角度: Az=317.66°, El=10.40°
+
+[Phase 1: 视觉解析] 收到目标 cx=88.0, cy=820.0, mono=25.1m -> 解算绝对角度: Az=317.37°, El=10.69°
+
+[Phase 1: 视觉解析] 收到目标 cx=376.0, cy=772.0, mono=25.1m -> 解算绝对角度: Az=318.68°, El=10.91°
+[Phase 3: 预测控制] 目标当前估算Az=317.41°, 速度=-0.03°/s
+                   -> 打提前量(0.25s后)Az=317.41°, El=10.50° | 下发云台指令: Az=47.41°, El=10.50°
+[GimbalAtt] cmd_id=40, elapsed=0.866s, actual_ctrl=(Az=47.10°, El=11.40°), actual_ui=(Az=317.10°, El=11.40°), target_ctrl=(Az=47.12°, El=10.80°), err=(dAz=0.02°, dEl=0.60°)
+
+[Phase 1: 视觉解析] 收到目标 cx=168.0, cy=883.0, mono=25.1m -> 解算绝对角度: Az=317.73°, El=10.40°
+
+[Phase 1: 视觉解析] 收到目标 cx=392.0, cy=771.0, mono=25.1m -> 解算绝对角度: Az=318.75°, El=10.92°
+[Phase 3: 预测控制] 目标当前估算Az=317.50°, 速度=0.02°/s
+                   -> 打提前量(0.25s后)Az=317.50°, El=10.44° | 下发云台指令: Az=47.50°, El=10.44°
+[GimbalAtt] cmd_id=40, elapsed=1.248s, actual_ctrl=(Az=47.10°, El=10.80°), actual_ui=(Az=317.10°, El=10.80°), target_ctrl=(Az=47.12°, El=10.80°), err=(dAz=0.02°, dEl=0.00°)
+[GimbalSettled] cmd_id=40, track_id=25, settle_time=1.248s, actual_ctrl=(Az=47.10°, El=10.80°), target_ctrl=(Az=47.12°, El=10.80°), err=(dAz=0.02°, dEl=0.00°)
+[Laser] Triggered cmd_id=40, track_id=25, dist=4.60m, interval=935.824s
+
+[Phase 1: 视觉解析] 收到目标 cx=376.0, cy=929.0, mono=25.1m -> 解算绝对角度: Az=318.68°, El=10.19°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=320, recv_unique_boxes=211 | ui_send_total=108, ui_unique_ids=9, ui_id_counts=5:45, 4:25, 2:12, 25:10, 11:9, 1:4, 13:1, 26:1
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=937.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.16°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[26]
+[TargetSwitch] reason=master_lost, from=25, to=26, score=-0.06, candidates=id=26, score=-0.06, speed=0.19deg/s, dist=1.54deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=318.53°, 速度=0.00°/s
+                   -> 打提前量(0.25s后)Az=318.53°, El=10.18° | 下发云台指令: Az=48.53°, El=10.18°
+[GimbalCmd] cmd_id=43, track_id=26, target_ctrl=(Az=48.53°, El=10.18°)
+[GimbalAtt] cmd_id=43, elapsed=0.041s, actual_ctrl=(Az=47.80°, El=10.80°), actual_ui=(Az=317.80°, El=10.80°), target_ctrl=(Az=48.53°, El=10.18°), err=(dAz=0.73°, dEl=0.62°)
+[GimbalAtt] cmd_id=43, elapsed=0.270s, actual_ctrl=(Az=47.80°, El=10.80°), actual_ui=(Az=317.80°, El=10.80°), target_ctrl=(Az=48.53°, El=10.18°), err=(dAz=0.73°, dEl=0.62°)
+[GimbalAtt] cmd_id=43, elapsed=0.613s, actual_ctrl=(Az=48.40°, El=10.20°), actual_ui=(Az=318.40°, El=10.20°), target_ctrl=(Az=48.53°, El=10.18°), err=(dAz=0.13°, dEl=0.02°)
+[GimbalSettled] cmd_id=43, track_id=26, settle_time=0.613s, actual_ctrl=(Az=48.40°, El=10.20°), target_ctrl=(Az=48.53°, El=10.18°), err=(dAz=0.13°, dEl=0.02°)
+[Laser] Triggered cmd_id=43, track_id=26, dist=4.70m, interval=4.617s
+
+[Phase 1: 视觉解析] 收到目标 cx=232.0, cy=1016.0, mono=25.1m -> 解算绝对角度: Az=318.02°, El=9.79°
+[Phase 3: 预测控制] 目标当前估算Az=318.37°, 速度=-0.08°/s
+                   -> 打提前量(0.25s后)Az=318.35°, El=9.95° | 下发云台指令: Az=48.35°, El=9.95°
+[Stats] recv_objs_total=322, recv_unique_boxes=213 | ui_send_total=110, ui_unique_ids=9, ui_id_counts=5:45, 4:25, 2:12, 25:10, 11:9, 1:4, 26:3, 13:1
+[GimbalCmd] cmd_id=44, track_id=26, target_ctrl=(Az=48.35°, El=9.95°)
+
+[Phase 1: 视觉解析] 收到目标 cx=187.0, cy=1033.0, mono=25.1m -> 解算绝对角度: Az=317.82°, El=9.72°
+[Phase 3: 预测控制] 目标当前估算Az=318.20°, 速度=-0.16°/s
+                   -> 打提前量(0.25s后)Az=318.16°, El=9.77° | 下发云台指令: Az=48.16°, El=9.77°
+[GimbalAtt] cmd_id=44, elapsed=0.000s, actual_ctrl=(Az=48.40°, El=10.20°), actual_ui=(Az=318.40°, El=10.20°), target_ctrl=(Az=48.35°, El=9.95°), err=(dAz=0.05°, dEl=0.25°)
+[GimbalSettled] cmd_id=44, track_id=26, settle_time=0.000s, actual_ctrl=(Az=48.40°, El=10.20°), target_ctrl=(Az=48.35°, El=9.95°), err=(dAz=0.05°, dEl=0.25°)
+[Laser] Triggered cmd_id=44, track_id=26, dist=4.70m, interval=8.116s
+[GimbalCmd] cmd_id=45, track_id=26, target_ctrl=(Az=48.16°, El=9.77°)
+[GimbalAtt] cmd_id=45, elapsed=0.000s, actual_ctrl=(Az=48.40°, El=9.90°), actual_ui=(Az=318.40°, El=9.90°), target_ctrl=(Az=48.16°, El=9.77°), err=(dAz=0.24°, dEl=0.13°)
+[GimbalSettled] cmd_id=45, track_id=26, settle_time=0.000s, actual_ctrl=(Az=48.40°, El=9.90°), target_ctrl=(Az=48.16°, El=9.77°), err=(dAz=0.24°, dEl=0.13°)
+[Laser] Triggered cmd_id=45, track_id=26, dist=4.70m, interval=0.334s
+
+[Phase 1: 视觉解析] 收到目标 cx=232.0, cy=1011.0, mono=25.1m -> 解算绝对角度: Az=318.02°, El=9.82°
+[Phase 3: 预测控制] 目标当前估算Az=318.12°, 速度=-0.18°/s
+                   -> 打提前量(0.25s后)Az=318.07°, El=9.70° | 下发云台指令: Az=48.07°, El=9.70°
+
+[Phase 1: 视觉解析] 收到目标 cx=168.0, cy=828.0, mono=25.1m -> 解算绝对角度: Az=317.73°, El=10.65°
+
+[Phase 1: 视觉解析] 收到目标 cx=328.0, cy=780.0, mono=25.1m -> 解算绝对角度: Az=318.46°, El=10.88°
+[TargetLost] master_id=26 不再满足锁定条件: valid_ids=[25]
+[TargetSwitch] reason=master_lost, from=26, to=25, score=0.47, candidates=id=25, score=0.47, speed=0.09deg/s, dist=0.82deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=317.65°, 速度=0.08°/s
+                   -> 打提前量(0.25s后)Az=317.67°, El=10.59° | 下发云台指令: Az=47.67°, El=10.59°
+[Stats] recv_objs_total=326, recv_unique_boxes=217 | ui_send_total=113, ui_unique_ids=9, ui_id_counts=5:45, 4:25, 2:12, 25:11, 11:9, 26:5, 1:4, 13:1
+[GimbalCmd] cmd_id=46, track_id=25, target_ctrl=(Az=47.67°, El=10.59°)
+
+[Phase 1: 视觉解析] 收到目标 cx=168.0, cy=819.0, mono=25.1m -> 解算绝对角度: Az=317.73°, El=10.70°
+
+[Phase 1: 视觉解析] 收到目标 cx=328.0, cy=771.0, mono=25.1m -> 解算绝对角度: Az=318.46°, El=10.92°
+[Phase 3: 预测控制] 目标当前估算Az=317.69°, 速度=0.09°/s
+                   -> 打提前量(0.25s后)Az=317.72°, El=10.66° | 下发云台指令: Az=47.72°, El=10.66°
+[GimbalAtt] cmd_id=46, elapsed=0.041s, actual_ctrl=(Az=48.10°, El=10.00°), actual_ui=(Az=318.10°, El=10.00°), target_ctrl=(Az=47.67°, El=10.59°), err=(dAz=0.43°, dEl=0.59°)
+[GimbalAtt] cmd_id=46, elapsed=0.223s, actual_ctrl=(Az=47.50°, El=10.00°), actual_ui=(Az=317.50°, El=10.00°), target_ctrl=(Az=47.67°, El=10.59°), err=(dAz=0.17°, dEl=0.59°)
+
+[Phase 1: 视觉解析] 收到目标 cx=296.0, cy=781.0, mono=25.1m -> 解算绝对角度: Az=318.31°, El=10.87°
+
+[Phase 1: 视觉解析] 收到目标 cx=152.0, cy=829.0, mono=25.1m -> 解算绝对角度: Az=317.66°, El=10.65°
+
+[Phase 1: 视觉解析] 收到目标 cx=216.0, cy=813.0, mono=25.1m -> 解算绝对角度: Az=317.95°, El=10.72°
+[Phase 3: 预测控制] 目标当前估算Az=317.69°, 速度=0.08°/s
+                   -> 打提前量(0.25s后)Az=317.71°, El=10.68° | 下发云台指令: Az=47.71°, El=10.68°
+[GimbalAtt] cmd_id=46, elapsed=0.548s, actual_ctrl=(Az=47.50°, El=10.60°), actual_ui=(Az=317.50°, El=10.60°), target_ctrl=(Az=47.67°, El=10.59°), err=(dAz=0.17°, dEl=0.01°)
+[GimbalSettled] cmd_id=46, track_id=25, settle_time=0.548s, actual_ctrl=(Az=47.50°, El=10.60°), target_ctrl=(Az=47.67°, El=10.59°), err=(dAz=0.17°, dEl=0.01°)
+[Laser] Triggered cmd_id=46, track_id=25, dist=4.70m, interval=10.349s
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=779.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[30]
+[TargetSwitch] reason=master_lost, from=25, to=30, score=0.20, candidates=id=30, score=0.20, speed=0.02deg/s, dist=1.13deg, hits=4, stab=1.29
+[Phase 3: 预测控制] 目标当前估算Az=318.59°, 速度=-0.01°/s
+                   -> 打提前量(0.25s后)Az=318.59°, El=10.88° | 下发云台指令: Az=48.59°, El=10.88°
+[Stats] recv_objs_total=332, recv_unique_boxes=222 | ui_send_total=118, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:13, 2:12, 11:9, 26:6, 1:4, 30:2
+[GimbalCmd] cmd_id=47, track_id=30, target_ctrl=(Az=48.59°, El=10.88°)
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=779.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=875.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.44°
+[Phase 3: 预测控制] 目标当前估算Az=318.73°, 速度=0.06°/s
+                   -> 打提前量(0.25s后)Az=318.75°, El=10.87° | 下发云台指令: Az=48.75°, El=10.87°
+[GimbalAtt] cmd_id=47, elapsed=0.041s, actual_ctrl=(Az=47.50°, El=10.70°), actual_ui=(Az=317.50°, El=10.70°), target_ctrl=(Az=48.59°, El=10.88°), err=(dAz=1.09°, dEl=0.18°)
+[GimbalAtt] cmd_id=47, elapsed=0.349s, actual_ctrl=(Az=48.30°, El=10.80°), actual_ui=(Az=318.30°, El=10.80°), target_ctrl=(Az=48.59°, El=10.88°), err=(dAz=0.29°, dEl=0.08°)
+[GimbalSettled] cmd_id=47, track_id=30, settle_time=0.349s, actual_ctrl=(Az=48.30°, El=10.80°), target_ctrl=(Az=48.59°, El=10.88°), err=(dAz=0.29°, dEl=0.08°)
+[Laser] Triggered cmd_id=47, track_id=30, dist=4.60m, interval=4.706s
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=902.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.32°
+[TargetLost] master_id=30 不再满足锁定条件: valid_ids=[26]
+[TargetSwitch] reason=master_lost, from=30, to=26, score=1.39, candidates=id=26, score=1.39, speed=0.18deg/s, dist=0.53deg, hits=6, stab=1.56
+[Phase 3: 预测控制] 目标当前估算Az=318.00°, 速度=-0.10°/s
+                   -> 打提前量(0.25s后)Az=317.97°, El=10.40° | 下发云台指令: Az=47.97°, El=10.40°
+[Stats] recv_objs_total=335, recv_unique_boxes=222 | ui_send_total=121, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:13, 2:12, 11:9, 26:8, 1:4, 30:3
+[GimbalCmd] cmd_id=48, track_id=26, target_ctrl=(Az=47.97°, El=10.40°)
+[GimbalAtt] cmd_id=48, elapsed=0.041s, actual_ctrl=(Az=48.30°, El=10.80°), actual_ui=(Az=318.30°, El=10.80°), target_ctrl=(Az=47.97°, El=10.40°), err=(dAz=0.33°, dEl=0.40°)
+[GimbalAtt] cmd_id=48, elapsed=0.365s, actual_ctrl=(Az=48.00°, El=10.50°), actual_ui=(Az=318.00°, El=10.50°), target_ctrl=(Az=47.97°, El=10.40°), err=(dAz=0.03°, dEl=0.10°)
+[GimbalSettled] cmd_id=48, track_id=26, settle_time=0.365s, actual_ctrl=(Az=48.00°, El=10.50°), target_ctrl=(Az=47.97°, El=10.40°), err=(dAz=0.03°, dEl=0.10°)
+[Laser] Triggered cmd_id=48, track_id=26, dist=4.70m, interval=72.050s
+
+[Phase 1: 视觉解析] 收到目标 cx=1212.0, cy=1870.5, mono=25.1m -> 解算绝对角度: Az=13.92°, El=5.88°
+[TargetLost] master_id=26 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=336, recv_unique_boxes=222 | ui_send_total=121, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:13, 2:12, 11:9, 26:8, 1:4, 30:3
+
+[Phase 1: 视觉解析] 收到目标 cx=1230.0, cy=1865.0, mono=25.1m -> 解算绝对角度: Az=14.00°, El=5.90°
+[TargetLost] master_id=26 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=337, recv_unique_boxes=223 | ui_send_total=121, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:13, 2:12, 11:9, 26:8, 1:4, 30:3
+
+[Phase 1: 视觉解析] 收到目标 cx=296.0, cy=781.0, mono=25.1m -> 解算绝对角度: Az=318.31°, El=10.87°
+
+[Phase 1: 视觉解析] 收到目标 cx=216.0, cy=813.0, mono=25.1m -> 解算绝对角度: Az=317.95°, El=10.72°
+[TargetLost] master_id=26 不再满足锁定条件: valid_ids=[30]
+[TargetSwitch] reason=master_lost, from=26, to=30, score=0.54, candidates=id=30, score=0.54, speed=0.05deg/s, dist=0.67deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=318.56°, 速度=-0.05°/s
+                   -> 打提前量(0.25s后)Az=318.55°, El=10.87° | 下发云台指令: Az=48.55°, El=10.87°
+[Stats] recv_objs_total=339, recv_unique_boxes=223 | ui_send_total=122, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:13, 2:12, 11:9, 26:8, 1:4, 30:4
+[GimbalCmd] cmd_id=49, track_id=30, target_ctrl=(Az=48.55°, El=10.87°)
+[GimbalAtt] cmd_id=49, elapsed=0.041s, actual_ctrl=(Az=48.00°, El=10.50°), actual_ui=(Az=318.00°, El=10.50°), target_ctrl=(Az=48.55°, El=10.87°), err=(dAz=0.55°, dEl=0.37°)
+[GimbalAtt] cmd_id=49, elapsed=0.366s, actual_ctrl=(Az=48.30°, El=10.80°), actual_ui=(Az=318.30°, El=10.80°), target_ctrl=(Az=48.55°, El=10.87°), err=(dAz=0.25°, dEl=0.07°)
+[GimbalSettled] cmd_id=49, track_id=30, settle_time=0.366s, actual_ctrl=(Az=48.30°, El=10.80°), target_ctrl=(Az=48.55°, El=10.87°), err=(dAz=0.25°, dEl=0.07°)
+[Laser] Triggered cmd_id=49, track_id=30, dist=4.60m, interval=436.198s
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=779.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=318.49°, 速度=-0.08°/s
+                   -> 打提前量(0.25s后)Az=318.47°, El=10.87° | 下发云台指令: Az=48.47°, El=10.87°
+[Stats] recv_objs_total=340, recv_unique_boxes=224 | ui_send_total=123, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:13, 2:12, 11:9, 26:8, 30:5, 1:4
+
+[Phase 1: 视觉解析] 收到目标 cx=296.0, cy=782.0, mono=25.1m -> 解算绝对角度: Az=318.31°, El=10.87°
+
+[Phase 1: 视觉解析] 收到目标 cx=216.0, cy=814.0, mono=25.1m -> 解算绝对角度: Az=317.95°, El=10.72°
+[Phase 3: 预测控制] 目标当前估算Az=318.41°, 速度=-0.11°/s
+                   -> 打提前量(0.25s后)Az=318.39°, El=10.87° | 下发云台指令: Az=48.39°, El=10.87°
+[Stats] recv_objs_total=342, recv_unique_boxes=226 | ui_send_total=124, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:13, 2:12, 11:9, 26:8, 30:6, 1:4
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=897.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.34°
+[Phase 3: 预测控制] 目标当前估算Az=318.39°, 速度=-0.11°/s
+                   -> 打提前量(0.25s后)Az=318.36°, El=10.62° | 下发云台指令: Az=48.36°, El=10.62°
+[Stats] recv_objs_total=343, recv_unique_boxes=226 | ui_send_total=125, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:13, 2:12, 11:9, 26:8, 30:7, 1:4
+[GimbalCmd] cmd_id=50, track_id=30, target_ctrl=(Az=48.36°, El=10.62°)
+[GimbalAtt] cmd_id=50, elapsed=0.001s, actual_ctrl=(Az=48.30°, El=10.80°), actual_ui=(Az=318.30°, El=10.80°), target_ctrl=(Az=48.36°, El=10.62°), err=(dAz=0.06°, dEl=0.18°)
+[GimbalSettled] cmd_id=50, track_id=30, settle_time=0.001s, actual_ctrl=(Az=48.30°, El=10.80°), target_ctrl=(Az=48.36°, El=10.62°), err=(dAz=0.06°, dEl=0.18°)
+[Laser] Triggered cmd_id=50, track_id=30, dist=4.60m, interval=48.835s
+
+[Phase 1: 视觉解析] 收到目标 cx=72.0, cy=944.0, mono=25.1m -> 解算绝对角度: Az=317.29°, El=10.12°
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=944.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.12°
+
+[Phase 1: 视觉解析] 收到目标 cx=120.0, cy=944.0, mono=52.0m -> 解算绝对角度: Az=317.51°, El=10.12°
+
+[Phase 1: 视觉解析] 收到目标 cx=23.5, cy=961.0, mono=25.2m -> 解算绝对角度: Az=317.07°, El=10.05°
+[Phase 3: 预测控制] 目标当前估算Az=318.12°, 速度=-0.23°/s
+                   -> 打提前量(0.25s后)Az=318.06°, El=10.36° | 下发云台指令: Az=48.06°, El=10.36°
+[Stats] recv_objs_total=347, recv_unique_boxes=230 | ui_send_total=126, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:13, 2:12, 11:9, 26:8, 30:8, 1:4
+[GimbalCmd] cmd_id=51, track_id=30, target_ctrl=(Az=48.06°, El=10.36°)
+[GimbalAtt] cmd_id=51, elapsed=0.041s, actual_ctrl=(Az=48.30°, El=10.50°), actual_ui=(Az=318.30°, El=10.50°), target_ctrl=(Az=48.06°, El=10.36°), err=(dAz=0.24°, dEl=0.14°)
+[GimbalSettled] cmd_id=51, track_id=30, settle_time=0.041s, actual_ctrl=(Az=48.30°, El=10.50°), target_ctrl=(Az=48.06°, El=10.36°), err=(dAz=0.24°, dEl=0.14°)
+[Laser] Triggered cmd_id=51, track_id=30, dist=4.70m, interval=15.445s
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=774.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=318.34°, 速度=-0.08°/s
+                   -> 打提前量(0.25s后)Az=318.32°, El=10.53° | 下发云台指令: Az=48.32°, El=10.53°
+[Stats] recv_objs_total=348, recv_unique_boxes=230 | ui_send_total=127, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:13, 2:12, 11:9, 30:9, 26:8, 1:4
+[GimbalCmd] cmd_id=52, track_id=30, target_ctrl=(Az=48.32°, El=10.53°)
+[GimbalAtt] cmd_id=52, elapsed=0.001s, actual_ctrl=(Az=48.10°, El=10.40°), actual_ui=(Az=318.10°, El=10.40°), target_ctrl=(Az=48.32°, El=10.53°), err=(dAz=0.22°, dEl=0.13°)
+[GimbalSettled] cmd_id=52, track_id=30, settle_time=0.001s, actual_ctrl=(Az=48.10°, El=10.40°), target_ctrl=(Az=48.32°, El=10.53°), err=(dAz=0.22°, dEl=0.13°)
+[Laser] Triggered cmd_id=52, track_id=30, dist=4.70m, interval=44.347s
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=895.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.35°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=783.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.86°
+[TargetKeep] reason=lock_timer_expired, master_id=30, score=1.68, candidates=id=30, score=1.68, speed=0.05deg/s, dist=0.48deg, hits=9, stab=1.84, hold=1.15x
+[Phase 3: 预测控制] 目标当前估算Az=318.51°, 速度=0.03°/s
+                   -> 打提前量(0.25s后)Az=318.52°, El=10.64° | 下发云台指令: Az=48.52°, El=10.64°
+[Stats] recv_objs_total=350, recv_unique_boxes=230 | ui_send_total=128, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:13, 2:12, 30:10, 11:9, 26:8, 1:4
+[GimbalCmd] cmd_id=53, track_id=30, target_ctrl=(Az=48.52°, El=10.64°)
+[GimbalAtt] cmd_id=53, elapsed=0.041s, actual_ctrl=(Az=48.10°, El=10.50°), actual_ui=(Az=318.10°, El=10.50°), target_ctrl=(Az=48.52°, El=10.64°), err=(dAz=0.42°, dEl=0.14°)
+[GimbalAtt] cmd_id=53, elapsed=0.340s, actual_ctrl=(Az=48.50°, El=10.60°), actual_ui=(Az=318.50°, El=10.60°), target_ctrl=(Az=48.52°, El=10.64°), err=(dAz=0.02°, dEl=0.04°)
+[GimbalSettled] cmd_id=53, track_id=30, settle_time=0.340s, actual_ctrl=(Az=48.50°, El=10.60°), target_ctrl=(Az=48.52°, El=10.64°), err=(dAz=0.02°, dEl=0.04°)
+[Laser] Triggered cmd_id=53, track_id=30, dist=4.60m, interval=28.917s
+
+[Phase 1: 视觉解析] 收到目标 cx=323.5, cy=1565.5, mono=159.9m -> 解算绝对角度: Az=9.87°, El=7.27°
+[TargetLost] master_id=30 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=351, recv_unique_boxes=231 | ui_send_total=128, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:13, 2:12, 30:10, 11:9, 26:8, 1:4
+
+[Phase 1: 视觉解析] 收到目标 cx=168.0, cy=948.0, mono=25.1m -> 解算绝对角度: Az=317.73°, El=10.11°
+[TargetLost] master_id=30 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=352, recv_unique_boxes=232 | ui_send_total=128, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:13, 2:12, 30:10, 11:9, 26:8, 1:4
+
+[Phase 1: 视觉解析] 收到目标 cx=72.0, cy=891.0, mono=25.1m -> 解算绝对角度: Az=317.29°, El=10.37°
+[TargetLost] master_id=30 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=353, recv_unique_boxes=233 | ui_send_total=128, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:13, 2:12, 30:10, 11:9, 26:8, 1:4
+
+[Phase 1: 视觉解析] 收到目标 cx=408.0, cy=772.0, mono=25.1m -> 解算绝对角度: Az=318.82°, El=10.91°
+[Phase 3: 预测控制] 目标当前估算Az=318.67°, 速度=0.09°/s
+                   -> 打提前量(0.25s后)Az=318.69°, El=10.83° | 下发云台指令: Az=48.69°, El=10.83°
+[GimbalCmd] cmd_id=54, track_id=30, target_ctrl=(Az=48.69°, El=10.83°)
+[GimbalAtt] cmd_id=54, elapsed=0.000s, actual_ctrl=(Az=48.50°, El=10.60°), actual_ui=(Az=318.50°, El=10.60°), target_ctrl=(Az=48.69°, El=10.83°), err=(dAz=0.19°, dEl=0.23°)
+[GimbalSettled] cmd_id=54, track_id=30, settle_time=0.000s, actual_ctrl=(Az=48.50°, El=10.60°), target_ctrl=(Az=48.69°, El=10.83°), err=(dAz=0.19°, dEl=0.23°)
+[Laser] Triggered cmd_id=54, track_id=30, dist=4.60m, interval=221.807s
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=884.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.40°
+[TargetLost] master_id=30 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=355, recv_unique_boxes=234 | ui_send_total=129, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:13, 2:12, 30:11, 11:9, 26:8, 1:4
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=885.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.39°
+[TargetLost] master_id=30 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=883.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.40°
+[TargetLost] master_id=30 不再满足锁定条件: valid_ids=[25]
+[TargetSwitch] reason=master_lost, from=30, to=25, score=0.40, candidates=id=25, score=0.40, speed=0.03deg/s, dist=0.76deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=317.79°, 速度=0.03°/s
+                   -> 打提前量(0.25s后)Az=317.79°, El=10.35° | 下发云台指令: Az=47.79°, El=10.35°
+[GimbalCmd] cmd_id=55, track_id=25, target_ctrl=(Az=47.79°, El=10.35°)
+[GimbalAtt] cmd_id=55, elapsed=0.045s, actual_ctrl=(Az=48.50°, El=10.50°), actual_ui=(Az=318.50°, El=10.50°), target_ctrl=(Az=47.79°, El=10.35°), err=(dAz=0.71°, dEl=0.15°)
+[GimbalAtt] cmd_id=55, elapsed=0.359s, actual_ctrl=(Az=47.80°, El=10.40°), actual_ui=(Az=317.80°, El=10.40°), target_ctrl=(Az=47.79°, El=10.35°), err=(dAz=0.01°, dEl=0.05°)
+[GimbalSettled] cmd_id=55, track_id=25, settle_time=0.359s, actual_ctrl=(Az=47.80°, El=10.40°), target_ctrl=(Az=47.79°, El=10.35°), err=(dAz=0.01°, dEl=0.05°)
+[Laser] Triggered cmd_id=55, track_id=25, dist=4.70m, interval=101.986s
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.89°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[30]
+[TargetSwitch] reason=master_lost, from=25, to=30, score=0.58, candidates=id=30, score=0.58, speed=0.15deg/s, dist=1.15deg, hits=5, stab=1.43
+[Phase 3: 预测控制] 目标当前估算Az=318.84°, 速度=0.12°/s
+                   -> 打提前量(0.25s后)Az=318.87°, El=10.91° | 下发云台指令: Az=48.87°, El=10.91°
+[GimbalCmd] cmd_id=56, track_id=30, target_ctrl=(Az=48.87°, El=10.91°)
+[GimbalAtt] cmd_id=56, elapsed=0.041s, actual_ctrl=(Az=48.50°, El=10.50°), actual_ui=(Az=318.50°, El=10.50°), target_ctrl=(Az=48.87°, El=10.91°), err=(dAz=0.37°, dEl=0.41°)
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=774.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=318.94°, 速度=0.16°/s
+                   -> 打提前量(0.25s后)Az=318.98°, El=10.93° | 下发云台指令: Az=48.98°, El=10.93°
+[GimbalAtt] cmd_id=56, elapsed=0.241s, actual_ctrl=(Az=48.50°, El=10.50°), actual_ui=(Az=318.50°, El=10.50°), target_ctrl=(Az=48.87°, El=10.91°), err=(dAz=0.37°, dEl=0.41°)
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.89°
+[Phase 3: 预测控制] 目标当前估算Az=319.00°, 速度=0.17°/s
+                   -> 打提前量(0.25s后)Az=319.04°, El=10.93° | 下发云台指令: Az=49.04°, El=10.93°
+[Stats] recv_objs_total=360, recv_unique_boxes=234 | ui_send_total=133, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:14, 30:14, 2:12, 11:9, 26:8, 1:4
+[GimbalAtt] cmd_id=56, elapsed=0.584s, actual_ctrl=(Az=48.60°, El=10.90°), actual_ui=(Az=318.60°, El=10.90°), target_ctrl=(Az=48.87°, El=10.91°), err=(dAz=0.27°, dEl=0.01°)
+[GimbalSettled] cmd_id=56, track_id=30, settle_time=0.584s, actual_ctrl=(Az=48.60°, El=10.90°), target_ctrl=(Az=48.87°, El=10.91°), err=(dAz=0.27°, dEl=0.01°)
+[Laser] Triggered cmd_id=56, track_id=30, dist=4.60m, interval=0.918s
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.89°
+[TargetLost] master_id=30 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=782.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.87°
+[TargetLost] master_id=30 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=2696.5, cy=1863.5, mono=159.9m -> 解算绝对角度: Az=329.25°, El=5.91°
+[TargetLost] master_id=30 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=363, recv_unique_boxes=236 | ui_send_total=133, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:14, 30:14, 2:12, 11:9, 26:8, 1:4
+
+[Phase 1: 视觉解析] 收到目标 cx=264.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=318.17°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=825.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.67°
+[TargetLost] master_id=30 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=902.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.32°
+[TargetLost] master_id=30 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=366, recv_unique_boxes=238 | ui_send_total=133, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:14, 30:14, 2:12, 11:9, 26:8, 1:4
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=875.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.44°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=779.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=319.12°, 速度=0.12°/s
+                   -> 打提前量(0.25s后)Az=319.15°, El=10.92° | 下发云台指令: Az=49.15°, El=10.92°
+[GimbalCmd] cmd_id=57, track_id=30, target_ctrl=(Az=49.15°, El=10.92°)
+
+[Phase 1: 视觉解析] 收到目标 cx=168.0, cy=875.0, mono=25.1m -> 解算绝对角度: Az=317.73°, El=10.44°
+
+[Phase 1: 视觉解析] 收到目标 cx=392.0, cy=779.0, mono=25.1m -> 解算绝对角度: Az=318.75°, El=10.88°
+[TargetLost] master_id=30 不再满足锁定条件: valid_ids=[25]
+[TargetSwitch] reason=master_lost, from=30, to=25, score=0.57, candidates=id=25, score=0.57, speed=0.04deg/s, dist=0.80deg, hits=4, stab=1.29
+[Phase 3: 预测控制] 目标当前估算Az=317.94°, 速度=0.04°/s
+                   -> 打提前量(0.25s后)Az=317.95°, El=10.46° | 下发云台指令: Az=47.95°, El=10.46°
+[GimbalAtt] cmd_id=57, elapsed=0.000s, actual_ctrl=(Az=48.60°, El=10.90°), actual_ui=(Az=318.60°, El=10.90°), target_ctrl=(Az=49.15°, El=10.92°), err=(dAz=0.55°, dEl=0.02°)
+[GimbalCmd] preempt cmd_id=58, track_id=25, mode=track_switch, axes=Az+El, target_ctrl=(Az=47.95°, El=10.46°), delta=(dAz=1.20°, dEl=0.45°, total=1.29°)
+[GimbalAtt] cmd_id=58, elapsed=0.000s, actual_ctrl=(Az=48.30°, El=10.80°), actual_ui=(Az=318.30°, El=10.80°), target_ctrl=(Az=47.95°, El=10.46°), err=(dAz=0.35°, dEl=0.34°)
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=894.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.35°
+[Phase 3: 预测控制] 目标当前估算Az=318.07°, 速度=0.10°/s
+                   -> 打提前量(0.25s后)Az=318.10°, El=10.42° | 下发云台指令: Az=48.10°, El=10.42°
+[GimbalAtt] cmd_id=58, elapsed=0.241s, actual_ctrl=(Az=48.30°, El=10.80°), actual_ui=(Az=318.30°, El=10.80°), target_ctrl=(Az=47.95°, El=10.46°), err=(dAz=0.35°, dEl=0.34°)
+[GimbalAtt] cmd_id=58, elapsed=0.584s, actual_ctrl=(Az=47.90°, El=10.50°), actual_ui=(Az=317.90°, El=10.50°), target_ctrl=(Az=47.95°, El=10.46°), err=(dAz=0.05°, dEl=0.04°)
+[GimbalSettled] cmd_id=58, track_id=25, settle_time=0.584s, actual_ctrl=(Az=47.90°, El=10.50°), target_ctrl=(Az=47.95°, El=10.46°), err=(dAz=0.05°, dEl=0.04°)
+[Laser] Triggered cmd_id=58, track_id=25, dist=4.70m, interval=16.891s
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=872.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.45°
+
+[Phase 1: 视觉解析] 收到目标 cx=440.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=318.97°, El=10.89°
+[Phase 3: 预测控制] 目标当前估算Az=318.02°, 速度=0.06°/s
+                   -> 打提前量(0.25s后)Az=318.03°, El=10.43° | 下发云台指令: Az=48.03°, El=10.43°
+[Stats] recv_objs_total=373, recv_unique_boxes=240 | ui_send_total=138, ui_unique_ids=10, ui_id_counts=5:45, 4:25, 25:18, 30:15, 2:12, 11:9, 26:8, 1:4
+
+[Phase 1: 视觉解析] 收到目标 cx=168.0, cy=879.0, mono=25.1m -> 解算绝对角度: Az=317.73°, El=10.42°
+
+[Phase 1: 视觉解析] 收到目标 cx=392.0, cy=783.0, mono=25.1m -> 解算绝对角度: Az=318.75°, El=10.86°
+[Phase 3: 预测控制] 目标当前估算Az=317.95°, 速度=0.02°/s
+                   -> 打提前量(0.25s后)Az=317.95°, El=10.43° | 下发云台指令: Az=47.95°, El=10.43°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.89°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[32]
+[TargetSwitch] reason=master_lost, from=25, to=32, score=0.32, candidates=id=32, score=0.32, speed=0.16deg/s, dist=1.12deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=318.94°, 速度=0.16°/s
+                   -> 打提前量(0.25s后)Az=318.98°, El=10.92° | 下发云台指令: Az=48.98°, El=10.92°
+[GimbalCmd] cmd_id=59, track_id=32, target_ctrl=(Az=48.98°, El=10.92°)
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=780.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=318.98°, 速度=0.17°/s
+                   -> 打提前量(0.25s后)Az=319.02°, El=10.90° | 下发云台指令: Az=49.02°, El=10.90°
+[GimbalAtt] cmd_id=59, elapsed=0.041s, actual_ctrl=(Az=48.70°, El=10.50°), actual_ui=(Az=318.70°, El=10.50°), target_ctrl=(Az=48.98°, El=10.92°), err=(dAz=0.28°, dEl=0.42°)
+[GimbalAtt] cmd_id=59, elapsed=0.241s, actual_ctrl=(Az=48.70°, El=10.50°), actual_ui=(Az=318.70°, El=10.50°), target_ctrl=(Az=48.98°, El=10.92°), err=(dAz=0.28°, dEl=0.42°)
+[GimbalAtt] cmd_id=59, elapsed=0.523s, actual_ctrl=(Az=48.70°, El=11.00°), actual_ui=(Az=318.70°, El=11.00°), target_ctrl=(Az=48.98°, El=10.92°), err=(dAz=0.28°, dEl=0.08°)
+[GimbalSettled] cmd_id=59, track_id=32, settle_time=0.523s, actual_ctrl=(Az=48.70°, El=11.00°), target_ctrl=(Az=48.98°, El=10.92°), err=(dAz=0.28°, dEl=0.08°)
+[Laser] Triggered cmd_id=59, track_id=32, dist=4.60m, interval=28.138s
+
+[Phase 1: 视觉解析] 收到目标 cx=324.0, cy=1567.0, mono=47.2m -> 解算绝对角度: Az=9.87°, El=7.27°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=378, recv_unique_boxes=241 | ui_send_total=141, ui_unique_ids=11, ui_id_counts=5:45, 4:25, 25:19, 30:15, 2:12, 11:9, 26:8, 1:4
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=774.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=319.01°, 速度=0.14°/s
+                   -> 打提前量(0.25s后)Az=319.04°, El=10.91° | 下发云台指令: Az=49.04°, El=10.91°
+[Stats] recv_objs_total=379, recv_unique_boxes=242 | ui_send_total=142, ui_unique_ids=11, ui_id_counts=5:45, 4:25, 25:19, 30:15, 2:12, 11:9, 26:8, 1:4
+
+[Phase 1: 视觉解析] 收到目标 cx=280.0, cy=770.0, mono=25.1m -> 解算绝对角度: Az=318.24°, El=10.92°
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=818.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.70°
+[Phase 3: 预测控制] 目标当前估算Az=318.80°, 速度=-0.00°/s
+                   -> 打提前量(0.25s后)Az=318.80°, El=10.92° | 下发云台指令: Az=48.80°, El=10.92°
+[Stats] recv_objs_total=381, recv_unique_boxes=243 | ui_send_total=144, ui_unique_ids=11, ui_id_counts=5:45, 4:25, 25:20, 30:15, 2:12, 11:9, 26:8, 1:4
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=884.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.40°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[25]
+[TargetSwitch] reason=master_lost, from=32, to=25, score=0.58, candidates=id=25, score=0.58, speed=0.05deg/s, dist=0.95deg, hits=5, stab=1.43
+[Phase 3: 预测控制] 目标当前估算Az=317.88°, 速度=-0.03°/s
+                   -> 打提前量(0.25s后)Az=317.87°, El=10.53° | 下发云台指令: Az=47.87°, El=10.53°
+[GimbalCmd] cmd_id=60, track_id=25, target_ctrl=(Az=47.87°, El=10.53°)
+
+[Phase 1: 视觉解析] 收到目标 cx=392.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=318.75°, El=10.89°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[32]
+[TargetSwitch] reason=master_lost, from=25, to=32, score=1.34, candidates=id=32, score=1.34, speed=0.01deg/s, dist=0.12deg, hits=5, stab=1.43
+[Phase 3: 预测控制] 目标当前估算Az=318.78°, 速度=-0.01°/s
+                   -> 打提前量(0.25s后)Az=318.78°, El=10.91° | 下发云台指令: Az=48.78°, El=10.91°
+[GimbalAtt] cmd_id=60, elapsed=0.041s, actual_ctrl=(Az=48.00°, El=10.90°), actual_ui=(Az=318.00°, El=10.90°), target_ctrl=(Az=47.87°, El=10.53°), err=(dAz=0.13°, dEl=0.37°)
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=318.85°, 速度=0.03°/s
+                   -> 打提前量(0.25s后)Az=318.86°, El=10.90° | 下发云台指令: Az=48.86°, El=10.90°
+[GimbalCmd] preempt cmd_id=61, track_id=32, mode=track_switch, axes=Az+El, target_ctrl=(Az=48.78°, El=10.91°), delta=(dAz=0.91°, dEl=0.38°, total=0.98°)
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=880.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.42°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[25]
+[TargetSwitch] reason=master_lost, from=32, to=25, score=0.92, candidates=id=25, score=0.92, speed=0.04deg/s, dist=0.45deg, hits=4, stab=1.29
+[Phase 3: 预测控制] 目标当前估算Az=317.84°, 速度=-0.04°/s
+                   -> 打提前量(0.25s后)Az=317.83°, El=10.48° | 下发云台指令: Az=47.83°, El=10.48°
+[Stats] recv_objs_total=385, recv_unique_boxes=243 | ui_send_total=148, ui_unique_ids=11, ui_id_counts=5:45, 4:25, 25:22, 30:15, 2:12, 11:9, 26:8, 32:6
+[GimbalAtt] cmd_id=61, elapsed=0.000s, actual_ctrl=(Az=48.60°, El=10.50°), actual_ui=(Az=318.60°, El=10.50°), target_ctrl=(Az=48.78°, El=10.91°), err=(dAz=0.18°, dEl=0.41°)
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=884.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.40°
+[Phase 3: 预测控制] 目标当前估算Az=317.83°, 速度=-0.05°/s
+                   -> 打提前量(0.25s后)Az=317.81°, El=10.44° | 下发云台指令: Az=47.81°, El=10.44°
+[GimbalCmd] preempt cmd_id=62, track_id=25, mode=track_switch, axes=Az+El, target_ctrl=(Az=47.83°, El=10.48°), delta=(dAz=0.95°, dEl=0.43°, total=1.04°)
+[GimbalAtt] cmd_id=62, elapsed=0.000s, actual_ctrl=(Az=47.80°, El=10.50°), actual_ui=(Az=317.80°, El=10.50°), target_ctrl=(Az=47.83°, El=10.48°), err=(dAz=0.03°, dEl=0.02°)
+[GimbalSettled] cmd_id=62, track_id=25, settle_time=0.000s, actual_ctrl=(Az=47.80°, El=10.50°), target_ctrl=(Az=47.83°, El=10.48°), err=(dAz=0.03°, dEl=0.02°)
+[Laser] Triggered cmd_id=62, track_id=25, dist=4.70m, interval=379.666s
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=772.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.91°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[32]
+[TargetSwitch] reason=master_lost, from=25, to=32, score=0.46, candidates=id=32, score=0.46, speed=0.07deg/s, dist=1.11deg, hits=5, stab=1.43
+[Phase 3: 预测控制] 目标当前估算Az=318.93°, 速度=0.07°/s
+                   -> 打提前量(0.25s后)Az=318.94°, El=10.91° | 下发云台指令: Az=48.94°, El=10.91°
+[GimbalCmd] cmd_id=63, track_id=32, target_ctrl=(Az=48.94°, El=10.91°)
+[GimbalAtt] cmd_id=63, elapsed=0.041s, actual_ctrl=(Az=48.60°, El=10.60°), actual_ui=(Az=318.60°, El=10.60°), target_ctrl=(Az=48.94°, El=10.91°), err=(dAz=0.34°, dEl=0.31°)
+[GimbalAtt] cmd_id=63, elapsed=0.241s, actual_ctrl=(Az=48.70°, El=10.60°), actual_ui=(Az=318.70°, El=10.60°), target_ctrl=(Az=48.94°, El=10.91°), err=(dAz=0.24°, dEl=0.31°)
+[GimbalAtt] cmd_id=63, elapsed=0.523s, actual_ctrl=(Az=48.70°, El=10.90°), actual_ui=(Az=318.70°, El=10.90°), target_ctrl=(Az=48.94°, El=10.91°), err=(dAz=0.24°, dEl=0.01°)
+[GimbalSettled] cmd_id=63, track_id=32, settle_time=0.523s, actual_ctrl=(Az=48.70°, El=10.90°), target_ctrl=(Az=48.94°, El=10.91°), err=(dAz=0.24°, dEl=0.01°)
+[Laser] Triggered cmd_id=63, track_id=32, dist=4.60m, interval=1.447s
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=318.93°, 速度=0.06°/s
+                   -> 打提前量(0.25s后)Az=318.94°, El=10.91° | 下发云台指令: Az=48.94°, El=10.91°
+[Stats] recv_objs_total=388, recv_unique_boxes=243 | ui_send_total=151, ui_unique_ids=11, ui_id_counts=5:45, 4:25, 25:23, 30:15, 2:12, 11:9, 26:8, 32:8
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=881.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.41°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[25]
+[TargetSwitch] reason=master_lost, from=32, to=25, score=0.37, candidates=id=25, score=0.37, speed=0.05deg/s, dist=1.02deg, hits=4, stab=1.29
+[Phase 3: 预测控制] 目标当前估算Az=317.80°, 速度=-0.04°/s
+                   -> 打提前量(0.25s后)Az=317.78°, El=10.41° | 下发云台指令: Az=47.78°, El=10.41°
+[GimbalCmd] cmd_id=64, track_id=25, target_ctrl=(Az=47.78°, El=10.41°)
+[GimbalAtt] cmd_id=64, elapsed=0.041s, actual_ctrl=(Az=48.00°, El=10.80°), actual_ui=(Az=318.00°, El=10.80°), target_ctrl=(Az=47.78°, El=10.41°), err=(dAz=0.22°, dEl=0.39°)
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=897.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.34°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=876.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.44°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=780.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=317.79°, 速度=-0.04°/s
+                   -> 打提前量(0.25s后)Az=317.78°, El=10.42° | 下发云台指令: Az=47.78°, El=10.42°
+[GimbalAtt] cmd_id=64, elapsed=0.241s, actual_ctrl=(Az=48.00°, El=10.80°), actual_ui=(Az=318.00°, El=10.80°), target_ctrl=(Az=47.78°, El=10.41°), err=(dAz=0.22°, dEl=0.39°)
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.89°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[32]
+[TargetSwitch] reason=master_lost, from=25, to=32, score=0.80, candidates=id=32, score=0.80, speed=0.05deg/s, dist=0.97deg, hits=7, stab=1.66
+[Phase 3: 预测控制] 目标当前估算Az=318.97°, 速度=0.05°/s
+                   -> 打提前量(0.25s后)Az=318.98°, El=10.89° | 下发云台指令: Az=48.98°, El=10.89°
+[GimbalAtt] cmd_id=64, elapsed=0.584s, actual_ctrl=(Az=47.70°, El=10.50°), actual_ui=(Az=317.70°, El=10.50°), target_ctrl=(Az=47.78°, El=10.41°), err=(dAz=0.08°, dEl=0.09°)
+[GimbalSettled] cmd_id=64, track_id=25, settle_time=0.584s, actual_ctrl=(Az=47.70°, El=10.50°), target_ctrl=(Az=47.78°, El=10.41°), err=(dAz=0.08°, dEl=0.09°)
+[Laser] Triggered cmd_id=64, track_id=25, dist=4.70m, interval=2.618s
+[GimbalCmd] cmd_id=65, track_id=32, target_ctrl=(Az=48.98°, El=10.89°)
+[GimbalAtt] cmd_id=65, elapsed=0.041s, actual_ctrl=(Az=48.50°, El=10.50°), actual_ui=(Az=318.50°, El=10.50°), target_ctrl=(Az=48.98°, El=10.89°), err=(dAz=0.48°, dEl=0.39°)
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=781.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.87°
+[Phase 3: 预测控制] 目标当前估算Az=319.00°, 速度=0.06°/s
+                   -> 打提前量(0.25s后)Az=319.02°, El=10.88° | 下发云台指令: Az=49.02°, El=10.88°
+[GimbalAtt] cmd_id=65, elapsed=0.241s, actual_ctrl=(Az=48.50°, El=10.50°), actual_ui=(Az=318.50°, El=10.50°), target_ctrl=(Az=48.98°, El=10.89°), err=(dAz=0.48°, dEl=0.39°)
+[GimbalAtt] cmd_id=65, elapsed=0.585s, actual_ctrl=(Az=48.80°, El=10.80°), actual_ui=(Az=318.80°, El=10.80°), target_ctrl=(Az=48.98°, El=10.89°), err=(dAz=0.18°, dEl=0.09°)
+[GimbalSettled] cmd_id=65, track_id=32, settle_time=0.585s, actual_ctrl=(Az=48.80°, El=10.80°), target_ctrl=(Az=48.98°, El=10.89°), err=(dAz=0.18°, dEl=0.09°)
+[Laser] Triggered cmd_id=65, track_id=32, dist=4.60m, interval=0.827s
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=895.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.35°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=395, recv_unique_boxes=243 | ui_send_total=156, ui_unique_ids=11, ui_id_counts=5:45, 4:25, 25:25, 30:15, 2:12, 32:11, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.89°
+[Phase 3: 预测控制] 目标当前估算Az=319.04°, 速度=0.07°/s
+                   -> 打提前量(0.25s后)Az=319.05°, El=10.88° | 下发云台指令: Az=49.05°, El=10.88°
+[Stats] recv_objs_total=396, recv_unique_boxes=243 | ui_send_total=157, ui_unique_ids=11, ui_id_counts=5:45, 4:25, 25:25, 30:15, 2:12, 32:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=408.0, cy=780.0, mono=25.1m -> 解算绝对角度: Az=318.82°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=318.98°, 速度=0.03°/s
+                   -> 打提前量(0.25s后)Az=318.98°, El=10.87° | 下发云台指令: Az=48.98°, El=10.87°
+[Stats] recv_objs_total=397, recv_unique_boxes=244 | ui_send_total=158, ui_unique_ids=11, ui_id_counts=5:45, 4:25, 25:25, 30:15, 32:13, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=319.00°, 速度=0.03°/s
+                   -> 打提前量(0.25s后)Az=319.01°, El=10.88° | 下发云台指令: Az=49.01°, El=10.88°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=874.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.44°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=319.02°, 速度=0.04°/s
+                   -> 打提前量(0.25s后)Az=319.03°, El=10.88° | 下发云台指令: Az=49.03°, El=10.88°
+
+[Phase 1: 视觉解析] 收到目标 cx=392.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=318.75°, El=10.90°
+[TargetKeep] reason=lock_timer_expired, master_id=32, score=2.17, candidates=id=32, score=2.17, speed=0.00deg/s, dist=0.17deg, hits=12, stab=2.05, hold=1.15x
+[Phase 3: 预测控制] 目标当前估算Az=318.95°, 速度=-0.00°/s
+                   -> 打提前量(0.25s后)Az=318.95°, El=10.89° | 下发云台指令: Az=48.95°, El=10.89°
+[Stats] recv_objs_total=401, recv_unique_boxes=245 | ui_send_total=161, ui_unique_ids=11, ui_id_counts=5:45, 4:25, 25:25, 32:16, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=779.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=318.98°, 速度=0.01°/s
+                   -> 打提前量(0.25s后)Az=318.98°, El=10.88° | 下发云台指令: Az=48.98°, El=10.88°
+
+[Phase 1: 视觉解析] 收到目标 cx=408.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=318.82°, El=10.89°
+[Phase 3: 预测控制] 目标当前估算Az=318.94°, 速度=-0.01°/s
+                   -> 打提前量(0.25s后)Az=318.94°, El=10.89° | 下发云台指令: Az=48.94°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=774.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=318.93°, 速度=-0.02°/s
+                   -> 打提前量(0.25s后)Az=318.92°, El=10.89° | 下发云台指令: Az=48.92°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=781.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.87°
+[Phase 3: 预测控制] 目标当前估算Az=318.92°, 速度=-0.02°/s
+                   -> 打提前量(0.25s后)Az=318.91°, El=10.88° | 下发云台指令: Az=48.91°, El=10.88°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=318.94°, 速度=-0.00°/s
+                   -> 打提前量(0.25s后)Az=318.94°, El=10.89° | 下发云台指令: Az=48.94°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=504.0, cy=819.0, mono=25.1m -> 解算绝对角度: Az=319.26°, El=10.70°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=883.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.40°
+[Phase 3: 预测控制] 目标当前估算Az=319.02°, 速度=0.05°/s
+                   -> 打提前量(0.25s后)Az=319.04°, El=10.81° | 下发云台指令: Az=49.04°, El=10.81°
+
+[Phase 1: 视觉解析] 收到目标 cx=280.0, cy=770.0, mono=25.1m -> 解算绝对角度: Az=318.24°, El=10.92°
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=818.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.70°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=410, recv_unique_boxes=246 | ui_send_total=167, ui_unique_ids=11, ui_id_counts=5:45, 4:25, 25:25, 32:22, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=2911.0, cy=342.0, mono=25.1m -> 解算绝对角度: Az=330.23°, El=12.88°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=411, recv_unique_boxes=247 | ui_send_total=167, ui_unique_ids=11, ui_id_counts=5:45, 4:25, 25:25, 32:22, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.89°
+[TargetKeep] reason=lock_timer_expired, master_id=32, score=2.47, candidates=id=32, score=2.47, speed=0.04deg/s, dist=0.26deg, hits=17, stab=2.31, hold=1.15x
+[Phase 3: 预测控制] 目标当前估算Az=319.05°, 速度=0.04°/s
+                   -> 打提前量(0.25s后)Az=319.06°, El=10.84° | 下发云台指令: Az=49.06°, El=10.84°
+[Stats] recv_objs_total=412, recv_unique_boxes=247 | ui_send_total=168, ui_unique_ids=11, ui_id_counts=5:45, 4:25, 25:25, 32:23, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=408.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=318.82°, El=10.89°
+[Phase 3: 预测控制] 目标当前估算Az=318.98°, 速度=-0.00°/s
+                   -> 打提前量(0.25s后)Az=318.98°, El=10.87° | 下发云台指令: Az=48.98°, El=10.87°
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=895.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.35°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=876.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.44°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=780.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=319.00°, 速度=0.01°/s
+                   -> 打提前量(0.25s后)Az=319.01°, El=10.87° | 下发云台指令: Az=49.01°, El=10.87°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=883.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.40°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[25]
+[TargetSwitch] reason=master_lost, from=32, to=25, score=0.30, candidates=id=25, score=0.30, speed=0.06deg/s, dist=0.93deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=317.96°, 速度=0.04°/s
+                   -> 打提前量(0.25s后)Az=317.97°, El=10.40° | 下发云台指令: Az=47.97°, El=10.40°
+[GimbalCmd] cmd_id=66, track_id=25, target_ctrl=(Az=47.97°, El=10.40°)
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=774.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+[TargetLost] master_id=25 不再满足锁定条件: valid_ids=[32]
+[GimbalAtt] cmd_id=66, elapsed=0.041s, actual_ctrl=(Az=48.00°, El=10.80°), actual_ui=(Az=318.00°, El=10.80°), target_ctrl=(Az=47.97°, El=10.40°), err=(dAz=0.03°, dEl=0.40°)
+[TargetSwitch] reason=master_lost, from=25, to=32, score=2.17, candidates=id=32, score=2.17, speed=0.02deg/s, dist=0.24deg, hits=18, stab=2.36
+[Phase 3: 预测控制] 目标当前估算Az=319.02°, 速度=0.02°/s
+                   -> 打提前量(0.25s后)Az=319.03°, El=10.89° | 下发云台指令: Az=49.03°, El=10.89°
+[GimbalCmd] preempt cmd_id=67, track_id=32, mode=track_switch, axes=Az+El, target_ctrl=(Az=49.03°, El=10.89°), delta=(dAz=1.06°, dEl=0.49°, total=1.17°)
+[GimbalAtt] cmd_id=67, elapsed=0.000s, actual_ctrl=(Az=48.70°, El=10.50°), actual_ui=(Az=318.70°, El=10.50°), target_ctrl=(Az=49.03°, El=10.89°), err=(dAz=0.33°, dEl=0.39°)
+[GimbalAtt] cmd_id=67, elapsed=0.241s, actual_ctrl=(Az=48.80°, El=10.50°), actual_ui=(Az=318.80°, El=10.50°), target_ctrl=(Az=49.03°, El=10.89°), err=(dAz=0.23°, dEl=0.39°)
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.89°
+[Phase 3: 预测控制] 目标当前估算Az=318.98°, 速度=-0.00°/s
+                   -> 打提前量(0.25s后)Az=318.98°, El=10.90° | 下发云台指令: Az=48.98°, El=10.90°
+[Stats] recv_objs_total=419, recv_unique_boxes=247 | ui_send_total=173, ui_unique_ids=11, ui_id_counts=5:45, 32:27, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+[GimbalAtt] cmd_id=67, elapsed=0.523s, actual_ctrl=(Az=48.80°, El=10.50°), actual_ui=(Az=318.80°, El=10.50°), target_ctrl=(Az=49.03°, El=10.89°), err=(dAz=0.23°, dEl=0.39°)
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=774.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=319.00°, 速度=0.00°/s
+                   -> 打提前量(0.25s后)Az=319.00°, El=10.90° | 下发云台指令: Az=49.00°, El=10.90°
+[GimbalAtt] cmd_id=67, elapsed=0.784s, actual_ctrl=(Az=48.80°, El=10.50°), actual_ui=(Az=318.80°, El=10.50°), target_ctrl=(Az=49.03°, El=10.89°), err=(dAz=0.23°, dEl=0.39°)
+
+[Phase 1: 视觉解析] 收到目标 cx=360.0, cy=784.0, mono=25.1m -> 解算绝对角度: Az=318.60°, El=10.86°
+
+[Phase 1: 视觉解析] 收到目标 cx=264.0, cy=816.0, mono=25.1m -> 解算绝对角度: Az=318.17°, El=10.71°
+[Phase 3: 预测控制] 目标当前估算Az=318.89°, 速度=-0.05°/s
+                   -> 打提前量(0.25s后)Az=318.88°, El=10.89° | 下发云台指令: Az=48.88°, El=10.89°
+[GimbalAtt] cmd_id=67, elapsed=1.046s, actual_ctrl=(Az=48.80°, El=10.50°), actual_ui=(Az=318.80°, El=10.50°), target_ctrl=(Az=49.03°, El=10.89°), err=(dAz=0.23°, dEl=0.39°)
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=318.88°, 速度=-0.05°/s
+                   -> 打提前量(0.25s后)Az=318.87°, El=10.89° | 下发云台指令: Az=48.87°, El=10.89°
+[GimbalAtt] cmd_id=67, elapsed=1.308s, actual_ctrl=(Az=48.80°, El=10.50°), actual_ui=(Az=318.80°, El=10.50°), target_ctrl=(Az=49.03°, El=10.89°), err=(dAz=0.23°, dEl=0.39°)
+[GimbalAtt] cmd_id=67, elapsed=1.569s, actual_ctrl=(Az=48.80°, El=10.50°), actual_ui=(Az=318.80°, El=10.50°), target_ctrl=(Az=49.03°, El=10.89°), err=(dAz=0.23°, dEl=0.39°)
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=772.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.91°
+[Phase 3: 预测控制] 目标当前估算Az=318.88°, 速度=-0.05°/s
+                   -> 打提前量(0.25s后)Az=318.86°, El=10.90° | 下发云台指令: Az=48.86°, El=10.90°
+[GimbalAtt] cmd_id=67, elapsed=1.831s, actual_ctrl=(Az=48.80°, El=10.50°), actual_ui=(Az=318.80°, El=10.50°), target_ctrl=(Az=49.03°, El=10.89°), err=(dAz=0.23°, dEl=0.39°)
+[GimbalAtt] cmd_id=67, elapsed=2.092s, actual_ctrl=(Az=48.80°, El=10.50°), actual_ui=(Az=318.80°, El=10.50°), target_ctrl=(Az=49.03°, El=10.89°), err=(dAz=0.23°, dEl=0.39°)
+[GimbalAtt] cmd_id=67, elapsed=2.354s, actual_ctrl=(Az=48.80°, El=10.50°), actual_ui=(Az=318.80°, El=10.50°), target_ctrl=(Az=49.03°, El=10.89°), err=(dAz=0.23°, dEl=0.39°)
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=893.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.36°
+
+[Phase 1: 视觉解析] 收到目标 cx=520.0, cy=813.0, mono=25.1m -> 解算绝对角度: Az=319.33°, El=10.72°
+[Phase 3: 预测控制] 目标当前估算Az=318.99°, 速度=0.03°/s
+                   -> 打提前量(0.25s后)Az=319.00°, El=10.83° | 下发云台指令: Az=49.00°, El=10.83°
+[Stats] recv_objs_total=426, recv_unique_boxes=251 | ui_send_total=178, ui_unique_ids=11, ui_id_counts=5:45, 32:32, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+[GimbalAtt] cmd_id=67, elapsed=2.615s, actual_ctrl=(Az=48.80°, El=10.50°), actual_ui=(Az=318.80°, El=10.50°), target_ctrl=(Az=49.03°, El=10.89°), err=(dAz=0.23°, dEl=0.39°)
+[GimbalTimeout] cmd_id=67, track_id=32, elapsed=2.615s, actual_ctrl=(Az=48.80°, El=10.50°), target_ctrl=(Az=49.03°, El=10.89°), err=(dAz=0.23°, dEl=0.39°)
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[TargetKeep] reason=lock_timer_expired, master_id=32, score=2.42, candidates=id=32, score=2.42, speed=0.04deg/s, dist=0.41deg, hits=25, stab=2.44, hold=1.15x
+[Phase 3: 预测控制] 目标当前估算Az=319.01°, 速度=0.03°/s
+                   -> 打提前量(0.25s后)Az=319.02°, El=10.84° | 下发云台指令: Az=49.02°, El=10.84°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=882.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.41°
+
+[Phase 1: 视觉解析] 收到目标 cx=488.0, cy=818.0, mono=25.1m -> 解算绝对角度: Az=319.19°, El=10.70°
+[Phase 3: 预测控制] 目标当前估算Az=319.06°, 速度=0.06°/s
+                   -> 打提前量(0.25s后)Az=319.08°, El=10.77° | 下发云台指令: Az=49.08°, El=10.77°
+[Stats] recv_objs_total=429, recv_unique_boxes=251 | ui_send_total=180, ui_unique_ids=11, ui_id_counts=5:45, 32:34, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+[GimbalCmd] cmd_id=68, track_id=32, target_ctrl=(Az=49.08°, El=10.77°)
+[GimbalAtt] cmd_id=68, elapsed=0.000s, actual_ctrl=(Az=48.80°, El=10.50°), actual_ui=(Az=318.80°, El=10.50°), target_ctrl=(Az=49.08°, El=10.77°), err=(dAz=0.28°, dEl=0.27°)
+[GimbalSettled] cmd_id=68, track_id=32, settle_time=0.000s, actual_ctrl=(Az=48.80°, El=10.50°), target_ctrl=(Az=49.08°, El=10.77°), err=(dAz=0.28°, dEl=0.27°)
+[Laser] Triggered cmd_id=68, track_id=32, dist=4.70m, interval=172.735s
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=319.07°, 速度=0.05°/s
+                   -> 打提前量(0.25s后)Az=319.08°, El=10.81° | 下发云台指令: Az=49.08°, El=10.81°
+
+[Phase 1: 视觉解析] 收到目标 cx=3136.0, cy=168.0, mono=25.1m -> 解算绝对角度: Az=331.26°, El=13.68°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=431, recv_unique_boxes=252 | ui_send_total=181, ui_unique_ids=11, ui_id_counts=5:45, 32:35, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=3307.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=332.03°, El=11.55°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=432, recv_unique_boxes=253 | ui_send_total=181, ui_unique_ids=11, ui_id_counts=5:45, 32:35, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=3135.0, cy=168.0, mono=25.1m -> 解算绝对角度: Az=331.25°, El=13.68°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[37]
+[TargetSwitch] reason=master_lost, from=32, to=37, score=-11.18, candidates=id=37, score=-11.18, speed=0.28deg/s, dist=12.86deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=331.41°, 速度=0.14°/s
+                   -> 打提前量(0.25s后)Az=331.44°, El=12.95° | 下发云台指令: Az=61.44°, El=12.95°
+[Stats] recv_objs_total=433, recv_unique_boxes=253 | ui_send_total=182, ui_unique_ids=12, ui_id_counts=5:45, 32:35, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+[GimbalCmd] cmd_id=69, track_id=37, target_ctrl=(Az=61.44°, El=12.95°)
+[GimbalAtt] cmd_id=69, elapsed=0.041s, actual_ctrl=(Az=49.60°, El=10.50°), actual_ui=(Az=319.60°, El=10.50°), target_ctrl=(Az=61.44°, El=12.95°), err=(dAz=11.84°, dEl=2.45°)
+[GimbalAtt] cmd_id=69, elapsed=0.302s, actual_ctrl=(Az=53.40°, El=11.50°), actual_ui=(Az=323.40°, El=11.50°), target_ctrl=(Az=61.44°, El=12.95°), err=(dAz=8.04°, dEl=1.45°)
+[GimbalAtt] cmd_id=69, elapsed=0.564s, actual_ctrl=(Az=53.40°, El=11.50°), actual_ui=(Az=323.40°, El=11.50°), target_ctrl=(Az=61.44°, El=12.95°), err=(dAz=8.04°, dEl=1.45°)
+[GimbalAtt] cmd_id=69, elapsed=1.066s, actual_ctrl=(Az=61.40°, El=13.00°), actual_ui=(Az=331.40°, El=13.00°), target_ctrl=(Az=61.44°, El=12.95°), err=(dAz=0.04°, dEl=0.05°)
+[GimbalSettled] cmd_id=69, track_id=37, settle_time=1.066s, actual_ctrl=(Az=61.40°, El=13.00°), target_ctrl=(Az=61.44°, El=12.95°), err=(dAz=0.04°, dEl=0.05°)
+[Laser] Triggered cmd_id=69, track_id=37, dist=4.60m, interval=82.990s
+
+[Phase 1: 视觉解析] 收到目标 cx=3118.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.17°, El=11.55°
+[Phase 3: 预测控制] 目标当前估算Az=331.34°, 速度=0.01°/s
+                   -> 打提前量(0.25s后)Az=331.34°, El=11.83° | 下发云台指令: Az=61.34°, El=11.83°
+[Stats] recv_objs_total=434, recv_unique_boxes=254 | ui_send_total=183, ui_unique_ids=12, ui_id_counts=5:45, 32:35, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+[GimbalCmd] cmd_id=70, track_id=37, target_ctrl=(Az=61.34°, El=11.83°)
+[GimbalAtt] cmd_id=70, elapsed=0.001s, actual_ctrl=(Az=61.40°, El=12.90°), actual_ui=(Az=331.40°, El=12.90°), target_ctrl=(Az=61.34°, El=11.83°), err=(dAz=0.06°, dEl=1.07°)
+[GimbalAtt] cmd_id=70, elapsed=0.262s, actual_ctrl=(Az=61.40°, El=12.10°), actual_ui=(Az=331.40°, El=12.10°), target_ctrl=(Az=61.34°, El=11.83°), err=(dAz=0.06°, dEl=0.27°)
+[GimbalSettled] cmd_id=70, track_id=37, settle_time=0.262s, actual_ctrl=(Az=61.40°, El=12.10°), target_ctrl=(Az=61.34°, El=11.83°), err=(dAz=0.06°, dEl=0.27°)
+[Laser] No valid laser distance, use mono distance
+
+[Phase 1: 视觉解析] 收到目标 cx=504.0, cy=817.0, mono=25.1m -> 解算绝对角度: Az=319.26°, El=10.71°
+[TargetLost] master_id=37 不再满足锁定条件: valid_ids=[32]
+[TargetSwitch] reason=master_lost, from=37, to=32, score=-9.61, candidates=id=32, score=-9.61, speed=0.10deg/s, dist=12.25deg, hits=24, stab=2.44
+[Phase 3: 预测控制] 目标当前估算Az=319.20°, 速度=0.08°/s
+                   -> 打提前量(0.25s后)Az=319.22°, El=10.71° | 下发云台指令: Az=49.22°, El=10.71°
+[Stats] recv_objs_total=435, recv_unique_boxes=254 | ui_send_total=184, ui_unique_ids=12, ui_id_counts=5:45, 32:36, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+[GimbalCmd] cmd_id=71, track_id=32, target_ctrl=(Az=49.22°, El=10.71°)
+[GimbalAtt] cmd_id=71, elapsed=0.041s, actual_ctrl=(Az=60.60°, El=11.80°), actual_ui=(Az=330.60°, El=11.80°), target_ctrl=(Az=49.22°, El=10.71°), err=(dAz=11.38°, dEl=1.09°)
+[GimbalAtt] cmd_id=71, elapsed=0.303s, actual_ctrl=(Az=60.60°, El=10.80°), actual_ui=(Az=330.60°, El=10.80°), target_ctrl=(Az=49.22°, El=10.71°), err=(dAz=11.38°, dEl=0.09°)
+[GimbalAtt] cmd_id=71, elapsed=0.624s, actual_ctrl=(Az=49.60°, El=10.80°), actual_ui=(Az=319.60°, El=10.80°), target_ctrl=(Az=49.22°, El=10.71°), err=(dAz=0.38°, dEl=0.09°)
+[GimbalAtt] cmd_id=71, elapsed=0.824s, actual_ctrl=(Az=49.30°, El=10.80°), actual_ui=(Az=319.30°, El=10.80°), target_ctrl=(Az=49.22°, El=10.71°), err=(dAz=0.08°, dEl=0.09°)
+[GimbalSettled] cmd_id=71, track_id=32, settle_time=0.824s, actual_ctrl=(Az=49.30°, El=10.80°), target_ctrl=(Az=49.22°, El=10.71°), err=(dAz=0.08°, dEl=0.09°)
+[Laser] Triggered cmd_id=71, track_id=32, dist=4.60m, interval=71.100s
+
+[Phase 1: 视觉解析] 收到目标 cx=440.0, cy=773.0, mono=25.1m -> 解算绝对角度: Az=318.97°, El=10.91°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=885.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.39°
+[Phase 3: 预测控制] 目标当前估算Az=319.12°, 速度=0.04°/s
+                   -> 打提前量(0.25s后)Az=319.13°, El=10.81° | 下发云台指令: Az=49.13°, El=10.81°
+[Stats] recv_objs_total=437, recv_unique_boxes=255 | ui_send_total=185, ui_unique_ids=12, ui_id_counts=5:45, 32:37, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=324.0, cy=1565.5, mono=155.9m -> 解算绝对角度: Az=9.87°, El=7.27°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=438, recv_unique_boxes=256 | ui_send_total=185, ui_unique_ids=12, ui_id_counts=5:45, 32:37, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=781.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.87°
+[Phase 3: 预测控制] 目标当前估算Az=319.10°, 速度=0.02°/s
+                   -> 打提前量(0.25s后)Az=319.11°, El=10.84° | 下发云台指令: Az=49.11°, El=10.84°
+[GimbalCmd] cmd_id=72, track_id=32, target_ctrl=(Az=49.11°, El=10.84°)
+[GimbalAtt] cmd_id=72, elapsed=0.000s, actual_ctrl=(Az=49.30°, El=10.80°), actual_ui=(Az=319.30°, El=10.80°), target_ctrl=(Az=49.11°, El=10.84°), err=(dAz=0.19°, dEl=0.04°)
+[GimbalSettled] cmd_id=72, track_id=32, settle_time=0.000s, actual_ctrl=(Az=49.30°, El=10.80°), target_ctrl=(Az=49.11°, El=10.84°), err=(dAz=0.19°, dEl=0.04°)
+[Laser] Triggered cmd_id=72, track_id=32, dist=4.60m, interval=29.285s
+
+[Phase 1: 视觉解析] 收到目标 cx=250.0, cy=781.0, mono=25.1m -> 解算绝对角度: Az=318.10°, El=10.87°
+
+[Phase 1: 视觉解析] 收到目标 cx=186.0, cy=829.0, mono=25.1m -> 解算绝对角度: Az=317.81°, El=10.65°
+[Phase 3: 预测控制] 目标当前估算Az=318.76°, 速度=-0.14°/s
+                   -> 打提前量(0.25s后)Az=318.73°, El=10.86° | 下发云台指令: Az=48.73°, El=10.86°
+[Stats] recv_objs_total=441, recv_unique_boxes=258 | ui_send_total=187, ui_unique_ids=12, ui_id_counts=5:45, 32:39, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+[GimbalCmd] cmd_id=73, track_id=32, target_ctrl=(Az=48.73°, El=10.86°)
+[GimbalAtt] cmd_id=73, elapsed=0.000s, actual_ctrl=(Az=49.30°, El=10.80°), actual_ui=(Az=319.30°, El=10.80°), target_ctrl=(Az=48.73°, El=10.86°), err=(dAz=0.57°, dEl=0.06°)
+[GimbalAtt] cmd_id=73, elapsed=0.182s, actual_ctrl=(Az=48.60°, El=10.80°), actual_ui=(Az=318.60°, El=10.80°), target_ctrl=(Az=48.73°, El=10.86°), err=(dAz=0.13°, dEl=0.06°)
+[GimbalSettled] cmd_id=73, track_id=32, settle_time=0.182s, actual_ctrl=(Az=48.60°, El=10.80°), target_ctrl=(Az=48.73°, El=10.86°), err=(dAz=0.13°, dEl=0.06°)
+[Laser] Triggered cmd_id=73, track_id=32, dist=4.60m, interval=28.538s
+
+[Phase 1: 视觉解析] 收到目标 cx=324.0, cy=1567.0, mono=47.2m -> 解算绝对角度: Az=9.87°, El=7.27°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=442, recv_unique_boxes=258 | ui_send_total=187, ui_unique_ids=12, ui_id_counts=5:45, 32:39, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=918.5, cy=1061.5, mono=159.9m -> 解算绝对角度: Az=12.58°, El=9.58°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=443, recv_unique_boxes=259 | ui_send_total=187, ui_unique_ids=12, ui_id_counts=5:45, 32:39, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=2924.0, cy=341.0, mono=25.1m -> 解算绝对角度: Az=330.29°, El=12.89°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=444, recv_unique_boxes=260 | ui_send_total=187, ui_unique_ids=12, ui_id_counts=5:45, 32:39, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=773.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.91°
+[Phase 3: 预测控制] 目标当前估算Az=318.83°, 速度=-0.05°/s
+                   -> 打提前量(0.25s后)Az=318.81°, El=10.91° | 下发云台指令: Az=48.81°, El=10.91°
+[Stats] recv_objs_total=445, recv_unique_boxes=260 | ui_send_total=188, ui_unique_ids=12, ui_id_counts=5:45, 32:40, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=2935.0, cy=342.0, mono=25.1m -> 解算绝对角度: Az=330.34°, El=12.88°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=446, recv_unique_boxes=261 | ui_send_total=188, ui_unique_ids=12, ui_id_counts=5:45, 32:40, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=883.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.40°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=447, recv_unique_boxes=261 | ui_send_total=188, ui_unique_ids=12, ui_id_counts=5:45, 32:40, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=2911.0, cy=341.0, mono=25.1m -> 解算绝对角度: Az=330.23°, El=12.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=3503.0, cy=789.0, mono=25.1m -> 解算绝对角度: Az=332.93°, El=10.83°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=449, recv_unique_boxes=263 | ui_send_total=188, ui_unique_ids=12, ui_id_counts=5:45, 32:40, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=2915.0, cy=342.0, mono=25.1m -> 解算绝对角度: Az=330.25°, El=12.88°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=3140.0, cy=168.0, mono=25.1m -> 解算绝对角度: Az=331.27°, El=13.68°
+
+[Phase 1: 视觉解析] 收到目标 cx=3140.0, cy=88.0, mono=25.1m -> 解算绝对角度: Az=331.27°, El=14.05°
+
+[Phase 1: 视觉解析] 收到目标 cx=3140.0, cy=312.0, mono=25.1m -> 解算绝对角度: Az=331.27°, El=13.02°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[37]
+[TargetSwitch] reason=master_lost, from=32, to=37, score=-10.28, candidates=id=37, score=-10.28, speed=0.36deg/s, dist=12.10deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=330.46°, 速度=-0.13°/s
+                   -> 打提前量(0.25s后)Az=330.42°, El=13.29° | 下发云台指令: Az=60.42°, El=13.29°
+[Stats] recv_objs_total=453, recv_unique_boxes=266 | ui_send_total=189, ui_unique_ids=12, ui_id_counts=5:45, 32:40, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+[GimbalCmd] cmd_id=74, track_id=37, target_ctrl=(Az=60.42°, El=13.29°)
+[GimbalAtt] cmd_id=74, elapsed=0.041s, actual_ctrl=(Az=49.40°, El=10.80°), actual_ui=(Az=319.40°, El=10.80°), target_ctrl=(Az=60.42°, El=13.29°), err=(dAz=11.02°, dEl=2.49°)
+[GimbalAtt] cmd_id=74, elapsed=0.302s, actual_ctrl=(Az=53.20°, El=11.80°), actual_ui=(Az=323.20°, El=11.80°), target_ctrl=(Az=60.42°, El=13.29°), err=(dAz=7.22°, dEl=1.49°)
+[GimbalAtt] cmd_id=74, elapsed=0.564s, actual_ctrl=(Az=53.20°, El=11.80°), actual_ui=(Az=323.20°, El=11.80°), target_ctrl=(Az=60.42°, El=13.29°), err=(dAz=7.22°, dEl=1.49°)
+[GimbalAtt] cmd_id=74, elapsed=0.966s, actual_ctrl=(Az=60.30°, El=13.20°), actual_ui=(Az=330.30°, El=13.20°), target_ctrl=(Az=60.42°, El=13.29°), err=(dAz=0.12°, dEl=0.09°)
+[GimbalSettled] cmd_id=74, track_id=37, settle_time=0.966s, actual_ctrl=(Az=60.30°, El=13.20°), target_ctrl=(Az=60.42°, El=13.29°), err=(dAz=0.12°, dEl=0.09°)
+[Laser] Triggered cmd_id=74, track_id=37, dist=4.00m, interval=160.633s
+
+[Phase 1: 视觉解析] 收到目标 cx=3150.0, cy=216.0, mono=25.1m -> 解算绝对角度: Az=331.32°, El=13.46°
+[TargetLost] master_id=37 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=454, recv_unique_boxes=266 | ui_send_total=189, ui_unique_ids=12, ui_id_counts=5:45, 32:40, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=360.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=318.60°, El=10.90°
+[TargetLost] master_id=37 不再满足锁定条件: valid_ids=[32]
+[TargetSwitch] reason=master_lost, from=37, to=32, score=-9.31, candidates=id=32, score=-9.31, speed=0.09deg/s, dist=11.87deg, hits=19, stab=2.40
+[Phase 3: 预测控制] 目标当前估算Az=318.65°, 速度=-0.08°/s
+                   -> 打提前量(0.25s后)Az=318.63°, El=10.91° | 下发云台指令: Az=48.63°, El=10.91°
+[Stats] recv_objs_total=455, recv_unique_boxes=267 | ui_send_total=190, ui_unique_ids=12, ui_id_counts=5:45, 32:41, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+[GimbalCmd] cmd_id=75, track_id=32, target_ctrl=(Az=48.63°, El=10.91°)
+[GimbalAtt] cmd_id=75, elapsed=0.041s, actual_ctrl=(Az=59.50°, El=13.20°), actual_ui=(Az=329.50°, El=13.20°), target_ctrl=(Az=48.63°, El=10.91°), err=(dAz=10.87°, dEl=2.29°)
+[GimbalAtt] cmd_id=75, elapsed=0.302s, actual_ctrl=(Az=55.70°, El=12.20°), actual_ui=(Az=325.70°, El=12.20°), target_ctrl=(Az=48.63°, El=10.91°), err=(dAz=7.07°, dEl=1.29°)
+[GimbalAtt] cmd_id=75, elapsed=0.553s, actual_ctrl=(Az=49.60°, El=12.20°), actual_ui=(Az=319.60°, El=12.20°), target_ctrl=(Az=48.63°, El=10.91°), err=(dAz=0.97°, dEl=1.29°)
+[GimbalAtt] cmd_id=75, elapsed=0.799s, actual_ctrl=(Az=48.60°, El=12.20°), actual_ui=(Az=318.60°, El=12.20°), target_ctrl=(Az=48.63°, El=10.91°), err=(dAz=0.03°, dEl=1.29°)
+[GimbalAtt] cmd_id=75, elapsed=1.081s, actual_ctrl=(Az=48.60°, El=10.90°), actual_ui=(Az=318.60°, El=10.90°), target_ctrl=(Az=48.63°, El=10.91°), err=(dAz=0.03°, dEl=0.01°)
+[GimbalSettled] cmd_id=75, track_id=32, settle_time=1.081s, actual_ctrl=(Az=48.60°, El=10.90°), target_ctrl=(Az=48.63°, El=10.91°), err=(dAz=0.03°, dEl=0.01°)
+[Laser] Triggered cmd_id=75, track_id=32, dist=4.60m, interval=55.959s
+
+[Phase 1: 视觉解析] 收到目标 cx=2851.0, cy=72.0, mono=25.1m -> 解算绝对角度: Az=329.96°, El=14.12°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=456, recv_unique_boxes=268 | ui_send_total=190, ui_unique_ids=12, ui_id_counts=5:45, 32:41, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=779.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=318.83°, 速度=0.00°/s
+                   -> 打提前量(0.25s后)Az=318.83°, El=10.89° | 下发云台指令: Az=48.83°, El=10.89°
+[Stats] recv_objs_total=457, recv_unique_boxes=268 | ui_send_total=191, ui_unique_ids=12, ui_id_counts=5:45, 32:42, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=296.0, cy=784.0, mono=25.1m -> 解算绝对角度: Az=318.31°, El=10.86°
+
+[Phase 1: 视觉解析] 收到目标 cx=216.0, cy=816.0, mono=25.1m -> 解算绝对角度: Az=317.95°, El=10.71°
+[Phase 3: 预测控制] 目标当前估算Az=318.63°, 速度=-0.08°/s
+                   -> 打提前量(0.25s后)Az=318.61°, El=10.87° | 下发云台指令: Az=48.61°, El=10.87°
+[Stats] recv_objs_total=459, recv_unique_boxes=270 | ui_send_total=192, ui_unique_ids=12, ui_id_counts=5:45, 32:43, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=318.70°, 速度=-0.04°/s
+                   -> 打提前量(0.25s后)Az=318.69°, El=10.88° | 下发云台指令: Az=48.69°, El=10.88°
+[Stats] recv_objs_total=460, recv_unique_boxes=270 | ui_send_total=193, ui_unique_ids=12, ui_id_counts=5:45, 32:44, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=3150.0, cy=168.0, mono=25.1m -> 解算绝对角度: Az=331.32°, El=13.68°
+
+[Phase 1: 视觉解析] 收到目标 cx=3150.0, cy=312.0, mono=25.1m -> 解算绝对角度: Az=331.32°, El=13.02°
+
+[Phase 1: 视觉解析] 收到目标 cx=3150.0, cy=88.0, mono=25.1m -> 解算绝对角度: Az=331.32°, El=14.05°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=463, recv_unique_boxes=273 | ui_send_total=193, ui_unique_ids=12, ui_id_counts=5:45, 32:44, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=3477.5, cy=627.5, mono=159.9m -> 解算绝对角度: Az=332.81°, El=11.57°
+
+[Phase 1: 视觉解析] 收到目标 cx=2882.0, cy=152.0, mono=25.1m -> 解算绝对角度: Az=330.10°, El=13.75°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=3116.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.16°, El=11.55°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[40]
+[TargetSwitch] reason=master_lost, from=32, to=40, score=-9.62, candidates=id=40, score=-9.62, speed=1.10deg/s, dist=12.93deg, hits=3, stab=1.11
+[Phase 3: 预测控制] 目标当前估算Az=331.50°, 速度=0.07°/s
+                   -> 打提前量(0.25s后)Az=331.52°, El=11.38° | 下发云台指令: Az=61.52°, El=11.38°
+[Stats] recv_objs_total=466, recv_unique_boxes=276 | ui_send_total=194, ui_unique_ids=13, ui_id_counts=5:45, 32:44, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+[GimbalCmd] cmd_id=76, track_id=40, target_ctrl=(Az=61.52°, El=11.38°)
+[GimbalAtt] cmd_id=76, elapsed=0.041s, actual_ctrl=(Az=49.40°, El=11.00°), actual_ui=(Az=319.40°, El=11.00°), target_ctrl=(Az=61.52°, El=11.38°), err=(dAz=12.12°, dEl=0.38°)
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=882.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.41°
+
+[Phase 1: 视觉解析] 收到目标 cx=504.0, cy=818.0, mono=25.1m -> 解算绝对角度: Az=319.26°, El=10.70°
+[TargetLost] master_id=40 不再满足锁定条件: valid_ids=[32]
+[TargetSwitch] reason=master_lost, from=40, to=32, score=2.14, candidates=id=32, score=2.14, speed=0.12deg/s, dist=0.51deg, hits=19, stab=2.40
+[Phase 3: 预测控制] 目标当前估算Az=318.95°, 速度=0.10°/s
+                   -> 打提前量(0.25s后)Az=318.98°, El=10.74° | 下发云台指令: Az=48.98°, El=10.74°
+[GimbalAtt] cmd_id=76, elapsed=0.241s, actual_ctrl=(Az=52.40°, El=11.00°), actual_ui=(Az=322.40°, El=11.00°), target_ctrl=(Az=61.52°, El=11.38°), err=(dAz=9.12°, dEl=0.38°)
+[GimbalCmd] preempt cmd_id=77, track_id=32, mode=track_switch, axes=Az+El, target_ctrl=(Az=48.98°, El=10.74°), delta=(dAz=12.55°, dEl=0.64°, total=12.56°)
+[GimbalAtt] cmd_id=77, elapsed=0.000s, actual_ctrl=(Az=53.20°, El=11.30°), actual_ui=(Az=323.20°, El=11.30°), target_ctrl=(Az=48.98°, El=10.74°), err=(dAz=4.22°, dEl=0.56°)
+[GimbalAtt] cmd_id=77, elapsed=0.260s, actual_ctrl=(Az=53.20°, El=11.30°), actual_ui=(Az=323.20°, El=11.30°), target_ctrl=(Az=48.98°, El=10.74°), err=(dAz=4.22°, dEl=0.56°)
+[GimbalAtt] cmd_id=77, elapsed=0.561s, actual_ctrl=(Az=48.90°, El=10.80°), actual_ui=(Az=318.90°, El=10.80°), target_ctrl=(Az=48.98°, El=10.74°), err=(dAz=0.08°, dEl=0.06°)
+[GimbalSettled] cmd_id=77, track_id=32, settle_time=0.561s, actual_ctrl=(Az=48.90°, El=10.80°), target_ctrl=(Az=48.98°, El=10.74°), err=(dAz=0.08°, dEl=0.06°)
+[Laser] Triggered cmd_id=77, track_id=32, dist=4.60m, interval=90.434s
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=319.00°, 速度=0.11°/s
+                   -> 打提前量(0.25s后)Az=319.03°, El=10.81° | 下发云台指令: Az=49.03°, El=10.81°
+[Stats] recv_objs_total=469, recv_unique_boxes=276 | ui_send_total=196, ui_unique_ids=13, ui_id_counts=32:46, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=340.0, cy=1570.0, mono=47.2m -> 解算绝对角度: Az=9.94°, El=7.25°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=470, recv_unique_boxes=277 | ui_send_total=196, ui_unique_ids=13, ui_id_counts=32:46, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=877.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.43°
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=781.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.87°
+[Phase 3: 预测控制] 目标当前估算Az=318.99°, 速度=0.08°/s
+                   -> 打提前量(0.25s后)Az=319.01°, El=10.84° | 下发云台指令: Az=49.01°, El=10.84°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=874.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.44°
+
+[Phase 1: 视觉解析] 收到目标 cx=504.0, cy=810.0, mono=25.1m -> 解算绝对角度: Az=319.26°, El=10.74°
+[Phase 3: 预测控制] 目标当前估算Az=319.10°, 速度=0.12°/s
+                   -> 打提前量(0.25s后)Az=319.13°, El=10.78° | 下发云台指令: Az=49.13°, El=10.78°
+[Stats] recv_objs_total=474, recv_unique_boxes=277 | ui_send_total=198, ui_unique_ids=13, ui_id_counts=32:48, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=328.0, cy=816.0, mono=25.1m -> 解算绝对角度: Az=318.46°, El=10.71°
+[Phase 3: 预测控制] 目标当前估算Az=318.92°, 速度=0.01°/s
+                   -> 打提前量(0.25s后)Az=318.93°, El=10.74° | 下发云台指令: Az=48.93°, El=10.74°
+[Stats] recv_objs_total=475, recv_unique_boxes=278 | ui_send_total=199, ui_unique_ids=13, ui_id_counts=32:49, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=318.96°, 速度=0.03°/s
+                   -> 打提前量(0.25s后)Az=318.97°, El=10.79° | 下发云台指令: Az=48.97°, El=10.79°
+
+[Phase 1: 视觉解析] 收到目标 cx=3149.0, cy=168.0, mono=25.1m -> 解算绝对角度: Az=331.31°, El=13.68°
+
+[Phase 1: 视觉解析] 收到目标 cx=3149.0, cy=88.0, mono=25.1m -> 解算绝对角度: Az=331.31°, El=14.05°
+
+[Phase 1: 视觉解析] 收到目标 cx=3149.0, cy=312.0, mono=25.1m -> 解算绝对角度: Az=331.31°, El=13.02°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=479, recv_unique_boxes=278 | ui_send_total=200, ui_unique_ids=13, ui_id_counts=32:50, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=882.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.41°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=480, recv_unique_boxes=278 | ui_send_total=200, ui_unique_ids=13, ui_id_counts=32:50, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=781.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.87°
+[TargetKeep] reason=lock_timer_expired, master_id=32, score=2.78, candidates=id=32, score=2.78, speed=0.05deg/s, dist=0.11deg, hits=22, stab=2.44, hold=1.15x
+[Phase 3: 预测控制] 目标当前估算Az=319.01°, 速度=0.05°/s
+                   -> 打提前量(0.25s后)Az=319.02°, El=10.84° | 下发云台指令: Az=49.02°, El=10.84°
+[Stats] recv_objs_total=481, recv_unique_boxes=278 | ui_send_total=201, ui_unique_ids=13, ui_id_counts=32:51, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=783.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.86°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=879.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.42°
+[Phase 3: 预测控制] 目标当前估算Az=319.03°, 速度=0.05°/s
+                   -> 打提前量(0.25s后)Az=319.04°, El=10.85° | 下发云台指令: Az=49.04°, El=10.85°
+[Stats] recv_objs_total=483, recv_unique_boxes=278 | ui_send_total=202, ui_unique_ids=13, ui_id_counts=32:52, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=779.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=875.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.44°
+[Phase 3: 预测控制] 目标当前估算Az=319.04°, 速度=0.05°/s
+                   -> 打提前量(0.25s后)Az=319.05°, El=10.87° | 下发云台指令: Az=49.05°, El=10.87°
+[Stats] recv_objs_total=485, recv_unique_boxes=278 | ui_send_total=203, ui_unique_ids=13, ui_id_counts=32:53, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+[GimbalCmd] cmd_id=78, track_id=32, target_ctrl=(Az=49.05°, El=10.87°)
+[GimbalAtt] cmd_id=78, elapsed=0.000s, actual_ctrl=(Az=48.90°, El=10.80°), actual_ui=(Az=318.90°, El=10.80°), target_ctrl=(Az=49.05°, El=10.87°), err=(dAz=0.15°, dEl=0.07°)
+[GimbalSettled] cmd_id=78, track_id=32, settle_time=0.000s, actual_ctrl=(Az=48.90°, El=10.80°), target_ctrl=(Az=49.05°, El=10.87°), err=(dAz=0.15°, dEl=0.07°)
+[Laser] Triggered cmd_id=78, track_id=32, dist=4.60m, interval=134.407s
+
+[Phase 1: 视觉解析] 收到目标 cx=324.0, cy=1566.5, mono=155.9m -> 解算绝对角度: Az=9.87°, El=7.27°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=486, recv_unique_boxes=279 | ui_send_total=203, ui_unique_ids=13, ui_id_counts=32:53, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=280.0, cy=784.0, mono=25.1m -> 解算绝对角度: Az=318.24°, El=10.86°
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=816.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.71°
+[Phase 3: 预测控制] 目标当前估算Az=318.77°, 速度=-0.10°/s
+                   -> 打提前量(0.25s后)Az=318.74°, El=10.87° | 下发云台指令: Az=48.74°, El=10.87°
+[Stats] recv_objs_total=488, recv_unique_boxes=281 | ui_send_total=204, ui_unique_ids=13, ui_id_counts=32:54, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+[GimbalCmd] cmd_id=79, track_id=32, target_ctrl=(Az=48.74°, El=10.87°)
+[GimbalAtt] cmd_id=79, elapsed=0.000s, actual_ctrl=(Az=48.90°, El=10.80°), actual_ui=(Az=318.90°, El=10.80°), target_ctrl=(Az=48.74°, El=10.87°), err=(dAz=0.16°, dEl=0.07°)
+[GimbalSettled] cmd_id=79, track_id=32, settle_time=0.000s, actual_ctrl=(Az=48.90°, El=10.80°), target_ctrl=(Az=48.74°, El=10.87°), err=(dAz=0.16°, dEl=0.07°)
+[Laser] Triggered cmd_id=79, track_id=32, dist=4.60m, interval=47.423s
+
+[Phase 1: 视觉解析] 收到目标 cx=3195.0, cy=152.0, mono=25.1m -> 解算绝对角度: Az=331.52°, El=13.75°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=489, recv_unique_boxes=282 | ui_send_total=204, ui_unique_ids=13, ui_id_counts=32:54, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=3312.0, cy=1771.0, mono=25.1m -> 解算绝对角度: Az=332.06°, El=6.33°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=490, recv_unique_boxes=283 | ui_send_total=204, ui_unique_ids=13, ui_id_counts=32:54, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.89°
+[Phase 3: 预测控制] 目标当前估算Az=318.85°, 速度=-0.03°/s
+                   -> 打提前量(0.25s后)Az=318.84°, El=10.89° | 下发云台指令: Az=48.84°, El=10.89°
+[Stats] recv_objs_total=491, recv_unique_boxes=283 | ui_send_total=205, ui_unique_ids=13, ui_id_counts=32:55, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=884.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.40°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=492, recv_unique_boxes=283 | ui_send_total=205, ui_unique_ids=13, ui_id_counts=32:55, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=774.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.90°
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=780.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.88°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.89°
+[Phase 3: 预测控制] 目标当前估算Az=318.92°, 速度=0.01°/s
+                   -> 打提前量(0.25s后)Az=318.92°, El=10.90° | 下发云台指令: Az=48.92°, El=10.90°
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=782.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.87°
+[Phase 3: 预测控制] 目标当前估算Az=318.91°, 速度=0.01°/s
+                   -> 打提前量(0.25s后)Az=318.92°, El=10.89° | 下发云台指令: Az=48.92°, El=10.89°
+[Stats] recv_objs_total=496, recv_unique_boxes=283 | ui_send_total=207, ui_unique_ids=13, ui_id_counts=32:57, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=884.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.40°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=777.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.89°
+[TargetKeep] reason=lock_timer_expired, master_id=32, score=2.46, candidates=id=32, score=2.46, speed=0.01deg/s, dist=0.32deg, hits=24, stab=2.44, hold=1.15x
+[Phase 3: 预测控制] 目标当前估算Az=318.91°, 速度=0.00°/s
+                   -> 打提前量(0.25s后)Az=318.91°, El=10.89° | 下发云台指令: Az=48.91°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=440.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=318.97°, El=10.89°
+[Phase 3: 预测控制] 目标当前估算Az=318.93°, 速度=0.01°/s
+                   -> 打提前量(0.25s后)Az=318.93°, El=10.89° | 下发云台指令: Az=48.93°, El=10.89°
+
+[Phase 1: 视觉解析] 收到目标 cx=424.0, cy=776.0, mono=25.1m -> 解算绝对角度: Az=318.90°, El=10.89°
+[Phase 3: 预测控制] 目标当前估算Az=318.92°, 速度=0.01°/s
+                   -> 打提前量(0.25s后)Az=318.92°, El=10.90° | 下发云台指令: Az=48.92°, El=10.90°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=875.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.44°
+
+[Phase 1: 视觉解析] 收到目标 cx=504.0, cy=811.0, mono=25.1m -> 解算绝对角度: Az=319.26°, El=10.73°
+[Phase 3: 预测控制] 目标当前估算Az=319.01°, 速度=0.06°/s
+                   -> 打提前量(0.25s后)Az=319.03°, El=10.83° | 下发云台指令: Az=49.03°, El=10.83°
+[GimbalCmd] cmd_id=80, track_id=32, target_ctrl=(Az=49.03°, El=10.83°)
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=780.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=319.03°, 速度=0.06°/s
+                   -> 打提前量(0.25s后)Az=319.04°, El=10.84° | 下发云台指令: Az=49.04°, El=10.84°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=877.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.43°
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=781.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.87°
+[Phase 3: 预测控制] 目标当前估算Az=319.04°, 速度=0.06°/s
+                   -> 打提前量(0.25s后)Az=319.06°, El=10.85° | 下发云台指令: Az=49.06°, El=10.85°
+[Stats] recv_objs_total=505, recv_unique_boxes=284 | ui_send_total=213, ui_unique_ids=13, ui_id_counts=32:63, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+[GimbalAtt] cmd_id=80, elapsed=0.000s, actual_ctrl=(Az=48.60°, El=10.80°), actual_ui=(Az=318.60°, El=10.80°), target_ctrl=(Az=49.03°, El=10.83°), err=(dAz=0.43°, dEl=0.03°)
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=877.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.43°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[GimbalAtt] cmd_id=80, elapsed=0.347s, actual_ctrl=(Az=48.90°, El=10.80°), actual_ui=(Az=318.90°, El=10.80°), target_ctrl=(Az=49.03°, El=10.83°), err=(dAz=0.13°, dEl=0.03°)
+[GimbalSettled] cmd_id=80, track_id=32, settle_time=0.347s, actual_ctrl=(Az=48.90°, El=10.80°), target_ctrl=(Az=49.03°, El=10.83°), err=(dAz=0.13°, dEl=0.03°)
+[Laser] Triggered cmd_id=80, track_id=32, dist=4.60m, interval=30.975s
+
+[Phase 1: 视觉解析] 收到目标 cx=284.0, cy=1566.5, mono=155.9m -> 解算绝对角度: Az=9.69°, El=7.27°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=507, recv_unique_boxes=285 | ui_send_total=213, ui_unique_ids=13, ui_id_counts=32:63, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=456.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=319.04°, El=10.88°
+
+[Phase 1: 视觉解析] 收到目标 cx=72.0, cy=890.0, mono=25.1m -> 解算绝对角度: Az=317.29°, El=10.37°
+[Phase 3: 预测控制] 目标当前估算Az=319.07°, 速度=0.05°/s
+                   -> 打提前量(0.25s后)Az=319.08°, El=10.86° | 下发云台指令: Az=49.08°, El=10.86°
+
+[Phase 1: 视觉解析] 收到目标 cx=3149.0, cy=104.0, mono=25.1m -> 解算绝对角度: Az=331.31°, El=13.97°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=510, recv_unique_boxes=287 | ui_send_total=214, ui_unique_ids=13, ui_id_counts=32:64, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=168.0, cy=882.0, mono=25.1m -> 解算绝对角度: Az=317.73°, El=10.41°
+
+[Phase 1: 视觉解析] 收到目标 cx=440.0, cy=818.0, mono=25.1m -> 解算绝对角度: Az=318.97°, El=10.70°
+[Phase 3: 预测控制] 目标当前估算Az=319.04°, 速度=0.03°/s
+                   -> 打提前量(0.25s后)Az=319.05°, El=10.76° | 下发云台指令: Az=49.05°, El=10.76°
+[Stats] recv_objs_total=512, recv_unique_boxes=289 | ui_send_total=215, ui_unique_ids=13, ui_id_counts=32:65, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=3102.0, cy=632.0, mono=25.1m -> 解算绝对角度: Az=331.10°, El=11.55°
+
+[Phase 1: 视觉解析] 收到目标 cx=3086.0, cy=168.0, mono=25.1m -> 解算绝对角度: Az=331.03°, El=13.68°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=514, recv_unique_boxes=291 | ui_send_total=215, ui_unique_ids=13, ui_id_counts=32:65, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=504.0, cy=815.0, mono=25.1m -> 解算绝对角度: Az=319.26°, El=10.71°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=879.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.42°
+[TargetKeep] reason=lock_timer_expired, master_id=32, score=2.73, candidates=id=32, score=2.73, speed=0.10deg/s, dist=0.25deg, hits=28, stab=2.44, hold=1.15x
+[Phase 3: 预测控制] 目标当前估算Az=319.14°, 速度=0.07°/s
+                   -> 打提前量(0.25s后)Az=319.16°, El=10.71° | 下发云台指令: Az=49.16°, El=10.71°
+[Stats] recv_objs_total=516, recv_unique_boxes=292 | ui_send_total=216, ui_unique_ids=13, ui_id_counts=32:66, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=2860.0, cy=408.0, mono=25.1m -> 解算绝对角度: Az=330.00°, El=12.58°
+
+[Phase 1: 视觉解析] 收到目标 cx=2860.0, cy=168.0, mono=25.1m -> 解算绝对角度: Az=330.00°, El=13.68°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=518, recv_unique_boxes=294 | ui_send_total=216, ui_unique_ids=13, ui_id_counts=32:66, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=360.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=318.60°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=318.94°, 速度=-0.05°/s
+                   -> 打提前量(0.25s后)Az=318.93°, El=10.80° | 下发云台指令: Az=48.93°, El=10.80°
+[Stats] recv_objs_total=519, recv_unique_boxes=294 | ui_send_total=217, ui_unique_ids=13, ui_id_counts=32:67, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=785.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.85°
+
+[Phase 1: 视觉解析] 收到目标 cx=232.0, cy=817.0, mono=25.1m -> 解算绝对角度: Az=318.02°, El=10.71°
+[Phase 3: 预测控制] 目标当前估算Az=318.74°, 速度=-0.14°/s
+                   -> 打提前量(0.25s后)Az=318.70°, El=10.83° | 下发云台指令: Az=48.70°, El=10.83°
+[Stats] recv_objs_total=521, recv_unique_boxes=296 | ui_send_total=218, ui_unique_ids=13, ui_id_counts=32:68, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+[GimbalCmd] cmd_id=81, track_id=32, target_ctrl=(Az=48.70°, El=10.83°)
+[GimbalAtt] cmd_id=81, elapsed=0.001s, actual_ctrl=(Az=48.90°, El=10.80°), actual_ui=(Az=318.90°, El=10.80°), target_ctrl=(Az=48.70°, El=10.83°), err=(dAz=0.20°, dEl=0.03°)
+[GimbalSettled] cmd_id=81, track_id=32, settle_time=0.001s, actual_ctrl=(Az=48.90°, El=10.80°), target_ctrl=(Az=48.70°, El=10.83°), err=(dAz=0.20°, dEl=0.03°)
+[Laser] Triggered cmd_id=81, track_id=32, dist=4.60m, interval=352.953s
+
+[Phase 1: 视觉解析] 收到目标 cx=388.0, cy=1566.0, mono=47.2m -> 解算绝对角度: Az=10.16°, El=7.27°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=522, recv_unique_boxes=297 | ui_send_total=218, ui_unique_ids=13, ui_id_counts=32:68, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=360.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=318.60°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=318.65°, 速度=-0.15°/s
+                   -> 打提前量(0.25s后)Az=318.61°, El=10.87° | 下发云台指令: Az=48.61°, El=10.87°
+[Stats] recv_objs_total=523, recv_unique_boxes=298 | ui_send_total=219, ui_unique_ids=13, ui_id_counts=32:69, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=2914.0, cy=340.0, mono=25.1m -> 解算绝对角度: Az=330.24°, El=12.89°
+[TargetLost] master_id=32 不再满足锁定条件: valid_ids=[]
+[Stats] recv_objs_total=524, recv_unique_boxes=299 | ui_send_total=219, ui_unique_ids=13, ui_id_counts=32:69, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=264.0, cy=782.0, mono=25.1m -> 解算绝对角度: Az=318.17°, El=10.87°
+
+[Phase 1: 视觉解析] 收到目标 cx=184.0, cy=814.0, mono=25.1m -> 解算绝对角度: Az=317.80°, El=10.72°
+[Phase 3: 预测控制] 目标当前估算Az=318.41°, 速度=-0.23°/s
+                   -> 打提前量(0.25s后)Az=318.36°, El=10.88° | 下发云台指令: Az=48.36°, El=10.88°
+[Stats] recv_objs_total=526, recv_unique_boxes=301 | ui_send_total=220, ui_unique_ids=13, ui_id_counts=32:70, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+[GimbalCmd] cmd_id=82, track_id=32, target_ctrl=(Az=48.36°, El=10.88°)
+
+[Phase 1: 视觉解析] 收到目标 cx=344.0, cy=773.0, mono=25.1m -> 解算绝对角度: Az=318.53°, El=10.91°
+[Phase 3: 预测控制] 目标当前估算Az=318.42°, 速度=-0.20°/s
+                   -> 打提前量(0.25s后)Az=318.37°, El=10.90° | 下发云台指令: Az=48.37°, El=10.90°
+[GimbalAtt] cmd_id=82, elapsed=0.001s, actual_ctrl=(Az=48.70°, El=10.80°), actual_ui=(Az=318.70°, El=10.80°), target_ctrl=(Az=48.36°, El=10.88°), err=(dAz=0.34°, dEl=0.08°)
+
+[Phase 1: 视觉解析] 收到目标 cx=280.0, cy=778.0, mono=25.1m -> 解算绝对角度: Az=318.24°, El=10.88°
+[Phase 3: 预测控制] 目标当前估算Az=318.33°, 速度=-0.22°/s
+                   -> 打提前量(0.25s后)Az=318.27°, El=10.90° | 下发云台指令: Az=48.27°, El=10.90°
+[GimbalAtt] cmd_id=82, elapsed=0.376s, actual_ctrl=(Az=48.20°, El=10.80°), actual_ui=(Az=318.20°, El=10.80°), target_ctrl=(Az=48.36°, El=10.88°), err=(dAz=0.16°, dEl=0.08°)
+[GimbalSettled] cmd_id=82, track_id=32, settle_time=0.376s, actual_ctrl=(Az=48.20°, El=10.80°), target_ctrl=(Az=48.36°, El=10.88°), err=(dAz=0.16°, dEl=0.08°)
+[Laser] Triggered cmd_id=82, track_id=32, dist=4.60m, interval=392.918s
+
+[Phase 1: 视觉解析] 收到目标 cx=312.0, cy=902.0, mono=25.1m -> 解算绝对角度: Az=318.39°, El=10.32°
+[TargetKeep] reason=lock_timer_expired, master_id=32, score=3.17, candidates=id=32, score=3.17, speed=0.24deg/s, dist=0.16deg, hits=32, stab=2.44, hold=1.15x
+[Phase 3: 预测控制] 目标当前估算Az=318.31°, 速度=-0.20°/s
+                   -> 打提前量(0.25s后)Az=318.26°, El=10.65° | 下发云台指令: Az=48.26°, El=10.65°
+[GimbalCmd] cmd_id=83, track_id=32, target_ctrl=(Az=48.26°, El=10.65°)
+[Stats] recv_objs_total=529, recv_unique_boxes=303 | ui_send_total=223, ui_unique_ids=13, ui_id_counts=32:73, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+[GimbalAtt] cmd_id=83, elapsed=0.000s, actual_ctrl=(Az=48.20°, El=10.80°), actual_ui=(Az=318.20°, El=10.80°), target_ctrl=(Az=48.26°, El=10.65°), err=(dAz=0.06°, dEl=0.15°)
+[GimbalSettled] cmd_id=83, track_id=32, settle_time=0.000s, actual_ctrl=(Az=48.20°, El=10.80°), target_ctrl=(Az=48.26°, El=10.65°), err=(dAz=0.06°, dEl=0.15°)
+[Laser] Triggered cmd_id=83, track_id=32, dist=4.60m, interval=1.673s
+
+[Phase 1: 视觉解析] 收到目标 cx=280.0, cy=775.0, mono=25.1m -> 解算绝对角度: Az=318.24°, El=10.90°
+[Phase 3: 预测控制] 目标当前估算Az=318.25°, 速度=-0.20°/s
+                   -> 打提前量(0.25s后)Az=318.20°, El=10.73° | 下发云台指令: Az=48.20°, El=10.73°
+
+[Phase 1: 视觉解析] 收到目标 cx=280.0, cy=784.0, mono=25.1m -> 解算绝对角度: Az=318.24°, El=10.86°
+[Phase 3: 预测控制] 目标当前估算Az=318.21°, 速度=-0.20°/s
+                   -> 打提前量(0.25s后)Az=318.16°, El=10.77° | 下发云台指令: Az=48.16°, El=10.77°
+[GimbalCmd] cmd_id=84, track_id=32, target_ctrl=(Az=48.16°, El=10.77°)
+[GimbalAtt] cmd_id=84, elapsed=0.000s, actual_ctrl=(Az=48.20°, El=10.80°), actual_ui=(Az=318.20°, El=10.80°), target_ctrl=(Az=48.16°, El=10.77°), err=(dAz=0.04°, dEl=0.03°)
+[GimbalSettled] cmd_id=84, track_id=32, settle_time=0.000s, actual_ctrl=(Az=48.20°, El=10.80°), target_ctrl=(Az=48.16°, El=10.77°), err=(dAz=0.04°, dEl=0.03°)
+[Laser] Triggered cmd_id=84, track_id=32, dist=4.60m, interval=1.348s
+
+[Phase 1: 视觉解析] 收到目标 cx=296.0, cy=783.0, mono=25.1m -> 解算绝对角度: Az=318.31°, El=10.86°
+[Phase 3: 预测控制] 目标当前估算Az=318.20°, 速度=-0.17°/s
+                   -> 打提前量(0.25s后)Az=318.16°, El=10.80° | 下发云台指令: Az=48.16°, El=10.80°
+[Stats] recv_objs_total=532, recv_unique_boxes=305 | ui_send_total=226, ui_unique_ids=13, ui_id_counts=32:76, 5:45, 25:26, 4:25, 30:15, 2:12, 11:9, 26:8
+
+[Phase 1: 视觉解析] 收到目标 cx=280.0, cy=784.0, mono=25.1m -> 解算绝对角度: Az=318.24°, El=10.86°
+
+[Phase 1: 视觉解析] 收到目标 cx=200.0, cy=816.0, mono=25.1m -> 解算绝对角度: Az=317.88°, El=10.71°
+[Phase 3: 预测控制] 目标当前估算Az=318.18°, 速度=-0.16°/s
+                   -> 打提前量(0.25s后)Az=318.14°, El=10.83° | 下发云台指令: Az=48.14°, El=10.83°
+
+[Phase 1: 视觉解析] 收到目标 cx=250.0, cy=779.0, mono=25.1m -> 解算绝对角度: Az=318.10°, El=10.88°
+
+[Phase 1: 视觉解析] 收到目标 cx=186.0, cy=827.0, mono=25.1m -> 解算绝对角度: Az=317.81°, El=10.66°
+[Phase 3: 预测控制] 目标当前估算Az=318.13°, 速度=-0.17°/s
+                   -> 打提前量(0.25s后)Az=318.09°, El=10.86° | 下发云台指令: Az=48.09°, El=10.86°

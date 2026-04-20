@@ -1,0 +1,25 @@
+[Log] stdout/stderr -> logs/main_tracking_v9_20260416_193542.log
+[Init] Connecting to Gimbal at /dev/ttyUSB0...
+[GT06Z] Driver Ready on /dev/ttyUSB0.
+[Adapter] GT06Z 云台已连接: /dev/ttyUSB0
+[Init] Real laser enabled on /dev/ttyUSB1
+[Init] Queue gimbal initial posture: Az=90.00°, El=0.00°
+[GimbalThread] 控制线程已启动
+[LaserThread] 激光读取线程已启动=== System V9.0 (Predictive Tracking & Scheduling) Running ===
+[Net] Listening RK3588 on 8888...
+[Laser] start_measurement mode=continuous
+
+[GimbalCmd] cmd_id=0, track_id=-1, target_ctrl=(Az=90.00°, El=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=0.041s, actual_ctrl=(Az=96.90°, El=28.50°), actual_ui=(Az=6.90°, El=28.50°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=6.90°, dEl=28.50°)
+[GimbalAtt] cmd_id=0, elapsed=0.302s, actual_ctrl=(Az=93.10°, El=27.50°), actual_ui=(Az=3.10°, El=27.50°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=3.10°, dEl=27.50°)
+[GimbalAtt] cmd_id=0, elapsed=0.564s, actual_ctrl=(Az=93.10°, El=25.50°), actual_ui=(Az=3.10°, El=25.50°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=3.10°, dEl=25.50°)
+[GimbalAtt] cmd_id=0, elapsed=0.885s, actual_ctrl=(Az=90.00°, El=21.60°), actual_ui=(Az=0.00°, El=21.60°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=21.60°)
+[GimbalAtt] cmd_id=0, elapsed=1.146s, actual_ctrl=(Az=90.00°, El=17.60°), actual_ui=(Az=0.00°, El=17.60°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=17.60°)
+[GimbalAtt] cmd_id=0, elapsed=1.408s, actual_ctrl=(Az=90.00°, El=13.60°), actual_ui=(Az=0.00°, El=13.60°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=13.60°)
+[GimbalAtt] cmd_id=0, elapsed=1.670s, actual_ctrl=(Az=90.00°, El=9.70°), actual_ui=(Az=0.00°, El=9.70°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=9.70°)
+[GimbalAtt] cmd_id=0, elapsed=1.932s, actual_ctrl=(Az=90.00°, El=5.70°), actual_ui=(Az=0.00°, El=5.70°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=5.70°)
+[GimbalAtt] cmd_id=0, elapsed=2.198s, actual_ctrl=(Az=90.00°, El=2.10°), actual_ui=(Az=0.00°, El=2.10°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=2.10°)
+[GimbalAtt] cmd_id=0, elapsed=2.446s, actual_ctrl=(Az=90.00°, El=2.10°), actual_ui=(Az=0.00°, El=2.10°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=2.10°)
+[GimbalAtt] cmd_id=0, elapsed=2.728s, actual_ctrl=(Az=90.00°, El=-0.00°), actual_ui=(Az=0.00°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=0.00°)
+[GimbalSettled] cmd_id=0, track_id=-1, settle_time=2.728s, actual_ctrl=(Az=90.00°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=0.00°)
+[Laser] Triggered cmd_id=0, track_id=-1, dist=4.60m, interval=first

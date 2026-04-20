@@ -224,6 +224,7 @@ GIMBAL_SETTLE_TIMEOUT = 2.5
 GIMBAL_THREAD_SLEEP = 0.02
 GIMBAL_PROGRESS_LOG_INTERVAL = 0.10
 LASER_DIST_TTL = 2.0
+LASER_UI_HOLD_TTL = 5.0
 MONO_DIST_TTL = 1.2
 DEFAULT_TRACKING_DISTANCE_M = 450.0  # 仅用于内部参数冷启动（保持稳定）
 DEFAULT_DISTANCE_MIN_M = 200.0
@@ -594,14 +595,22 @@ def select_track_distance(track, master_id, curr_time):
         if (track.last_laser_dist is not None and (curr_time - track.laser_ts) <= LASER_DIST_TTL)
         else None
     )
+    held_laser = (
+        track.last_laser_dist
+        if (track.last_laser_dist is not None and (curr_time - track.laser_ts) <= LASER_UI_HOLD_TTL)
+        else None
+    )
     fresh_mono = (
         track.last_mono_dist
         if (track.last_mono_dist is not None and (curr_time - track.mono_ts) <= MONO_DIST_TTL)
         else None
     )
 
-    if is_master and fresh_laser is not None:
-        return fresh_laser, "laser"
+    if is_master:
+        if fresh_laser is not None:
+            return fresh_laser, "laser"
+        if held_laser is not None:
+            return held_laser, "laser_hold"
     if fresh_mono is not None:
         return fresh_mono, "mono"
     if track.last_mono_dist is not None:
