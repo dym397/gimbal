@@ -1,3 +1,6 @@
 {
-    "python-envs.defaultPackageManager": "ms-python.python:conda"
+    "python-envs.defaultPackageManager": "ms-python.python:conda",
+    "python.locator": "js",
+    "python.defaultInterpreterPath": "d:\\anaconda3\\envs\\c40d_gimbal\\python.exe",
+    "python.useEnvironmentsExtension": false
 }

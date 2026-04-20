@@ -1,5 +1,16 @@
 # AGENTS.md
 
+## 2026-04-16 增量说明
+- 云台抢占逻辑已从“单一总阈值 + 整条命令替换”升级为“分轴阈值 + 同目标按轴更新”。
+- 当前抢占基线：
+  - `AZ_PREEMPT_DEG = 0.5`
+  - `EL_PREEMPT_DEG = 0.8`
+- 当前执行规则：
+  - **同一 `track_id` 连续跟踪**：哪个轴超过各自阈值，就只更新哪个轴的目标值。
+  - **`track_id` 发生切换**：必须整条命令替换，`Az/El` 一起更新，避免出现“新方位 + 旧俯仰”的混合指向。
+- 当前抢占日志已补充 `mode=track_switch/axis_update` 与 `axes=Az/El/Az+El`，便于从日志直接判断是目标切换，还是同目标下的单轴更新。
+- 本次更新只涉及控制线程内的抢占更新逻辑，没有改动 `PREDICT_DELAY`、`SETTLE_THRESHOLD`、激光流程或外部协议。
+
 ## 2026-04-14 增量说明
 - 激光链路已从“只有接口、未接主流程”升级为“真实可运行”状态：`main_tracking_v9.py` 现会在 `USE_MOCK_LASER=False` 时启动 `SDDMLaser` 后台线程，持续读取真实激光并写入 `SharedHardwareState.raw_laser_dist`。
 - 已新增 `USE_MOCK_LASER`，语义与 `USE_MOCK_GIMBAL` 一致：
@@ -88,7 +99,7 @@ UI 输出格式、GT06Z 串口协议与坐标系约定必须保持一致。
 ## 当前控制基线 (Current control baseline)
 截至 2026-04-10，`main_tracking_v9.py` 的当前控制基线为：
 - Kalman `MIN_DT=0.001`，仅保留异常极小 `dt` 保护，避免 15FPS 场景被固定下限抬高。
-- `GIMBAL_PREEMPT_DEG=1.5`，`GIMBAL_SETTLE_THRESHOLD=0.3`，用于拉开抢占/到位迟滞区间。
+- 抢占阈值已在 2026-04-16 更新为分轴基线：`AZ_PREEMPT_DEG=0.5`、`EL_PREEMPT_DEG=0.8`；`GIMBAL_SETTLE_THRESHOLD=0.3` 保持不变，用于维持到位迟滞区间。
 - 启动时通过 `gimbal_cmd_queue` 投递初始化姿态命令，目标为 `Az=GIMBAL_AZ_BASE`、`El=0.0°`，仍由单一云台控制线程下发。
 - 串口默认值按平台切换：Windows 为 `COM3` / `COM4` / `COM5`，Linux 为 `/dev/ttyUSB0` / `/dev/ttyUSB1` / `/dev/ttyUSB2`。
 - `PREDICT_DELAY` 尚未拆分为 `AZ_PREDICT_DELAY` / `EL_PREDICT_DELAY`；后续如修改预测提前量，仍必须保持 Pan/Pitch 解耦。

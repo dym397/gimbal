@@ -1,5 +1,19 @@
 # PROJECT_CONTEXT.md
 
+## 2026-04-16 最新进展
+- 云台抢占控制已进一步解耦为“同目标按轴更新、切目标整条替换”。
+- 当前方位/俯仰抢占基线为：
+  - `AZ_PREEMPT_DEG = 0.5`
+  - `EL_PREEMPT_DEG = 0.8`
+- 当前控制线程行为：
+  1. 若 `new_track_id != active_track_id`，视为目标切换，`Az/El` 整条命令一起替换。
+  2. 若仍是同一 `track_id`，则分别比较 `dAz` 与 `dEl`：
+     - `dAz > AZ_PREEMPT_DEG` 时只更新方位目标
+     - `dEl > EL_PREEMPT_DEG` 时只更新俯仰目标
+     - 两轴都满足则同时更新
+- 这样做的目的，是避免在同一目标连续跟踪时，低方位阈值把俯仰目标也一起频繁刷新；同时又避免在切换到新目标时出现“新方位 + 旧俯仰”的混合指向。
+- 当前这次代码变更后，尚未写入新的实机回归结果；后续应优先复测 `linear` 场景，验证方位误差是否不再呈现明显的周期性放大。
+
 ## 2026-04-14 最新进展
 - 真实激光已正式接入主流程，不再只是保留 `LASER_PORT`、`raw_laser_dist` 和驱动文件但没有数据源。
 - 当前激光数据路径：
@@ -43,7 +57,7 @@
 - 主流程已在 `main_tracking_v9.py` 集成：UDP 输入、目标归一化、Kalman 追踪、目标选择、云台控制、UI 回传。
 - 当前代码已支持双平台串口默认值切换：Windows 默认 `COM3` / `COM4` / `COM5`，Linux 默认 `/dev/ttyUSB0` / `/dev/ttyUSB1` / `/dev/ttyUSB2`；实际运行时仍可通过 `GIMBAL_PORT` / `LASER_PORT` / `IMU_PORT` 覆盖。
 - 当前调优依据来自 `logs/main_tracking_v9_20260409_154819.log`：15FPS、320m、5.1m/s、水平匀速直线运动，`cx=700 -> 3686.67`，`cy=1080`。
-- 已完成第一轮小范围控制修正：Kalman `MIN_DT=0.001`、`GIMBAL_PREEMPT_DEG=1.5`、`GIMBAL_SETTLE_THRESHOLD=0.3`、启动时云台归位到 `Az=GIMBAL_AZ_BASE` / `El=0.0°`。
+- 已完成第一轮控制修正并在 2026-04-16 继续演进：Kalman `MIN_DT=0.001`、抢占阈值改为 `AZ_PREEMPT_DEG=0.5` / `EL_PREEMPT_DEG=0.8`、`GIMBAL_SETTLE_THRESHOLD=0.3`、启动时云台归位到 `Az=GIMBAL_AZ_BASE` / `El=0.0°`。
 - 尚未完成：`PREDICT_DELAY` 双轴拆分、首次捕获/稳定跟踪的独立参数状态机、激光有效工作距离/反射条件边界验证。
 
 ---
@@ -70,7 +84,7 @@
 
 ### 4.1 当前控制基线 (2026-04-10)
 - `main_tracking_v9.py` 已将 Kalman `MIN_DT` 从固定 `0.08` 调整为 `0.001`，仅作为异常极小 `dt` 保护，避免 15FPS (`~0.066s`) 场景被强行抬高。
-- `GIMBAL_PREEMPT_DEG=1.5`，`GIMBAL_SETTLE_THRESHOLD=0.3`。当前策略是让抢占阈值显著大于到位阈值，利用云台约 `0.1°` 精度收紧到位判定，同时降低小幅新命令反复抢占。
+- 抢占阈值已在 2026-04-16 更新为 `AZ_PREEMPT_DEG=0.5`、`EL_PREEMPT_DEG=0.8`；`GIMBAL_SETTLE_THRESHOLD=0.3` 保持不变。当前策略是同目标连续跟踪时按轴更新、切换目标时整条替换，并继续利用云台约 `0.1°` 精度收紧到位判定。
 - 系统启动后会先通过现有 `gimbal_cmd_queue` 投递初始化姿态命令：方位角 `GIMBAL_AZ_BASE`，俯仰角 `0°`。串口下发仍由 `gimbal_control_thread` 单一控制线程执行。
 - 尚未完成 `PREDICT_DELAY` 的双轴拆分；当前仍是单一 `PREDICT_DELAY=0.25`，俯仰轴慢的问题先通过启动位姿初始化进行部分缓解，后续仍需垂直/斜向运动测试后再调 `AZ_PREDICT_DELAY` / `EL_PREDICT_DELAY`。
 
