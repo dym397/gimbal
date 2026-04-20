@@ -1,0 +1,24 @@
+[Log] stdout/stderr -> logs/main_tracking_v9_20260420_205319.log
+[Config][Warn] LASER_PORT=/dev/ttyUSB1 当前不存在。请确认设备节点、udev 映射或 USB 串口权限。
+[Init] Connecting to Gimbal at /dev/ttyUSB0...
+[GT06Z] Driver Ready on /dev/ttyUSB0.
+[Adapter] GT06Z 云台已连接: /dev/ttyUSB0
+[Laser][Warn] Init failed on /dev/ttyUSB1: 无法打开激光串口 /dev/ttyUSB1: [Errno 2] could not open port /dev/ttyUSB1: [Errno 2] No such file or directory: '/dev/ttyUSB1'
+[Init] Queue gimbal initial posture: Az=90.00°, El=0.00°
+[GimbalThread] 控制线程已启动=== System V9.0 (Predictive Tracking & Scheduling) Running ===
+[Net] Listening RK3588 on 8888...
+
+[GimbalCmd] cmd_id=0, track_id=-1, target_ctrl=(Az=90.00°, El=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=0.041s, actual_ctrl=(Az=179.60°, El=-8.60°), actual_ui=(Az=89.60°, El=-8.60°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=89.60°, dEl=8.60°)
+[GimbalAtt] cmd_id=0, elapsed=0.304s, actual_ctrl=(Az=175.80°, El=-7.60°), actual_ui=(Az=85.80°, El=-7.60°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=85.80°, dEl=7.60°)
+[GimbalAtt] cmd_id=0, elapsed=0.565s, actual_ctrl=(Az=168.90°, El=-5.60°), actual_ui=(Az=78.90°, El=-5.60°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=78.90°, dEl=5.60°)
+[GimbalAtt] cmd_id=0, elapsed=0.827s, actual_ctrl=(Az=159.10°, El=-2.60°), actual_ui=(Az=69.10°, El=-2.60°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=69.10°, dEl=2.60°)
+[GimbalAtt] cmd_id=0, elapsed=1.090s, actual_ctrl=(Az=159.10°, El=-0.10°), actual_ui=(Az=69.10°, El=-0.10°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=69.10°, dEl=0.10°)
+[GimbalAtt] cmd_id=0, elapsed=1.411s, actual_ctrl=(Az=133.30°, El=-0.00°), actual_ui=(Az=43.30°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=43.30°, dEl=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=1.673s, actual_ctrl=(Az=121.70°, El=-0.00°), actual_ui=(Az=31.70°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=31.70°, dEl=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=1.935s, actual_ctrl=(Az=110.10°, El=-0.00°), actual_ui=(Az=20.10°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=20.10°, dEl=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=2.197s, actual_ctrl=(Az=99.10°, El=-0.00°), actual_ui=(Az=9.10°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=9.10°, dEl=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=2.458s, actual_ctrl=(Az=90.70°, El=-0.00°), actual_ui=(Az=0.70°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.70°, dEl=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=2.659s, actual_ctrl=(Az=90.10°, El=-0.00°), actual_ui=(Az=0.10°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.10°, dEl=0.00°)
+[GimbalSettled] cmd_id=0, track_id=-1, settle_time=2.659s, actual_ctrl=(Az=90.10°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.10°, dEl=0.00°)
+[Laser] No valid laser distance, use mono distance
