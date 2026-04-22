@@ -1406,7 +1406,7 @@ def main():
     master_id = None
     lock_timer = 0.0
     LOCK_DURATION = 1.5      # 锁定目标的最长驻留时间
-    PREDICT_DELAY = 0.3     # 系统与物理响应总延迟 (打提前量)
+    PREDICT_DELAY = 0.35     # 系统与物理响应总延迟 (打提前量)
     CONFIRM_HITS = 3         # 连续追踪多少帧才确认为合法目标
     MAX_DT = 0.25            # Clamp dt to avoid model divergence
     global_cmd_id = 0
