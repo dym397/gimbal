@@ -28,8 +28,10 @@ try:
 except ImportError:
     SDDMLaser = None
 try:
-    from gps import read_gps_fix
+    from gps import DEFAULT_LATITUDE, DEFAULT_LONGITUDE, read_gps_fix
 except ImportError:
+    DEFAULT_LATITUDE = None
+    DEFAULT_LONGITUDE = None
     read_gps_fix = None
 # ==========================================
 # 配置
@@ -223,7 +225,6 @@ IMU_BAUDRATE = 9600
 IMU_PRINT_INTERVAL = 0.2
 GPS_BAUDRATE = 115200
 GPS_FIX_TIMEOUT_SECONDS = 60
-GPS_RETRY_INTERVAL = 2.0
 GPS_STATUS_INTERVAL = 5.0
 GPS_DEBUG_RAW = _env_flag("GPS_DEBUG_RAW", False)
 GIMBAL_AZ_BASE = 90.0  # 云台水平基准角（UI绝对方位 0° 映射到控制角的基准）
@@ -527,36 +528,36 @@ def gps_sender_thread(sender):
     if read_gps_fix is None:
         print("[GPS][Warn] gps.py import failed, GPS location packet disabled.")
         return
+    if DEFAULT_LATITUDE is None or DEFAULT_LONGITUDE is None:
+        print("[GPS][Warn] default GPS location missing, GPS location packet disabled.")
+        return
 
-    attempt = 0
     print(
         f"[GPS] Thread started, waiting for one valid fix on "
         f"{GPS_PORT}@{GPS_BAUDRATE}, timeout={GPS_FIX_TIMEOUT_SECONDS}s"
     )
-    while True:
-        attempt += 1
-        print(f"[GPS] Attempt {attempt}: searching satellites and waiting for valid latitude/longitude...")
-        longitude, latitude, source = read_gps_fix(
-            port=GPS_PORT,
-            baudrate=GPS_BAUDRATE,
-            timeout_seconds=GPS_FIX_TIMEOUT_SECONDS,
-            print_raw=GPS_DEBUG_RAW,
-            print_status=True,
-            status_interval=GPS_STATUS_INTERVAL,
-        )
-        if longitude is not None and latitude is not None:
-            sender.send_gps_location(latitude=latitude, longitude=longitude)
-            print(
-                f"[GPS] Fix acquired and sent to UI: "
-                f"source={source}, latitude={latitude:.6f}, longitude={longitude:.6f}"
-            )
-            return
-
+    print("[GPS] Searching satellites and waiting for valid latitude/longitude...")
+    longitude, latitude, source = read_gps_fix(
+        port=GPS_PORT,
+        baudrate=GPS_BAUDRATE,
+        timeout_seconds=GPS_FIX_TIMEOUT_SECONDS,
+        print_raw=GPS_DEBUG_RAW,
+        print_status=True,
+        status_interval=GPS_STATUS_INTERVAL,
+    )
+    if longitude is not None and latitude is not None:
+        sender.send_gps_location(latitude=latitude, longitude=longitude)
         print(
-            f"[GPS] Attempt {attempt}: no valid latitude/longitude yet, source={source}, "
-            f"retry_in={GPS_RETRY_INTERVAL:.1f}s"
+            f"[GPS] Fix acquired and sent to UI: "
+            f"source={source}, latitude={latitude:.6f}, longitude={longitude:.6f}"
         )
-        time.sleep(GPS_RETRY_INTERVAL)
+        return
+
+    sender.send_gps_location(latitude=DEFAULT_LATITUDE, longitude=DEFAULT_LONGITUDE)
+    print(
+        f"[GPS] Fix timeout/no valid location, sent default location to UI: "
+        f"source={source}, latitude={DEFAULT_LATITUDE:.6f}, longitude={DEFAULT_LONGITUDE:.6f}"
+    )
 
 
 def parse_udp_objects(raw_objs):
