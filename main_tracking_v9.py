@@ -27,6 +27,10 @@ try:
     from sddm_laser import SDDMLaser
 except ImportError:
     SDDMLaser = None
+try:
+    from gps import read_gps_fix
+except ImportError:
+    read_gps_fix = None
 # ==========================================
 # 配置
 # ==========================================
@@ -37,11 +41,13 @@ def _platform_serial_defaults():
             "gimbal": "COM3",
             "laser": "COM4",
             "imu": "COM5",
+            "gps": "COM8",
         }
     return {
         "gimbal": "/dev/ttyUSB0",
         "laser": "/dev/ttyUSB1",
         "imu": "/dev/ttyUSB2",
+        "gps": "/dev/ttyUSB3",
     }
 
 
@@ -207,12 +213,18 @@ UI_PORT = 9999
 LOCAL_PORT = 8888
 GIMBAL_PORT = _serial_port("GIMBAL_PORT", "gimbal")
 LASER_PORT = _serial_port("LASER_PORT", "laser")
+GPS_PORT = _serial_port("GPS_PORT", "gps")
 USE_MOCK_GIMBAL = False  # True: 使用 mock_gimbal.py; False: 使用真实 GT06Z
 USE_MOCK_LASER = False   # True: 激光通道使用 mono 模拟值; False: 使用真实 SDDM 激光
+ENABLE_GPS = _env_flag("ENABLE_GPS", True)
 ENABLE_IMU = False      # Manual switch: True to enable IMU read/print
 IMU_PORT = _serial_port("IMU_PORT", "imu")
 IMU_BAUDRATE = 9600
 IMU_PRINT_INTERVAL = 0.2
+GPS_BAUDRATE = 115200
+GPS_FIX_TIMEOUT_SECONDS = 60
+GPS_RETRY_INTERVAL = 2.0
+GPS_DEBUG_RAW = _env_flag("GPS_DEBUG_RAW", False)
 GIMBAL_AZ_BASE = 90.0  # 云台水平基准角（UI绝对方位 0° 映射到控制角的基准）
 GIMBAL_INIT_EL = 0.0  # 启动时俯仰归位角，目标通常从该方向进入
 GIMBAL_CMD_DEADBAND_AZ = 0.20
@@ -327,7 +339,9 @@ class UISender:
         self.ip = ip
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.MSG_STATUS = 0x02 
+        self.lock = threading.Lock()
+        self.MSG_STATUS = 0x02
+        self.MSG_GPS = 0x03
 
     def send_status(self, board_str, camera_id, target_id, azimuth, elevation, distance):
             try:
@@ -345,9 +359,23 @@ class UISender:
                     float(elevation),
                     float(distance)
                 )
-                self.sock.sendto(packet, (self.ip, self.port))
+                with self.lock:
+                    self.sock.sendto(packet, (self.ip, self.port))
             except Exception as e:
                 print(f"[Sender] Error: {e}")
+
+    def send_gps_location(self, latitude, longitude):
+            try:
+                packet = struct.pack(
+                    '!Bff',
+                    self.MSG_GPS,
+                    float(latitude),
+                    float(longitude),
+                )
+                with self.lock:
+                    self.sock.sendto(packet, (self.ip, self.port))
+            except Exception as e:
+                print(f"[Sender][GPS] Error: {e}")
 
 # ==========================================
 # 3. 激光与网络
@@ -492,6 +520,40 @@ def laser_reader_thread(laser, stop_event):
         with shared_state.lock:
             shared_state.raw_laser_dist = dist
             shared_state.raw_laser_ts = now_t
+
+
+def gps_sender_thread(sender):
+    if read_gps_fix is None:
+        print("[GPS][Warn] gps.py import failed, GPS location packet disabled.")
+        return
+
+    attempt = 0
+    print(
+        f"[GPS] Thread started, waiting for one valid fix on "
+        f"{GPS_PORT}@{GPS_BAUDRATE}, timeout={GPS_FIX_TIMEOUT_SECONDS}s"
+    )
+    while True:
+        attempt += 1
+        print(f"[GPS] Attempt {attempt}: searching satellites and waiting for valid latitude/longitude...")
+        longitude, latitude, source = read_gps_fix(
+            port=GPS_PORT,
+            baudrate=GPS_BAUDRATE,
+            timeout_seconds=GPS_FIX_TIMEOUT_SECONDS,
+            print_raw=GPS_DEBUG_RAW,
+        )
+        if longitude is not None and latitude is not None:
+            sender.send_gps_location(latitude=latitude, longitude=longitude)
+            print(
+                f"[GPS] Fix acquired and sent to UI: "
+                f"source={source}, latitude={latitude:.6f}, longitude={longitude:.6f}"
+            )
+            return
+
+        print(
+            f"[GPS] Attempt {attempt}: no valid latitude/longitude yet, source={source}, "
+            f"retry_in={GPS_RETRY_INTERVAL:.1f}s"
+        )
+        time.sleep(GPS_RETRY_INTERVAL)
 
 
 def parse_udp_objects(raw_objs):
@@ -1330,8 +1392,13 @@ def main():
         _validate_serial_port("GIMBAL_PORT", GIMBAL_PORT)
     if not USE_MOCK_LASER:
         _validate_serial_port("LASER_PORT", LASER_PORT)
+    if ENABLE_GPS:
+        _validate_serial_port("GPS_PORT", GPS_PORT)
     if ENABLE_IMU:
         _validate_serial_port("IMU_PORT", IMU_PORT)
+
+    if ENABLE_GPS:
+        threading.Thread(target=gps_sender_thread, args=(sender,), daemon=True).start()
     
     if USE_MOCK_GIMBAL:
         if MockGimbalAdapter is None:

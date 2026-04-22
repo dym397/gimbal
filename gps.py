@@ -1,12 +1,31 @@
 import serial
 import serial.tools.list_ports
 import math
+import os
 import time
 import pynmea2
 
 DEFAULT_LONGITUDE = 104.3070
 DEFAULT_LATITUDE = 30.9497
 GPS_FIX_TIMEOUT_SECONDS = 60
+
+
+def default_gps_port():
+    env_port = os.getenv("GPS_PORT")
+    if env_port:
+        return env_port.strip()
+    if os.name == "nt":
+        return "COM8"
+    return "/dev/ttyUSB3"
+
+
+def _normalize_windows_com_port(port_name):
+    normalized = port_name.strip().upper()
+    if normalized.startswith("\\\\.\\"):
+        normalized = normalized[4:]
+    return normalized
+
+
 def wgs84_to_gcj02(lng, lat):
     """
     WGS84转GCJ02(火星坐标系)
@@ -50,10 +69,20 @@ def wgs84_to_gcj02(lng, lat):
     dlng = (dlng * 180.0) / (a / sqrtmagic * math.cos(radlat) * pi)
 
     return lng + dlng, lat + dlat
-def read_gps(port="COM8", baudrate=115200, timeout_seconds=GPS_FIX_TIMEOUT_SECONDS):
+
+
+def read_gps_fix(port=None, baudrate=115200, timeout_seconds=GPS_FIX_TIMEOUT_SECONDS, print_raw=True):
+    if port is None:
+        port = default_gps_port()
+
     ports = [item.device for item in serial.tools.list_ports.comports()]
-    if port not in ports:
-        return DEFAULT_LONGITUDE, DEFAULT_LATITUDE, "fallback"
+    if os.name == "nt":
+        available_ports = {_normalize_windows_com_port(item) for item in ports}
+        if _normalize_windows_com_port(port) not in available_ports:
+            return None, None, "fallback"
+
+    if not port:
+        return None, None, "fallback"
 
     longitude = None
     latitude = None
@@ -63,7 +92,8 @@ def read_gps(port="COM8", baudrate=115200, timeout_seconds=GPS_FIX_TIMEOUT_SECON
             deadline = time.monotonic() + timeout_seconds
             while time.monotonic() < deadline:
                 line = ser.readline().decode("ascii", errors="ignore").strip()
-                print(f"[GPS] raw line: {line}")
+                if print_raw:
+                    print(f"[GPS] raw line: {line}")
 
                 if line.startswith("$GPGGA") or line.startswith("$GNGGA"):
                     try:
@@ -80,17 +110,27 @@ def read_gps(port="COM8", baudrate=115200, timeout_seconds=GPS_FIX_TIMEOUT_SECON
                     latitude = round(msg.latitude, 4)
                     break
     except serial.SerialException:
-        return DEFAULT_LONGITUDE, DEFAULT_LATITUDE, "serial_error"
+        return None, None, "serial_error"
 
     if longitude is None or latitude is None:
-        return DEFAULT_LONGITUDE, DEFAULT_LATITUDE, "no_fix"
+        return None, None, "no_fix"
 
     longitude, latitude = wgs84_to_gcj02(longitude, latitude)
     return longitude, latitude, port
 
 
-longitude, latitude, gps_source = read_gps()
+def read_gps(port=None, baudrate=115200, timeout_seconds=GPS_FIX_TIMEOUT_SECONDS, print_raw=True):
+    longitude, latitude, gps_source = read_gps_fix(
+        port=port,
+        baudrate=baudrate,
+        timeout_seconds=timeout_seconds,
+        print_raw=print_raw,
+    )
+    if longitude is None or latitude is None:
+        return DEFAULT_LONGITUDE, DEFAULT_LATITUDE, gps_source
+    return longitude, latitude, gps_source
 
 
 if __name__ == "__main__":
+    longitude, latitude, gps_source = read_gps()
     print(f"source={gps_source} longitude={longitude:.6f} latitude={latitude:.6f}")
