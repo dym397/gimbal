@@ -1,5 +1,29 @@
 # AGENTS.md
 
+## 2026-04-22 增量说明
+- 已新增 GPS 启动定位链路：`main_tracking_v9.py` 启动后会创建 GPS 后台线程，在系统刚启动时尝试获取一次有效经纬度。
+- GPS 数据源为 `gps.py`，当前使用 Unicore UM980 输出的 NMEA GGA 语句；只有 `gps_qual != 0` 且经纬度字段有效时，才认为是真实定位。
+- GPS 搜星等待策略：
+  - 最多等待 `GPS_FIX_TIMEOUT_SECONDS = 60`
+  - 等待期间打印 GGA 状态摘要，必要时可通过 `GPS_DEBUG_RAW=1` 打印每条原始 NMEA
+  - 60 秒内获取真实定位，则发送真实经纬度给 UI
+  - 60 秒内仍无有效定位，则发送 `gps.py` 中的 `DEFAULT_LATITUDE` / `DEFAULT_LONGITUDE` 作为兜底位置
+  - 无论真实定位还是默认兜底，GPS 线程都会按 `GPS_UI_SEND_DURATION` 持续短时发送后退出
+  - 当前 UI 发送突发参数：`GPS_UI_SEND_DURATION = 0.5`、`GPS_UI_SEND_INTERVAL = 0.1`
+- UI 新增 GPS 数据包格式：
+  - 包头 `0x03`
+  - 紧跟 `float latitude`
+  - 紧跟 `float longitude`
+  - 当前实现为 `struct.pack('!Bff', 0x03, latitude, longitude)`，网络字节序，与现有 UI 状态包保持一致
+- 串口配置已扩展 GPS：
+  - Windows 默认：云台 `COM3`、激光 `COM4`、IMU `COM5`、GPS `COM8`
+  - Linux 当前默认：云台 `/dev/ttyUSB0`、激光 `/dev/ttyUSB1`、GPS `/dev/ttyUSB2`、IMU `/dev/ttyUSB3`
+  - 仍可通过 `GIMBAL_PORT` / `LASER_PORT` / `GPS_PORT` / `IMU_PORT` 环境变量覆盖
+- 已新增 `udp_ui_receiver.py` 用于模拟 UI 端监听 UDP `9999`，可解析并打印：
+  - `0x02` 目标状态包
+  - `0x03` GPS 经纬度包
+- GPS 相关变更不改动云台控制线程、激光流程、目标追踪逻辑或现有 `0x02` 状态包格式。
+
 ## 2026-04-16 增量说明
 - 云台抢占逻辑已从“单一总阈值 + 整条命令替换”升级为“分轴阈值 + 同目标按轴更新”。
 - 当前抢占基线：

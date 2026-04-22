@@ -1,5 +1,32 @@
 # TODO_NEXT.md
 
+## 2026-04-22 状态更新
+
+### 已完成
+- [x] 新增 `gps.py` 的 UM980 NMEA 读取逻辑，支持持续等待有效 GGA 定位。
+- [x] `gps.py` 已支持 `GPS_PORT` 环境变量覆盖，并按平台提供默认 GPS 串口。
+- [x] `main_tracking_v9.py` 已在系统启动阶段启动 GPS 后台线程，获取一次经纬度后短时重复发送给 UI。
+- [x] GPS 真实定位成功时发送真实经纬度；60 秒超时仍无有效定位时，发送 `gps.py` 中的默认经纬度。
+- [x] GPS 线程按 `GPS_UI_SEND_DURATION = 0.5`、`GPS_UI_SEND_INTERVAL = 0.1` 发完突发包后退出，不持续占用主流程决策逻辑。
+- [x] UI 新增 GPS 包格式：`struct.pack('!Bff', 0x03, latitude, longitude)`。
+- [x] 新增 `udp_ui_receiver.py`，用于模拟 UI 端监听 `9999` 并解析 `0x02` / `0x03` 数据包。
+- [x] Linux 串口默认值已纳入 GPS：当前为云台 `/dev/ttyUSB0`、激光 `/dev/ttyUSB1`、GPS `/dev/ttyUSB2`、IMU `/dev/ttyUSB3`。
+
+### 当前结论
+- UM980 在室内无卫星时仍会持续输出 NMEA，但典型日志为：
+  - `$GNGGA,,,,,,0,...`：无有效定位
+  - `$GPGSA,,1,...`：未定位
+  - `$GNRMC,,V,...`：定位无效
+  - `$GPGSV,1,1,00,...`：可见 GPS 卫星为 0
+- 该状态下主程序不会把无效 GPS 数据当成真实经纬度；启动等待超时后会发默认经纬度给 UI。
+- 如果看到 `source=COM8` 或 `source=/dev/ttyUSB*` 且日志显示 `GGA fix_quality != 0`，才表示真实 GPS 坐标已获取。
+
+### 下一步优先级
+1. 部署前把 `gps.py` 中 `DEFAULT_LONGITUDE` / `DEFAULT_LATITUDE` 改成设备实际安装点坐标。
+2. 在 Linux 目标机上确认 `GPS_PORT` 对应的确是 UM980，建议后续固定为 `/dev/serial/by-id/...`。
+3. 在 UI 调试机运行 `python udp_ui_receiver.py --host 0.0.0.0 --port 9999`，验证 Linux 端启动后是否收到 `0x03` GPS 包。
+4. 在室外或天线条件较好的位置复测真实 GPS fix，确认 UI 收到的是真实经纬度而非默认兜底值。
+
 ## 2026-04-16 状态更新
 
 ### 已完成

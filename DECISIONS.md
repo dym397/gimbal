@@ -1,5 +1,48 @@
 # DECISIONS.md
 
+## 2026-04-22
+### 决策：GPS 启动定位短时重复发送，超时后使用默认经纬度兜底
+**为什么**
+- UI 只需要系统启动时获得设备经纬度，不需要 GPS 线程长期持续发送。
+- 启动阶段采用 0.5 秒短时重复发送，可降低 UDP 单包丢失导致 UI 未收到位置的风险。
+- UM980 冷启动或室内环境可能长时间无有效定位；如果一直等待真实 fix，UI 端会迟迟拿不到设备位置。
+- 设备部署点通常是固定的，因此 `gps.py` 中的默认经纬度可以作为硬件异常、无卫星或天线问题时的可靠兜底。
+
+**影响**
+- `main_tracking_v9.py` 启动后创建 `gps_sender_thread`。
+- GPS 线程最多等待 `GPS_FIX_TIMEOUT_SECONDS = 60` 秒获取真实 GGA 定位。
+- 若获取成功，发送真实经纬度给 UI。
+- 若超时、无卫星、无有效 GGA、串口异常或打开失败，发送 `gps.py` 中的 `DEFAULT_LATITUDE` / `DEFAULT_LONGITUDE`。
+- GPS 包按 `GPS_UI_SEND_DURATION = 0.5`、`GPS_UI_SEND_INTERVAL = 0.1` 短时重复发送，发送完成后线程退出。
+- 新增 UI GPS 包格式：`0x03 + float(latitude) + float(longitude)`，实现为 `struct.pack('!Bff', 0x03, latitude, longitude)`。
+
+**验证**
+- `gps.py` 可直接运行调试 UM980 NMEA 输出。
+- `udp_ui_receiver.py` 可模拟 UI 端监听 UDP `9999`，并解析 `0x03` GPS 包。
+- 本地已验证 `0x03` 包长度为 9 字节，首字节为 `3`，后续为纬度和经度两个 float。
+
+---
+
+## 2026-04-22
+### 决策：GPS 串口纳入现有跨平台串口配置体系
+**为什么**
+- 项目已有云台、激光、IMU 的平台默认串口和环境变量覆盖机制，GPS 应复用同一配置风格，避免硬编码散落在业务逻辑里。
+- Linux 下 `/dev/ttyUSB*` 会受 USB 插拔顺序影响，必须允许通过环境变量覆盖到稳定设备节点。
+
+**影响**
+- 新增 `GPS_PORT = _serial_port("GPS_PORT", "gps")`。
+- 当前默认值：
+  - Windows: `COM8`
+  - Linux: `/dev/ttyUSB2`
+- `GPS_PORT` 可通过环境变量覆盖；后续部署建议改用 `/dev/serial/by-id/...`。
+- `gps.py` 也支持读取 `GPS_PORT` 环境变量，保持单独调试脚本和主程序一致。
+
+**验证**
+- `main_tracking_v9.py` 导入后可正确解析 GPS 默认端口。
+- Linux 日志中已能看到 GPS 线程按配置端口启动，例如 `waiting for one valid fix on /dev/ttyUSB2@115200`。
+
+---
+
 ## 2026-04-16
 ### 决策：云台抢占改为“同目标按轴更新，切目标整条替换”
 **为什么**

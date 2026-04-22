@@ -1,5 +1,27 @@
 # PROJECT_CONTEXT.md
 
+## 2026-04-22 最新进展
+- GPS 启动定位功能已接入 `main_tracking_v9.py`，用于系统启动时向 UI 短时重复发送设备经纬度。
+- 当前 GPS 数据路径：
+  1. `main_tracking_v9.py` 创建 `UISender`
+  2. 启动 `gps_sender_thread` 后台线程
+  3. 线程调用 `gps.py` 中的 `read_gps_fix()`
+  4. `read_gps_fix()` 打开 GPS 串口并解析 UM980 NMEA GGA 数据
+  5. 若 60 秒内拿到有效定位，向 UI 发送真实经纬度突发包
+  6. 若 60 秒内仍无有效定位，向 UI 发送 `gps.py` 默认经纬度突发包
+  7. 按 `GPS_UI_SEND_DURATION` / `GPS_UI_SEND_INTERVAL` 发送完成后 GPS 线程退出
+- GPS UI 协议为独立包，不复用目标状态包：
+  - `0x03 + float(latitude) + float(longitude)`
+  - 代码实现为 `struct.pack('!Bff', 0x03, latitude, longitude)`
+  - 现有目标状态包仍为 `0x02`，格式不变
+- 当前 GPS 串口配置与其他硬件统一：
+  - `GPS_PORT = _serial_port("GPS_PORT", "gps")`
+  - Windows 默认 `COM8`
+  - Linux 当前默认 `/dev/ttyUSB2`
+  - 可通过 `GPS_PORT` 环境变量覆盖；部署时建议优先使用 `/dev/serial/by-id/...` 避免 USB 插拔顺序变化
+- `gps.py` 的 `DEFAULT_LONGITUDE` / `DEFAULT_LATITUDE` 现在具有运行兜底意义：GPS 模块无信号、无卫星、串口异常或超时后，会用该默认坐标发给 UI。部署前应改成设备实际安装点坐标。
+- 已新增 `udp_ui_receiver.py`，可在 UI 端或调试电脑监听 UDP `9999`，解析 `0x02` 状态包和 `0x03` GPS 包，用于验证 Linux 端发包。
+
 ## 2026-04-16 最新进展
 - 云台抢占控制已进一步解耦为“同目标按轴更新、切目标整条替换”。
 - 当前方位/俯仰抢占基线为：
