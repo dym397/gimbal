@@ -1,0 +1,33 @@
+[Log] stdout/stderr -> logs/main_tracking_v9_20260422_205249.log
+[Config][Warn] GPS_PORT=/dev/ttyUSB3 当前不存在。请确认设备节点、udev 映射或 USB 串口权限。
+[Init] Connecting to Gimbal at /dev/ttyUSB0...
+[GPS] Thread started, waiting for one valid fix on /dev/ttyUSB3@115200, timeout=60s
+[GPS] Attempt 1: searching satellites and waiting for valid latitude/longitude...
+[GT06Z] Driver Ready on /dev/ttyUSB0.
+[Adapter] GT06Z 云台已连接: /dev/ttyUSB0
+[GPS] Attempt 1: no valid latitude/longitude yet, source=serial_error, retry_in=2.0s
+[Init] Real laser enabled on /dev/ttyUSB1
+[Init] Queue gimbal initial posture: Az=90.00°, El=0.00°
+[LaserThread] 激光读取线程已启动[GimbalThread] 控制线程已启动
+
+=== System V9.0 (Predictive Tracking & Scheduling) Running ===
+[Net] Listening RK3588 on 8888...[Laser] start_measurement mode=continuous
+
+[GimbalCmd] cmd_id=0, track_id=-1, target_ctrl=(Az=90.00°, El=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=0.322s, actual_ctrl=(Az=90.00°, El=-0.00°), actual_ui=(Az=0.00°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=0.00°)
+[GimbalSettled] cmd_id=0, track_id=-1, settle_time=0.322s, actual_ctrl=(Az=90.00°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.00°, dEl=0.00°)
+[Laser] No valid laser distance, use mono distance
+[GPS] Attempt 2: searching satellites and waiting for valid latitude/longitude...
+[GPS] Attempt 2: no valid latitude/longitude yet, source=serial_error, retry_in=2.0s
+[GPS] Attempt 3: searching satellites and waiting for valid latitude/longitude...
+[GPS] Attempt 3: no valid latitude/longitude yet, source=serial_error, retry_in=2.0s
+[GPS] Attempt 4: searching satellites and waiting for valid latitude/longitude...
+[GPS] Attempt 4: no valid latitude/longitude yet, source=serial_error, retry_in=2.0s
+[GPS] Attempt 5: searching satellites and waiting for valid latitude/longitude...
+[GPS] Attempt 5: no valid latitude/longitude yet, source=serial_error, retry_in=2.0s
+[GPS] Attempt 6: searching satellites and waiting for valid latitude/longitude...
+[GPS] Attempt 6: no valid latitude/longitude yet, source=serial_error, retry_in=2.0s
+[GPS] Attempt 7: searching satellites and waiting for valid latitude/longitude...
+[GPS] Attempt 7: no valid latitude/longitude yet, source=serial_error, retry_in=2.0s
+[GPS] Attempt 8: searching satellites and waiting for valid latitude/longitude...
+[GPS] Attempt 8: no valid latitude/longitude yet, source=serial_error, retry_in=2.0s

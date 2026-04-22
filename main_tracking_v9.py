@@ -46,8 +46,8 @@ def _platform_serial_defaults():
     return {
         "gimbal": "/dev/ttyUSB0",
         "laser": "/dev/ttyUSB1",
-        "imu": "/dev/ttyUSB2",
-        "gps": "/dev/ttyUSB3",
+        "imu": "/dev/ttyUSB3",
+        "gps": "/dev/ttyUSB2",
     }
 
 
@@ -224,7 +224,7 @@ IMU_PRINT_INTERVAL = 0.2
 GPS_BAUDRATE = 115200
 GPS_FIX_TIMEOUT_SECONDS = 60
 GPS_RETRY_INTERVAL = 2.0
-GPS_DEBUG_RAW = _env_flag("GPS_DEBUG_RAW", False)
+GPS_DEBUG_RAW = _env_flag("GPS_DEBUG_RAW", True)
 GIMBAL_AZ_BASE = 90.0  # 云台水平基准角（UI绝对方位 0° 映射到控制角的基准）
 GIMBAL_INIT_EL = 0.0  # 启动时俯仰归位角，目标通常从该方向进入
 GIMBAL_CMD_DEADBAND_AZ = 0.20
