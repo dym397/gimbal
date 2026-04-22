@@ -71,7 +71,14 @@ def wgs84_to_gcj02(lng, lat):
     return lng + dlng, lat + dlat
 
 
-def read_gps_fix(port=None, baudrate=115200, timeout_seconds=GPS_FIX_TIMEOUT_SECONDS, print_raw=True):
+def read_gps_fix(
+    port=None,
+    baudrate=115200,
+    timeout_seconds=GPS_FIX_TIMEOUT_SECONDS,
+    print_raw=True,
+    print_status=True,
+    status_interval=5.0,
+):
     if port is None:
         port = default_gps_port()
 
@@ -89,17 +96,39 @@ def read_gps_fix(port=None, baudrate=115200, timeout_seconds=GPS_FIX_TIMEOUT_SEC
 
     try:
         with serial.Serial(port, baudrate, timeout=1) as ser:
+            start_t = time.monotonic()
             deadline = time.monotonic() + timeout_seconds
+            last_status_t = 0.0
             while time.monotonic() < deadline:
                 line = ser.readline().decode("ascii", errors="ignore").strip()
                 if print_raw:
-                    print(f"[GPS] raw line: {line}")
+                    print(f"[GPS] raw line: {line}", flush=True)
+                if not line:
+                    now_t = time.monotonic()
+                    if print_status and (now_t - last_status_t) >= status_interval:
+                        elapsed = now_t - start_t
+                        print(
+                            f"[GPS] Waiting for NMEA data on {port}, "
+                            f"elapsed={elapsed:.1f}s/{timeout_seconds:.1f}s",
+                            flush=True,
+                        )
+                        last_status_t = now_t
+                    continue
 
                 if line.startswith("$GPGGA") or line.startswith("$GNGGA"):
                     try:
                         msg = pynmea2.parse(line)
                     except pynmea2.ParseError:
                         continue
+
+                    if print_status:
+                        print(
+                            f"[GPS] GGA fix_quality={getattr(msg, 'gps_qual', '')}, "
+                            f"num_sats={getattr(msg, 'num_sats', '')}, "
+                            f"hdop={getattr(msg, 'horizontal_dil', '')}, "
+                            f"lat={msg.latitude}, lon={msg.longitude}",
+                            flush=True,
+                        )
 
                     if str(getattr(msg, "gps_qual", "0")) == "0":
                         continue
@@ -125,6 +154,7 @@ def read_gps(port=None, baudrate=115200, timeout_seconds=GPS_FIX_TIMEOUT_SECONDS
         baudrate=baudrate,
         timeout_seconds=timeout_seconds,
         print_raw=print_raw,
+        print_status=print_raw,
     )
     if longitude is None or latitude is None:
         return DEFAULT_LONGITUDE, DEFAULT_LATITUDE, gps_source

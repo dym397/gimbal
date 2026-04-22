@@ -224,7 +224,8 @@ IMU_PRINT_INTERVAL = 0.2
 GPS_BAUDRATE = 115200
 GPS_FIX_TIMEOUT_SECONDS = 60
 GPS_RETRY_INTERVAL = 2.0
-GPS_DEBUG_RAW = _env_flag("GPS_DEBUG_RAW", True)
+GPS_STATUS_INTERVAL = 5.0
+GPS_DEBUG_RAW = _env_flag("GPS_DEBUG_RAW", False)
 GIMBAL_AZ_BASE = 90.0  # 云台水平基准角（UI绝对方位 0° 映射到控制角的基准）
 GIMBAL_INIT_EL = 0.0  # 启动时俯仰归位角，目标通常从该方向进入
 GIMBAL_CMD_DEADBAND_AZ = 0.20
@@ -540,6 +541,8 @@ def gps_sender_thread(sender):
             baudrate=GPS_BAUDRATE,
             timeout_seconds=GPS_FIX_TIMEOUT_SECONDS,
             print_raw=GPS_DEBUG_RAW,
+            print_status=True,
+            status_interval=GPS_STATUS_INTERVAL,
         )
         if longitude is not None and latitude is not None:
             sender.send_gps_location(latitude=latitude, longitude=longitude)
