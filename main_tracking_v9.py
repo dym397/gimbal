@@ -229,6 +229,7 @@ IMU_PRINT_INTERVAL = 0.2
 GPS_BAUDRATE = 115200
 GPS_FIX_TIMEOUT_SECONDS = 5
 GPS_STATUS_INTERVAL = 5.0
+GPS_UI_SEND_INTERVAL = 10.0
 GPS_DEBUG_RAW = _env_flag("GPS_DEBUG_RAW", False)
 GIMBAL_AZ_BASE = 90.0  # 云台水平基准角（UI绝对方位 0° 映射到控制角的基准）
 GIMBAL_INIT_EL = 0.0  # 启动时俯仰归位角，目标通常从该方向进入
@@ -542,32 +543,50 @@ def gps_sender_thread(sender):
         return
 
     print(
-        f"[GPS] Thread started, waiting for one valid fix on "
-        f"{GPS_PORT}@{GPS_BAUDRATE}, timeout={GPS_FIX_TIMEOUT_SECONDS}s"
+        f"[GPS] Thread started, periodic UI updates enabled on "
+        f"{GPS_PORT}@{GPS_BAUDRATE}, fix_timeout={GPS_FIX_TIMEOUT_SECONDS}s, "
+        f"ui_interval={GPS_UI_SEND_INTERVAL}s"
     )
-    print("[GPS] Searching satellites and waiting for valid latitude/longitude...")
-    longitude, latitude, source = read_gps_fix(
-        port=GPS_PORT,
-        baudrate=GPS_BAUDRATE,
-        timeout_seconds=GPS_FIX_TIMEOUT_SECONDS,
-        print_raw=GPS_DEBUG_RAW,
-        print_status=True,
-        status_interval=GPS_STATUS_INTERVAL,
-    )
-    if longitude is not None and latitude is not None:
-        sender.send_gps_location(latitude=latitude, longitude=longitude)
-           
-        print(
-            f"[GPS] Fix acquired and sent to UI: "
-            f"source={source}, latitude={latitude:.6f}, longitude={longitude:.6f}"
+
+    last_sent_latitude = None
+    last_sent_longitude = None
+    last_sent_source = "default"
+
+    while True:
+        cycle_start = time.monotonic()
+        print("[GPS] Searching satellites and waiting for valid latitude/longitude...")
+        longitude, latitude, source = read_gps_fix(
+            port=GPS_PORT,
+            baudrate=GPS_BAUDRATE,
+            timeout_seconds=GPS_FIX_TIMEOUT_SECONDS,
+            print_raw=GPS_DEBUG_RAW,
+            print_status=True,
+            status_interval=GPS_STATUS_INTERVAL,
         )
-        return
-    sender.send_gps_location(latitude=DEFAULT_LATITUDE, longitude=DEFAULT_LONGITUDE)
-    
-    print(
-        f"[GPS] Fix timeout/no valid location, sent default location to UI: "
-        f"source={source}, latitude={DEFAULT_LATITUDE:.6f}, longitude={DEFAULT_LONGITUDE:.6f}"
-    )
+
+        send_source = source
+        if longitude is not None and latitude is not None:
+            last_sent_longitude = longitude
+            last_sent_latitude = latitude
+            last_sent_source = source
+        elif last_sent_longitude is not None and last_sent_latitude is not None:
+            longitude = last_sent_longitude
+            latitude = last_sent_latitude
+            send_source = f"cached:{last_sent_source}"
+        else:
+            longitude = DEFAULT_LONGITUDE
+            latitude = DEFAULT_LATITUDE
+            send_source = "default"
+
+        sender.send_gps_location(latitude=latitude, longitude=longitude)
+        print(
+            f"[GPS] Sent location to UI: "
+            f"source={send_source}, latitude={latitude:.6f}, longitude={longitude:.6f}"
+        )
+
+        sleep_time = GPS_UI_SEND_INTERVAL - (time.monotonic() - cycle_start)
+        if sleep_time > 0:
+            time.sleep(sleep_time)
 
 
 def parse_udp_objects(raw_objs):
