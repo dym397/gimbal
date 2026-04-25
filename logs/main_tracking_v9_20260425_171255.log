@@ -1,0 +1,15 @@
+[Log] stdout/stderr -> logs/main_tracking_v9_20260425_171255.log
+[Init] Connecting to Gimbal at /dev/ttyUSB0...
+[GPS] Thread started, waiting for one valid fix on /dev/ttyUSB2@115200, timeout=5s
+[GPS] Searching satellites and waiting for valid latitude/longitude...
+[GT06Z] Driver Ready on /dev/ttyUSB0.
+[Adapter] GT06Z 云台已连接: /dev/ttyUSB0
+[LaserThread] 激光读取线程已启动
+[Laser] start_measurement mode=continuous
+[Init] Real laser enabled on /dev/ttyUSB1
+[Init] Queue gimbal initial posture: Az=90.00°, El=0.00°
+[GimbalThread] 控制线程已启动
+=== System V9.0 (Predictive Tracking & Scheduling) Running ===[Net] Listening RK3588 on 8888...
+
+[GimbalCmd] cmd_id=0, track_id=-1, target_ctrl=(Az=90.00°, El=0.00°)
+[GimbalTimeout] cmd_id=0, track_id=-1, elapsed=2.661s, no attitude feedback

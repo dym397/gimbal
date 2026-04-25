@@ -1,0 +1,33 @@
+[Log] stdout/stderr -> logs/main_tracking_v9_20260425_172943.log
+[Init] Connecting to Gimbal at /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.3:1.0-port0...
+[GPS] Thread started, waiting for one valid fix on /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2:1.0-port0@115200, timeout=5s
+[GPS] Searching satellites and waiting for valid latitude/longitude...
+[GT06Z] Driver Ready on /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.3:1.0-port0.
+[Adapter] GT06Z 云台已连接: /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.3:1.0-port0
+[GPS] GGA fix_quality=0, num_sats=00, hdop=9999.0, lat=0.0, lon=0.0
+[Init] Real laser enabled on /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-port0
+[Init] Queue gimbal initial posture: Az=90.00°, El=0.00°
+[LaserThread] 激光读取线程已启动[GimbalThread] 控制线程已启动
+
+[Laser] start_measurement mode=continuous
+=== System V9.0 (Predictive Tracking & Scheduling) Running ===
+[Net] Listening RK3588 on 8888...
+[GimbalCmd] cmd_id=0, track_id=-1, target_ctrl=(Az=90.00°, El=0.00°)
+[GPS] GGA fix_quality=0, num_sats=00, hdop=9999.0, lat=0.0, lon=0.0
+[GimbalAtt] cmd_id=0, elapsed=0.041s, actual_ctrl=(Az=196.00°, El=17.20°), actual_ui=(Az=106.00°, El=17.20°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=106.00°, dEl=17.20°)
+[GimbalAtt] cmd_id=0, elapsed=0.302s, actual_ctrl=(Az=192.10°, El=16.20°), actual_ui=(Az=102.10°, El=16.20°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=102.10°, dEl=16.20°)
+[GimbalAtt] cmd_id=0, elapsed=0.564s, actual_ctrl=(Az=185.40°, El=14.20°), actual_ui=(Az=95.40°, El=14.20°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=95.40°, dEl=14.20°)
+[GimbalAtt] cmd_id=0, elapsed=0.826s, actual_ctrl=(Az=175.60°, El=11.20°), actual_ui=(Az=85.60°, El=11.20°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=85.60°, dEl=11.20°)
+[GPS] GGA fix_quality=0, num_sats=00, hdop=9999.0, lat=0.0, lon=0.0
+[GimbalAtt] cmd_id=0, elapsed=1.088s, actual_ctrl=(Az=164.00°, El=7.30°), actual_ui=(Az=74.00°, El=7.30°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=74.00°, dEl=7.30°)
+[GimbalAtt] cmd_id=0, elapsed=1.349s, actual_ctrl=(Az=152.60°, El=3.60°), actual_ui=(Az=62.60°, El=3.60°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=62.60°, dEl=3.60°)
+[GimbalAtt] cmd_id=0, elapsed=1.611s, actual_ctrl=(Az=152.60°, El=0.70°), actual_ui=(Az=62.60°, El=0.70°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=62.60°, dEl=0.70°)
+[GPS] GGA fix_quality=0, num_sats=00, hdop=9999.0, lat=0.0, lon=0.0
+[GimbalAtt] cmd_id=0, elapsed=1.967s, actual_ctrl=(Az=125.30°, El=-0.00°), actual_ui=(Az=35.30°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=35.30°, dEl=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=2.229s, actual_ctrl=(Az=113.70°, El=-0.00°), actual_ui=(Az=23.70°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=23.70°, dEl=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=2.491s, actual_ctrl=(Az=102.30°, El=-0.00°), actual_ui=(Az=12.30°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=12.30°, dEl=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=2.753s, actual_ctrl=(Az=93.10°, El=-0.00°), actual_ui=(Az=3.10°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=3.10°, dEl=0.00°)
+[GimbalTimeout] cmd_id=0, track_id=-1, elapsed=2.753s, actual_ctrl=(Az=93.10°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=3.10°, dEl=0.00°)
+[GPS] GGA fix_quality=0, num_sats=00, hdop=9999.0, lat=0.0, lon=0.0
+[GPS] GGA fix_quality=0, num_sats=00, hdop=9999.0, lat=0.0, lon=0.0
+[GPS] Fix timeout/no valid location, sent default location to UI: source=no_fix, latitude=30.949700, longitude=104.307000

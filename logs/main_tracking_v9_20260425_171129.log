@@ -1,0 +1,27 @@
+[Log] stdout/stderr -> logs/main_tracking_v9_20260425_171129.log
+[Config][Warn] GIMBAL_PORT=/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.3:1.0-port0 不是 Linux 串口设备路径。请改为 /dev/ttyUSB*、/dev/ttyACM*、/dev/ttyS* 或 /dev/serial/by-id/*。
+[Config][Warn] LASER_PORT=/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-port0 不是 Linux 串口设备路径。请改为 /dev/ttyUSB*、/dev/ttyACM*、/dev/ttyS* 或 /dev/serial/by-id/*。
+[Config][Warn] GPS_PORT=/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2:1.0-port0 不是 Linux 串口设备路径。请改为 /dev/ttyUSB*、/dev/ttyACM*、/dev/ttyS* 或 /dev/serial/by-id/*。
+[GPS] Thread started, waiting for one valid fix on /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2:1.0-port0@115200, timeout=5s[Init] Connecting to Gimbal at /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.3:1.0-port0...
+
+[GPS] Searching satellites and waiting for valid latitude/longitude...
+[GT06Z] Driver Ready on /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.3:1.0-port0.
+[Adapter] GT06Z 云台已连接: /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.3:1.0-port0
+[GPS] GGA fix_quality=0, num_sats=00, hdop=9999.0, lat=0.0, lon=0.0
+[LaserThread] 激光读取线程已启动[Init] Real laser enabled on /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-port0
+
+[Init] Queue gimbal initial posture: Az=90.00°, El=0.00°
+[Laser] start_measurement mode=continuous
+[GimbalThread] 控制线程已启动
+[Net] Listening RK3588 on 8888...
+=== System V9.0 (Predictive Tracking & Scheduling) Running ===
+[GPS] GGA fix_quality=0, num_sats=00, hdop=9999.0, lat=0.0, lon=0.0
+[GimbalCmd] cmd_id=0, track_id=-1, target_ctrl=(Az=90.00°, El=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=0.322s, actual_ctrl=(Az=90.10°, El=-0.00°), actual_ui=(Az=0.10°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.10°, dEl=0.00°)
+[GimbalSettled] cmd_id=0, track_id=-1, settle_time=0.322s, actual_ctrl=(Az=90.10°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.10°, dEl=0.00°)
+[Laser] Triggered cmd_id=0, track_id=-1, dist=6.20m, interval=first
+[GPS] GGA fix_quality=0, num_sats=00, hdop=9999.0, lat=0.0, lon=0.0
+[GPS] GGA fix_quality=0, num_sats=00, hdop=9999.0, lat=0.0, lon=0.0
+[GPS] GGA fix_quality=0, num_sats=00, hdop=9999.0, lat=0.0, lon=0.0
+[GPS] GGA fix_quality=0, num_sats=00, hdop=9999.0, lat=0.0, lon=0.0
+[GPS] Fix timeout/no valid location, sent default location to UI: source=no_fix, latitude=30.949700, longitude=104.307000

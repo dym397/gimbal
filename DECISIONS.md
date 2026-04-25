@@ -1,10 +1,9 @@
 # DECISIONS.md
 
 ## 2026-04-22
-### 决策：GPS 启动定位短时重复发送，超时后使用默认经纬度兜底
+### 决策：GPS 启动定位发送一次，超时后使用默认经纬度兜底
 **为什么**
 - UI 只需要系统启动时获得设备经纬度，不需要 GPS 线程长期持续发送。
-- 启动阶段采用 0.5 秒短时重复发送，可降低 UDP 单包丢失导致 UI 未收到位置的风险。
 - UM980 冷启动或室内环境可能长时间无有效定位；如果一直等待真实 fix，UI 端会迟迟拿不到设备位置。
 - 设备部署点通常是固定的，因此 `gps.py` 中的默认经纬度可以作为硬件异常、无卫星或天线问题时的可靠兜底。
 
@@ -13,7 +12,7 @@
 - GPS 线程最多等待 `GPS_FIX_TIMEOUT_SECONDS = 60` 秒获取真实 GGA 定位。
 - 若获取成功，发送真实经纬度给 UI。
 - 若超时、无卫星、无有效 GGA、串口异常或打开失败，发送 `gps.py` 中的 `DEFAULT_LATITUDE` / `DEFAULT_LONGITUDE`。
-- GPS 包按 `GPS_UI_SEND_DURATION = 0.5`、`GPS_UI_SEND_INTERVAL = 0.1` 短时重复发送，发送完成后线程退出。
+- GPS 线程在发送一次真实或默认经纬度后退出。
 - 新增 UI GPS 包格式：`0x03 + float(latitude) + float(longitude)`，实现为 `struct.pack('!Bff', 0x03, latitude, longitude)`。
 
 **验证**

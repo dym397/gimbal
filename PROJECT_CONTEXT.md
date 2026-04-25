@@ -1,15 +1,15 @@
 # PROJECT_CONTEXT.md
 
 ## 2026-04-22 最新进展
-- GPS 启动定位功能已接入 `main_tracking_v9.py`，用于系统启动时向 UI 短时重复发送设备经纬度。
+- GPS 启动定位功能已接入 `main_tracking_v9.py`，用于系统启动时向 UI 发送一次设备经纬度。
 - 当前 GPS 数据路径：
   1. `main_tracking_v9.py` 创建 `UISender`
   2. 启动 `gps_sender_thread` 后台线程
   3. 线程调用 `gps.py` 中的 `read_gps_fix()`
   4. `read_gps_fix()` 打开 GPS 串口并解析 UM980 NMEA GGA 数据
-  5. 若 60 秒内拿到有效定位，向 UI 发送真实经纬度突发包
-  6. 若 60 秒内仍无有效定位，向 UI 发送 `gps.py` 默认经纬度突发包
-  7. 按 `GPS_UI_SEND_DURATION` / `GPS_UI_SEND_INTERVAL` 发送完成后 GPS 线程退出
+  5. 若 60 秒内拿到有效定位，向 UI 发送真实经纬度
+  6. 若 60 秒内仍无有效定位，向 UI 发送 `gps.py` 默认经纬度
+  7. 发送一次后 GPS 线程退出
 - GPS UI 协议为独立包，不复用目标状态包：
   - `0x03 + float(latitude) + float(longitude)`
   - 代码实现为 `struct.pack('!Bff', 0x03, latitude, longitude)`

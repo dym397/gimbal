@@ -16,7 +16,7 @@ def default_gps_port():
         return env_port.strip()
     if os.name == "nt":
         return "COM8"
-    return "/dev/ttyUSB3"
+    return "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2:1.0-port0"
 
 
 def _normalize_windows_com_port(port_name):

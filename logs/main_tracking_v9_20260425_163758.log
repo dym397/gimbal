@@ -1,0 +1,22 @@
+[Log] stdout/stderr -> logs/main_tracking_v9_20260425_163758.log
+[Config][Warn] GIMBAL_PORT=/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.3:1.0-port0 不是 Linux 串口设备路径。请改为 /dev/ttyUSB*、/dev/ttyACM*、/dev/ttyS* 或 /dev/serial/by-id/*。
+[Config][Warn] LASER_PORT=/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-port0 不是 Linux 串口设备路径。请改为 /dev/ttyUSB*、/dev/ttyACM*、/dev/ttyS* 或 /dev/serial/by-id/*。
+[Config][Warn] GPS_PORT=/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2:1.0-port0 不是 Linux 串口设备路径。请改为 /dev/ttyUSB*、/dev/ttyACM*、/dev/ttyS* 或 /dev/serial/by-id/*。
+[GPS] Thread started, waiting for one valid fix on /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2:1.0-port0@115200, timeout=5s
+[GPS] Searching satellites and waiting for valid latitude/longitude...
+[Init] Connecting to Gimbal at /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.3:1.0-port0...
+[GT06Z] Driver Ready on /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.3:1.0-port0.
+[Adapter] GT06Z 云台已连接: /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.3:1.0-port0
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.951968877, lon=104.304072571
+[GPS] Fix acquired and sent to UI: source=/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2:1.0-port0, latitude=30.949625, longitude=104.306569
+[LaserThread] 激光读取线程已启动[Init] Real laser enabled on /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-port0
+[Init] Queue gimbal initial posture: Az=90.00°, El=0.00°
+
+[GimbalThread] 控制线程已启动
+[Net] Listening RK3588 on 8888...
+=== System V9.0 (Predictive Tracking & Scheduling) Running ===
+[Laser] start_measurement mode=continuous
+[GimbalCmd] cmd_id=0, track_id=-1, target_ctrl=(Az=90.00°, El=0.00°)
+[GimbalAtt] cmd_id=0, elapsed=0.321s, actual_ctrl=(Az=89.90°, El=-0.00°), actual_ui=(Az=359.90°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.10°, dEl=0.00°)
+[GimbalSettled] cmd_id=0, track_id=-1, settle_time=0.321s, actual_ctrl=(Az=89.90°, El=-0.00°), target_ctrl=(Az=90.00°, El=0.00°), err=(dAz=0.10°, dEl=0.00°)
+[Laser] Triggered cmd_id=0, track_id=-1, dist=5.10m, interval=first

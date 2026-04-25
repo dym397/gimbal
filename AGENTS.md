@@ -8,8 +8,7 @@
   - 等待期间打印 GGA 状态摘要，必要时可通过 `GPS_DEBUG_RAW=1` 打印每条原始 NMEA
   - 60 秒内获取真实定位，则发送真实经纬度给 UI
   - 60 秒内仍无有效定位，则发送 `gps.py` 中的 `DEFAULT_LATITUDE` / `DEFAULT_LONGITUDE` 作为兜底位置
-  - 无论真实定位还是默认兜底，GPS 线程都会按 `GPS_UI_SEND_DURATION` 持续短时发送后退出
-  - 当前 UI 发送突发参数：`GPS_UI_SEND_DURATION = 0.5`、`GPS_UI_SEND_INTERVAL = 0.1`
+  - 无论真实定位还是默认兜底，GPS 线程都会向 UI 发送一次经纬度信息后退出
 - UI 新增 GPS 数据包格式：
   - 包头 `0x03`
   - 紧跟 `float latitude`

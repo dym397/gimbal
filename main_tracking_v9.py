@@ -46,10 +46,10 @@ def _platform_serial_defaults():
             "gps": "COM8",
         }
     return {
-        "gimbal": "/dev/ttyUSB0",
-        "laser": "/dev/ttyUSB1",
-        "imu": "/dev/ttyUSB3",
-        "gps": "/dev/ttyUSB2",
+        "gimbal": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.3:1.0-port0",
+        "laser": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-port0",
+        "imu": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.2:1.0-port0",
+        "gps": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2:1.0-port0",
     }
 
 
@@ -90,6 +90,7 @@ def _is_linux_serial_port(port_name):
         "/dev/ttyACM",
         "/dev/ttyS",
         "/dev/serial/by-id/",
+        "/dev/serial/by-path/",
     ))
 
 
@@ -121,7 +122,8 @@ def _validate_serial_port(label, port_name):
     if not _is_linux_serial_port(port_name):
         print(
             f"[Config][Warn] {label}={port_name} 不是 Linux 串口设备路径。"
-            "请改为 /dev/ttyUSB*、/dev/ttyACM*、/dev/ttyS* 或 /dev/serial/by-id/*。"
+            "请改为 /dev/ttyUSB*、/dev/ttyACM*、/dev/ttyS*、/dev/serial/by-id/* "
+            "或 /dev/serial/by-path/*。"
         )
         return
     if not os.path.exists(port_name):
@@ -211,6 +213,7 @@ def _env_flag(name, default=True):
 
 
 UI_IP = "192.168.2.200"
+# UI_IP="172.28.3.80"
 UI_PORT = 9999
 LOCAL_PORT = 8888
 GIMBAL_PORT = _serial_port("GIMBAL_PORT", "gimbal")
@@ -224,7 +227,7 @@ IMU_PORT = _serial_port("IMU_PORT", "imu")
 IMU_BAUDRATE = 9600
 IMU_PRINT_INTERVAL = 0.2
 GPS_BAUDRATE = 115200
-GPS_FIX_TIMEOUT_SECONDS = 60
+GPS_FIX_TIMEOUT_SECONDS = 5
 GPS_STATUS_INTERVAL = 5.0
 GPS_DEBUG_RAW = _env_flag("GPS_DEBUG_RAW", False)
 GIMBAL_AZ_BASE = 90.0  # 云台水平基准角（UI绝对方位 0° 映射到控制角的基准）
@@ -301,7 +304,12 @@ DEVICE_THETA = {
     37: {"theta_vertical": 76.0, "theta_horizontal": 24.0},
     38: {"theta_vertical": 76.0, "theta_horizontal": 0.0},
     39: {"theta_vertical": 76.0, "theta_horizontal": 336.0},
-    40: {"theta_vertical": 76.0, "theta_horizontal": 312.0}
+    40: {"theta_vertical": 76.0, "theta_horizontal": 312.0},
+    41: {"theta_vertical": 76.0, "theta_horizontal": 48.0},
+    42: {"theta_vertical": 76.0, "theta_horizontal": 24.0},
+    43: {"theta_vertical": 76.0, "theta_horizontal": 0.0},
+    44: {"theta_vertical": 76.0, "theta_horizontal": 336.0},
+    45: {"theta_vertical": 76.0, "theta_horizontal": 312.0}
 }
 
 # ==========================================
@@ -316,6 +324,7 @@ HARDWARE_MAP = {
     ("BOARD_6", 0): 26, ("BOARD_6", 1): 27, ("BOARD_6", 2): 28, ("BOARD_6", 3): 29, ("BOARD_6", 4): 30,
     ("BOARD_7", 0): 31 , ("BOARD_7", 1): 32, ("BOARD_7", 2): 33, ("BOARD_7", 3): 34, ("BOARD_7", 4): 35,
     ("BOARD_8", 0): 36, ("BOARD_8", 1): 37, ("BOARD_8", 2): 38, ("BOARD_8", 3): 39, ("BOARD_8", 4): 40,
+    ("BOARD_9", 0): 41, ("BOARD_9", 1): 42, ("BOARD_9", 2): 43, ("BOARD_9", 3): 44, ("BOARD_9", 4): 45,
 }
 
 # ==========================================
@@ -547,13 +556,14 @@ def gps_sender_thread(sender):
     )
     if longitude is not None and latitude is not None:
         sender.send_gps_location(latitude=latitude, longitude=longitude)
+           
         print(
             f"[GPS] Fix acquired and sent to UI: "
             f"source={source}, latitude={latitude:.6f}, longitude={longitude:.6f}"
         )
         return
-
     sender.send_gps_location(latitude=DEFAULT_LATITUDE, longitude=DEFAULT_LONGITUDE)
+    
     print(
         f"[GPS] Fix timeout/no valid location, sent default location to UI: "
         f"source={source}, latitude={DEFAULT_LATITUDE:.6f}, longitude={DEFAULT_LONGITUDE:.6f}"
