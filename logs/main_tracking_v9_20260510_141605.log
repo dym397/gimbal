@@ -1,0 +1,7 @@
+[Log] stdout/stderr -> logs\main_tracking_v9_20260510_141605.log
+[Init] Connecting to Gimbal at COM3...
+[GPS] Thread started, periodic UI updates enabled on COM8@115200, fix_timeout=5s, ui_interval=10.0s
+[GPS] Searching satellites and waiting for valid latitude/longitude...
+[GT06Z] Open fail: could not open port 'COM3': FileNotFoundError(2, '系统找不到指定的文件。', None, 2)
+[Error] Failed to connect gimbal.
+[GPS] Sent location to UI: source=default, latitude=30.949700, longitude=104.307000
