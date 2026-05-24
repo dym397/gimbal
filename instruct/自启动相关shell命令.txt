@@ -1,0 +1,49 @@
+删除Z盘     net use Z: /delete /y
+
+看日志          journalctl -u gimbal-tracking -f
+启动服务       sudo systemctl start gimbal-tracking
+关闭服务        sudo systemctl stop gimbal-tracking
+查看代码执行状态  sudo systemctl status gimbal-tracking
+
+
+开机自启       sudo systemctl enable gimbal-tracking
+关闭开机自启 sudo systemctl disable gimbal-tracking
+ 确认是否已经启用   systemctl is-enabled gimbal-tracking
+
+
+  1. enable 不等于立刻启动
+     它只是设置“下次开机自动启动”
+  2. disable 不等于立刻停止
+     它只是取消“下次开机自动启动”
+  3. 如果你想“现在立刻启动，并且以后开机也自动启动”，可以用：sudo systemctl enable --now gimbal-tracking
+
+ 
+  如果你把开机自启关闭了，下次不需要先开启服务再开机自启。
+
+  你只要根据目的选一个命令就行：
+
+  - 只想恢复开机自启：
++++
+  sudo systemctl enable gimbal-tracking
+
+  - 想现在就启动，并恢复开机自启：
+
+  sudo systemctl enable --now gimbal-tracking
+
+  - 只想现在启动一次，但不开机自启：
+
+  sudo systemctl start gimbal-tracking
+
+硬件映射关系:
+
+  - 激光 -> /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-port0
+  - GPS -> /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2:1.0-port0
+  - IMU -> /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.2:1.0-port0
+  - 云台 -> /dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.3:1.0-port0
+
+
+垂直低头11度   ->低20度算
+抬头52度         ->抬头70度算
+
+
+

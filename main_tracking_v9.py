@@ -8,6 +8,7 @@ import json
 import queue
 import os
 import sys
+import csv
 import atexit
 from collections import deque, Counter
 
@@ -180,7 +181,9 @@ def _setup_log_mirror(log_dir):
 
     os.makedirs(log_dir, exist_ok=True)
     timestamp = time.strftime("%Y%m%d_%H%M%S", time.localtime())
-    log_path = os.path.join(log_dir, f"main_tracking_v9_{timestamp}.log")
+    log_prefix = os.getenv("LOG_PREFIX", "main_tracking_v9").strip() or "main_tracking_v9"
+    safe_prefix = "".join(ch if (ch.isalnum() or ch in ("-", "_")) else "_" for ch in log_prefix)
+    log_path = os.path.join(log_dir, f"{safe_prefix}_{timestamp}.log")
     log_file = open(log_path, "a", encoding="utf-8", newline="\n", buffering=1)
     original_stdout = sys.stdout
     original_stderr = sys.stderr
@@ -212,17 +215,17 @@ def _env_flag(name, default=True):
     return str(val).strip().lower() not in ("0", "false", "no", "off")
 
 
-UI_IP = "192.168.2.200"
+UI_IP = os.getenv("UI_IP", "192.168.2.200")
 # UI_IP="172.28.3.80"
-UI_PORT = 9999
-LOCAL_PORT = 8888
+UI_PORT = int(os.getenv("UI_PORT", "9999"))
+LOCAL_PORT = int(os.getenv("LOCAL_PORT", "8888"))
 GIMBAL_PORT = _serial_port("GIMBAL_PORT", "gimbal")
 LASER_PORT = _serial_port("LASER_PORT", "laser")
 GPS_PORT = _serial_port("GPS_PORT", "gps")
-USE_MOCK_GIMBAL = False  # True: 使用 mock_gimbal.py; False: 使用真实 GT06Z
-USE_MOCK_LASER = False   # True: 激光通道使用 mono 模拟值; False: 使用真实 SDDM 激光
+USE_MOCK_GIMBAL = _env_flag("USE_MOCK_GIMBAL", False)  # True: 使用 mock_gimbal.py; False: 使用真实 GT06Z
+USE_MOCK_LASER = _env_flag("USE_MOCK_LASER", False)   # True: 激光通道使用 mono 模拟值; False: 使用真实 SDDM 激光
 ENABLE_GPS = _env_flag("ENABLE_GPS", True)
-ENABLE_IMU = False      # Manual switch: True to enable IMU read/print
+ENABLE_IMU = _env_flag("ENABLE_IMU", False)      # Manual switch: True to enable IMU read/print
 IMU_PORT = _serial_port("IMU_PORT", "imu")
 IMU_BAUDRATE = 9600
 IMU_PRINT_INTERVAL = 0.2
@@ -231,7 +234,7 @@ GPS_FIX_TIMEOUT_SECONDS = 5
 GPS_STATUS_INTERVAL = 5.0
 GPS_UI_SEND_INTERVAL = 10.0
 GPS_DEBUG_RAW = _env_flag("GPS_DEBUG_RAW", False)
-GIMBAL_AZ_BASE = 59.6  # 云台水平基准角（UI绝对方位 0° 映射到控制角的基准）
+GIMBAL_AZ_BASE = 59.3  # 云台水平基准角（UI绝对方位 0° 映射到控制角的基准）
 GIMBAL_INIT_EL = 0.0  # 启动时俯仰归位角，目标通常从该方向进入
 GIMBAL_CMD_DEADBAND_AZ = 0.20
 GIMBAL_CMD_DEADBAND_EL = 0.12
@@ -252,8 +255,19 @@ STABILITY_HIT_CAP = 20
 STABILITY_WEIGHT = 0.8
 STATS_PRINT_INTERVAL = 2.0
 MASTER_SELECTION_LOG_TOPK = 5
+NO_PACKET_TRACKER_UPDATE_INTERVAL = 1.0 / 15.0
 LOG_TO_FILE = _env_flag("LOG_TO_FILE", True)
 LOG_DIR = os.getenv("LOG_DIR", "logs")
+DEBUG_TRACKER = _env_flag("DEBUG_TRACKER", False)
+DEBUG_KALMAN_MATCH = _env_flag("DEBUG_KALMAN_MATCH", False)
+PRINT_PHASE_LOGS = _env_flag("PRINT_PHASE_LOGS", False)
+PRINT_GIMBAL_PROGRESS = _env_flag("PRINT_GIMBAL_PROGRESS", False)
+PRINT_EVENT_LOGS = _env_flag("PRINT_EVENT_LOGS", False)
+PRINT_STATS = _env_flag("PRINT_STATS", False)
+PRINT_LIVE_STATUS = _env_flag("PRINT_LIVE_STATUS", True)
+LIVE_STATUS_INTERVAL = float(os.getenv("LIVE_STATUS_INTERVAL", "1.0"))
+FIELD_LOG = _env_flag("FIELD_LOG", True)
+FIELD_LOG_DIR = os.getenv("FIELD_LOG_DIR", LOG_DIR)
 
 IMG_W = 3840.0
 IMG_H = 2160.0
@@ -262,55 +276,265 @@ FOV_Y = 9.9
 DEG_PER_PIXEL_X = FOV_X / IMG_W
 DEG_PER_PIXEL_Y = FOV_Y / IMG_H
 
+class FieldLogger:
+    def __init__(self, log_dir):
+        os.makedirs(log_dir, exist_ok=True)
+        timestamp = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+        self.lock = threading.Lock()
+        self.disabled = False
+        self.last_flush_t = time.monotonic()
+        self.flush_interval = 1.0
+        self.raw_f = open(os.path.join(log_dir, f"raw_udp_{timestamp}.jsonl"), "a", encoding="utf-8", newline="\n")
+        self.measurements_f = open(os.path.join(log_dir, f"measurements_{timestamp}.csv"), "a", encoding="utf-8", newline="")
+        self.summary_f = open(os.path.join(log_dir, f"track_summary_{timestamp}.csv"), "a", encoding="utf-8", newline="")
+        self.events_f = open(os.path.join(log_dir, f"events_{timestamp}.csv"), "a", encoding="utf-8", newline="")
+        self.gimbal_f = open(os.path.join(log_dir, f"gimbal_{timestamp}.csv"), "a", encoding="utf-8", newline="")
+
+        self.measurements_fields = [
+            "timestamp", "seq", "mode", "board", "cam", "meas_idx",
+            "bbox_x1", "bbox_y1", "bbox_x2", "bbox_y2", "bbox_cx", "bbox_cy",
+            "bbox_w", "bbox_h", "mono_dist", "meas_az", "meas_el",
+        ]
+        self.summary_fields = [
+            "timestamp", "seq", "mode", "dt", "meas_count", "track_count",
+            "valid_count", "track_ids", "valid_ids", "master_id",
+            "hit_streaks", "time_since_updates", "track_states",
+            "cmd_az", "cmd_el", "gimbal_ui_az", "gimbal_ui_el",
+        ]
+        self.events_fields = [
+            "timestamp", "seq", "mode", "event", "track_id", "meas_idx",
+            "meas_az", "meas_el", "pred_az", "pred_el", "cost",
+            "dynamic_thresh", "uncertainty", "p_az", "p_el",
+            "hit_streak", "time_since_update", "reason",
+            "master_id", "is_master", "laser_track_id",
+            "distance", "distance_source", "track_laser_dist",
+            "track_laser_ts", "track_laser_age",
+        ]
+        self.gimbal_fields = [
+            "timestamp", "event", "cmd_id", "track_id", "cmd_az", "cmd_el",
+            "gimbal_ui_az", "gimbal_ui_el", "gimbal_ctrl_az", "gimbal_ctrl_el",
+            "target_ctrl_az", "target_ctrl_el", "err_az", "err_el",
+            "is_settled", "settle_time", "laser_valid", "laser_dist",
+            "laser_source", "laser_ts", "laser_age", "laser_interval",
+        ]
+
+        self.measurements_writer = csv.DictWriter(self.measurements_f, fieldnames=self.measurements_fields, extrasaction="ignore")
+        self.summary_writer = csv.DictWriter(self.summary_f, fieldnames=self.summary_fields, extrasaction="ignore")
+        self.events_writer = csv.DictWriter(self.events_f, fieldnames=self.events_fields, extrasaction="ignore")
+        self.gimbal_writer = csv.DictWriter(self.gimbal_f, fieldnames=self.gimbal_fields, extrasaction="ignore")
+        self.measurements_writer.writeheader()
+        self.summary_writer.writeheader()
+        self.events_writer.writeheader()
+        self.gimbal_writer.writeheader()
+        print(f"[FieldLog] enabled: {os.path.abspath(log_dir)}")
+
+    def _handle_write_error(self, exc):
+        if not self.disabled:
+            self.disabled = True
+            print(f"[FieldLog][Warn] 写入失败，已自动停用结构化日志: {exc}")
+
+    def _write_csv(self, writer, fields, row):
+        writer.writerow({field: row.get(field, "") for field in fields})
+
+    def _flush_if_due_locked(self):
+        now = time.monotonic()
+        if (now - self.last_flush_t) < self.flush_interval:
+            return
+        self.raw_f.flush()
+        self.measurements_f.flush()
+        self.summary_f.flush()
+        self.events_f.flush()
+        self.gimbal_f.flush()
+        self.last_flush_t = now
+
+    def write_raw_udp(self, row):
+        if self.disabled:
+            return
+        try:
+            with self.lock:
+                self.raw_f.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n")
+                self._flush_if_due_locked()
+        except Exception as e:
+            self._handle_write_error(e)
+
+    def write_measurement(self, row):
+        if self.disabled:
+            return
+        try:
+            with self.lock:
+                self._write_csv(self.measurements_writer, self.measurements_fields, row)
+                self._flush_if_due_locked()
+        except Exception as e:
+            self._handle_write_error(e)
+
+    def write_summary(self, row):
+        if self.disabled:
+            return
+        try:
+            with self.lock:
+                self._write_csv(self.summary_writer, self.summary_fields, row)
+                self._flush_if_due_locked()
+        except Exception as e:
+            self._handle_write_error(e)
+
+    def write_event(self, row):
+        if self.disabled:
+            return
+        try:
+            with self.lock:
+                self._write_csv(self.events_writer, self.events_fields, row)
+                self._flush_if_due_locked()
+        except Exception as e:
+            self._handle_write_error(e)
+
+    def write_gimbal(self, row):
+        if self.disabled:
+            return
+        try:
+            with self.lock:
+                self._write_csv(self.gimbal_writer, self.gimbal_fields, row)
+                self._flush_if_due_locked()
+        except Exception as e:
+            self._handle_write_error(e)
+
+    def flush(self):
+        if self.disabled:
+            return
+        try:
+            with self.lock:
+                self.raw_f.flush()
+                self.measurements_f.flush()
+                self.summary_f.flush()
+                self.events_f.flush()
+                self.gimbal_f.flush()
+                self.last_flush_t = time.monotonic()
+        except Exception as e:
+            self._handle_write_error(e)
+
+    def close(self):
+        with self.lock:
+            for f in (self.raw_f, self.measurements_f, self.summary_f, self.events_f, self.gimbal_f):
+                try:
+                    f.flush()
+                    f.close()
+                except Exception:
+                    pass
+
+
+FIELD_LOGGER = None
+
+
+def field_log_event(row):
+    if FIELD_LOGGER is not None:
+        try:
+            FIELD_LOGGER.write_event(row)
+        except Exception:
+            pass
+
+
+def field_log_gimbal(row):
+    if FIELD_LOGGER is not None:
+        try:
+            FIELD_LOGGER.write_gimbal(row)
+        except Exception:
+            pass
+
 # ==========================================
 #  摄像头物理位置配置 (不变)
 # ==========================================
+# DEVICE_THETA = {
+#     1: {"theta_vertical": 0.0, "theta_horizontal": 32.727},
+#     2: {"theta_vertical": 0.0, "theta_horizontal": 16.364},
+#     3: {"theta_vertical": 0.0, "theta_horizontal": 0.0},
+#     4: {"theta_vertical": 0.0, "theta_horizontal": 343.636},
+#     5: {"theta_vertical": 0.0, "theta_horizontal": 327.273},
+#     6: {"theta_vertical": 9.5, "theta_horizontal": 34.286},
+#     7: {"theta_vertical": 9.5, "theta_horizontal": 17.143},
+#     8: {"theta_vertical": 9.5, "theta_horizontal": 0.0},
+#     9: {"theta_vertical": 9.5, "theta_horizontal": 342.857},
+#     10: {"theta_vertical": 9.5, "theta_horizontal": 325.714},
+#     11: {"theta_vertical": 19.0, "theta_horizontal": 35.186},
+#     12: {"theta_vertical": 19.0, "theta_horizontal": 18.043},
+#     13: {"theta_vertical": 19.0, "theta_horizontal": 0.9},
+#     14: {"theta_vertical": 19.0, "theta_horizontal": 343.757},
+#     15: {"theta_vertical": 19.0, "theta_horizontal": 326.614},
+#     16: {"theta_vertical": 28.5, "theta_horizontal": 36.7},
+#     17: {"theta_vertical": 28.5, "theta_horizontal": 18.7},
+#     18: {"theta_vertical": 28.5, "theta_horizontal": 0.7},
+#     19: {"theta_vertical": 28.5, "theta_horizontal": 342.7},
+#     20: {"theta_vertical": 28.5, "theta_horizontal": 324.7},
+#     21: {"theta_vertical": 38.0, "theta_horizontal": 38.595},
+#     22: {"theta_vertical": 38.0, "theta_horizontal": 19.647},
+#     23: {"theta_vertical": 38.0, "theta_horizontal": 0.7},
+#     24: {"theta_vertical": 38.0, "theta_horizontal": 341.753},
+#     25: {"theta_vertical": 38.0, "theta_horizontal": 322.805},
+#     26: {"theta_vertical": 47.5, "theta_horizontal": 41.7},
+#     27: {"theta_vertical": 47.5, "theta_horizontal": 21.7},
+#     28: {"theta_vertical": 47.5, "theta_horizontal": 1.7},
+#     29: {"theta_vertical": 47.5, "theta_horizontal": 341.7},
+#     30: {"theta_vertical": 47.5, "theta_horizontal": 321.7},
+#     31: {"theta_vertical": 57.0, "theta_horizontal": 44.953},
+#     32: {"theta_vertical": 57.0, "theta_horizontal": 23.776},
+#     33: {"theta_vertical": 57.0, "theta_horizontal": 2.6},
+#     34: {"theta_vertical": 57.0, "theta_horizontal": 341.424},
+#     35: {"theta_vertical": 57.0, "theta_horizontal": 320.247},
+#     36: {"theta_vertical": 66.5, "theta_horizontal": 47.6},
+#     37: {"theta_vertical": 66.5, "theta_horizontal": 25.1},
+#     38: {"theta_vertical": 66.5, "theta_horizontal": 2.6},
+#     39: {"theta_vertical": 66.5, "theta_horizontal": 340.1},
+#     40: {"theta_vertical": 66.5, "theta_horizontal": 317.6},
+#     41: {"theta_vertical": 76.0, "theta_horizontal": 61.4},
+#     42: {"theta_vertical": 76.0, "theta_horizontal": 37.4},
+#     43: {"theta_vertical": 76.0, "theta_horizontal": 13.4},
+#     44: {"theta_vertical": 76.0, "theta_horizontal": 349.4},
+#     45: {"theta_vertical": 76.0, "theta_horizontal": 325.4}
+# }
+
+#这是用棋盘格标定出来的
 DEVICE_THETA = {
-    1: {"theta_vertical": 0.0, "theta_horizontal": 32.727},
-    2: {"theta_vertical": 0.0, "theta_horizontal": 16.364},
-    3: {"theta_vertical": 0.0, "theta_horizontal": 0.0},
-    4: {"theta_vertical": 0.0, "theta_horizontal": 343.636},
-    5: {"theta_vertical": 0.0, "theta_horizontal": 327.273},
-    6: {"theta_vertical": 9.5, "theta_horizontal": 34.286},
-    7: {"theta_vertical": 9.5, "theta_horizontal": 17.143},
-    8: {"theta_vertical": 9.5, "theta_horizontal": 0.0},
-    9: {"theta_vertical": 9.5, "theta_horizontal": 342.857},
-    10: {"theta_vertical": 9.5, "theta_horizontal": 325.714},
-    11: {"theta_vertical": 19.0, "theta_horizontal": 35.186},
-    12: {"theta_vertical": 19.0, "theta_horizontal": 18.043},
-    13: {"theta_vertical": 19.0, "theta_horizontal": 0.9},
-    14: {"theta_vertical": 19.0, "theta_horizontal": 343.757},
-    15: {"theta_vertical": 19.0, "theta_horizontal": 326.614},
-    16: {"theta_vertical": 28.5, "theta_horizontal": 36.7},
-    17: {"theta_vertical": 28.5, "theta_horizontal": 18.7},
-    18: {"theta_vertical": 28.5, "theta_horizontal": 0.7},
-    19: {"theta_vertical": 28.5, "theta_horizontal": 342.7},
-    20: {"theta_vertical": 28.5, "theta_horizontal": 324.7},
-    21: {"theta_vertical": 38.0, "theta_horizontal": 38.595},
-    22: {"theta_vertical": 38.0, "theta_horizontal": 19.647},
-    23: {"theta_vertical": 38.0, "theta_horizontal": 0.7},
-    24: {"theta_vertical": 38.0, "theta_horizontal": 341.753},
-    25: {"theta_vertical": 38.0, "theta_horizontal": 322.805},
-    26: {"theta_vertical": 47.5, "theta_horizontal": 41.7},
-    27: {"theta_vertical": 47.5, "theta_horizontal": 21.7},
-    28: {"theta_vertical": 47.5, "theta_horizontal": 1.7},
-    29: {"theta_vertical": 47.5, "theta_horizontal": 341.7},
-    30: {"theta_vertical": 47.5, "theta_horizontal": 321.7},
-    31: {"theta_vertical": 57.0, "theta_horizontal": 44.953},
-    32: {"theta_vertical": 57.0, "theta_horizontal": 23.776},
-    33: {"theta_vertical": 57.0, "theta_horizontal": 2.6},
-    34: {"theta_vertical": 57.0, "theta_horizontal": 341.424},
-    35: {"theta_vertical": 57.0, "theta_horizontal": 320.247},
-    36: {"theta_vertical": 66.5, "theta_horizontal": 47.6},
-    37: {"theta_vertical": 66.5, "theta_horizontal": 25.1},
-    38: {"theta_vertical": 66.5, "theta_horizontal": 2.6},
-    39: {"theta_vertical": 66.5, "theta_horizontal": 340.1},
-    40: {"theta_vertical": 66.5, "theta_horizontal": 317.6},
-    41: {"theta_vertical": 76.0, "theta_horizontal": 61.4},
-    42: {"theta_vertical": 76.0, "theta_horizontal": 37.4},
-    43: {"theta_vertical": 76.0, "theta_horizontal": 13.4},
-    44: {"theta_vertical": 76.0, "theta_horizontal": 349.4},
-    45: {"theta_vertical": 76.0, "theta_horizontal": 325.4}
+    2: {"theta_vertical": 0.0000, "theta_horizontal": 16.7874},  # Layer 1 cam2
+    3: {"theta_vertical": 0.0000, "theta_horizontal": 0.0000},  # Layer 1 cam3
+    4: {"theta_vertical": 0.0000, "theta_horizontal": 343.8421},  # Layer 1 cam4
+    5: {"theta_vertical": 0.0000, "theta_horizontal": 326.6701},  # Layer 1 cam5
+    6: {"theta_vertical": 9.5000, "theta_horizontal": 34.3086},  # Layer 2 cam1
+    7: {"theta_vertical": 9.5000, "theta_horizontal": 15.5593},  # Layer 2 cam2
+    8: {"theta_vertical": 9.5000, "theta_horizontal": 0.0759},  # Layer 2 cam3
+    9: {"theta_vertical": 9.5000, "theta_horizontal": 342.7710},  # Layer 2 cam4
+    10: {"theta_vertical": 9.5000, "theta_horizontal": 342.3703},  # Layer 2 cam5
+    11: {"theta_vertical": 19.0000, "theta_horizontal": 31.9870},  # Layer 3 cam1
+    12: {"theta_vertical": 19.0000, "theta_horizontal": 19.6921},  # Layer 3 cam2
+    13: {"theta_vertical": 19.0000, "theta_horizontal": 0.9703},  # Layer 3 cam3
+    14: {"theta_vertical": 19.0000, "theta_horizontal": 339.9173},  # Layer 3 cam4
+    15: {"theta_vertical": 19.0000, "theta_horizontal": 322.7531},  # Layer 3 cam5
+    16: {"theta_vertical": 28.5000, "theta_horizontal": 36.7386},  # Layer 4 cam1
+    18: {"theta_vertical": 28.5000, "theta_horizontal": 0.7703},  # Layer 4 cam3
+    19: {"theta_vertical": 28.5000, "theta_horizontal": 341.8870},  # Layer 4 cam4
+    20: {"theta_vertical": 28.5000, "theta_horizontal": 323.5302},  # Layer 4 cam5
+    21: {"theta_vertical": 38.0000, "theta_horizontal": 37.5403},  # Layer 5 cam1
+    22: {"theta_vertical": 38.0000, "theta_horizontal": 18.5903},  # Layer 5 cam2
+    23: {"theta_vertical": 38.0000, "theta_horizontal": 0.7703},  # Layer 5 cam3
+    24: {"theta_vertical": 38.0000, "theta_horizontal": 340.7103},  # Layer 5 cam4
+    25: {"theta_vertical": 38.0000, "theta_horizontal": 321.7703},  # Layer 5 cam5
+    26: {"theta_vertical": 47.5000, "theta_horizontal": 41.7703},  # Layer 6 cam1
+    27: {"theta_vertical": 47.5000, "theta_horizontal": 21.7703},  # Layer 6 cam2
+    28: {"theta_vertical": 47.5000, "theta_horizontal": 1.7703},  # Layer 6 cam3
+    29: {"theta_vertical": 47.5000, "theta_horizontal": 341.7703},  # Layer 6 cam4
+    30: {"theta_vertical": 47.5000, "theta_horizontal": 321.7703},  # Layer 6 cam5
+    31: {"theta_vertical": 57.0000, "theta_horizontal": 45.2403},  # Layer 7 cam1
+    32: {"theta_vertical": 57.0000, "theta_horizontal": 24.0403},  # Layer 7 cam2
+    33: {"theta_vertical": 57.0000, "theta_horizontal": 2.8703},  # Layer 7 cam3
+    34: {"theta_vertical": 57.0000, "theta_horizontal": 340.6003},  # Layer 7 cam4
+    35: {"theta_vertical": 57.0000, "theta_horizontal": 319.4303},  # Layer 7 cam5
+    36: {"theta_vertical": 66.5000, "theta_horizontal": 47.8703},  # Layer 8 cam1
+    37: {"theta_vertical": 66.5000, "theta_horizontal": 25.3703},  # Layer 8 cam2
+    38: {"theta_vertical": 66.5000, "theta_horizontal": 2.8703},  # Layer 8 cam3
+    39: {"theta_vertical": 66.5000, "theta_horizontal": 340.3703},  # Layer 8 cam4
+    40: {"theta_vertical": 66.5000, "theta_horizontal": 317.8703},  # Layer 8 cam5
+    41: {"theta_vertical": 76.0000, "theta_horizontal": 61.6703},  # Layer 9 cam1
+    42: {"theta_vertical": 76.0000, "theta_horizontal": 37.6703},  # Layer 9 cam2
+    43: {"theta_vertical": 76.0000, "theta_horizontal": 13.6703},  # Layer 9 cam3
+    44: {"theta_vertical": 76.0000, "theta_horizontal": 349.6703},  # Layer 9 cam4
+    45: {"theta_vertical": 76.0000, "theta_horizontal": 325.6703},  # Layer 9 cam5
 }
 
 # ==========================================
@@ -439,8 +663,21 @@ def rk3588_thread():
     while True:
         try:
             data, addr = sock.recvfrom(65535)
+            recv_ts = time.time()
             pkg = json.loads(data.decode("utf-8"))
             if isinstance(pkg, dict) and "objs" in pkg:
+                if FIELD_LOGGER is not None:
+                    FIELD_LOGGER.write_raw_udp({
+                        "recv_ts": recv_ts,
+                        "addr": f"{addr[0]}:{addr[1]}",
+                        "packet_len": len(data),
+                        "seq": pkg.get("seq", ""),
+                        "mode": pkg.get("mode", ""),
+                        "board": pkg.get("board", ""),
+                        "cam": pkg.get("cam", ""),
+                        "raw_obj_count": len(pkg.get("objs", [])) if isinstance(pkg.get("objs", []), list) else "",
+                        "raw_objs": pkg.get("objs", []),
+                    })
                 packet_queue.append(pkg)
 
         except socket.timeout:
@@ -793,11 +1030,20 @@ def gimbal_control_thread(gimbal):
                     shared_state.active_cmd_id = int(active_cmd["cmd_id"])#设置当前执行指令的ID
                     shared_state.active_track_id = int(active_cmd.get("track_id", -1))
                     shared_state.is_settled = False#转动到位标志重置
-                print(
-                    f"[GimbalCmd] cmd_id={int(active_cmd['cmd_id'])}, "
-                    f"track_id={int(active_cmd.get('track_id', -1))}, "
-                    f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°)"
-                )
+                if PRINT_EVENT_LOGS:
+                    print(
+                        f"[GimbalCmd] cmd_id={int(active_cmd['cmd_id'])}, "
+                        f"track_id={int(active_cmd.get('track_id', -1))}, "
+                        f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°)"
+                    )
+                field_log_gimbal({
+                    "timestamp": f"{cmd_start_t:.6f}",
+                    "event": "GIMBAL_CMD_SEND",
+                    "cmd_id": int(active_cmd["cmd_id"]),
+                    "track_id": int(active_cmd.get("track_id", -1)),
+                    "target_ctrl_az": f"{target_az:.6f}",
+                    "target_ctrl_el": f"{target_el:.6f}",
+                })
             #2.若当前有指令在执行(执行态)
             now_t = time.time()
             #检查指令队列中是否有更新的指令，如果有则取出最新的一条（丢弃旧指令），准备进行抢占式执行判断
@@ -838,12 +1084,23 @@ def gimbal_control_thread(gimbal):
                     if update_el:
                         updated_axes.append("El")
                     updated_axes_text = "+".join(updated_axes) if updated_axes else "none"
-                    print(
-                        f"[GimbalCmd] preempt cmd_id={int(active_cmd['cmd_id'])}, "
-                        f"track_id={new_track_id}, mode={update_mode}, axes={updated_axes_text}, "
-                        f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°), "
-                        f"delta=(dAz={d_az:.2f}°, dEl={d_el:.2f}°, total={d_total:.2f}°)"
-                    )
+                    if PRINT_EVENT_LOGS:
+                        print(
+                            f"[GimbalCmd] preempt cmd_id={int(active_cmd['cmd_id'])}, "
+                            f"track_id={new_track_id}, mode={update_mode}, axes={updated_axes_text}, "
+                            f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°), "
+                            f"delta=(dAz={d_az:.2f}°, dEl={d_el:.2f}°, total={d_total:.2f}°)"
+                        )
+                    field_log_gimbal({
+                        "timestamp": f"{now_t:.6f}",
+                        "event": "GIMBAL_CMD_PREEMPT",
+                        "cmd_id": int(active_cmd["cmd_id"]),
+                        "track_id": new_track_id,
+                        "target_ctrl_az": f"{target_az:.6f}",
+                        "target_ctrl_el": f"{target_el:.6f}",
+                        "err_az": f"{d_az:.6f}",
+                        "err_el": f"{d_el:.6f}",
+                    })
 
             real_att = gimbal.get_attitude()
             if real_att:
@@ -859,14 +1116,29 @@ def gimbal_control_thread(gimbal):
 
                 if (last_progress_log_t == 0.0) or ((now_t - last_progress_log_t) >= GIMBAL_PROGRESS_LOG_INTERVAL):
                     elapsed = now_t - cmd_start_t
-                    print(
-                        f"[GimbalAtt] cmd_id={int(active_cmd['cmd_id'])}, "
-                        f"elapsed={elapsed:.3f}s, "
-                        f"actual_ctrl=(Az={curr_az:.2f}°, El={curr_el:.2f}°), "
-                        f"actual_ui=(Az={curr_ui_az:.2f}°, El={curr_el:.2f}°), "
-                        f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°), "
-                        f"err=(dAz={err_az:.2f}°, dEl={err_el:.2f}°)"
-                    )
+                    if PRINT_GIMBAL_PROGRESS:
+                        print(
+                            f"[GimbalAtt] cmd_id={int(active_cmd['cmd_id'])}, "
+                            f"elapsed={elapsed:.3f}s, "
+                            f"actual_ctrl=(Az={curr_az:.2f}°, El={curr_el:.2f}°), "
+                            f"actual_ui=(Az={curr_ui_az:.2f}°, El={curr_el:.2f}°), "
+                            f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°), "
+                            f"err=(dAz={err_az:.2f}°, dEl={err_el:.2f}°)"
+                        )
+                    field_log_gimbal({
+                        "timestamp": f"{now_t:.6f}",
+                        "event": "GIMBAL_ATT",
+                        "cmd_id": int(active_cmd["cmd_id"]),
+                        "track_id": int(active_cmd.get("track_id", -1)),
+                        "gimbal_ui_az": f"{curr_ui_az:.6f}",
+                        "gimbal_ui_el": f"{curr_el:.6f}",
+                        "gimbal_ctrl_az": f"{curr_az:.6f}",
+                        "gimbal_ctrl_el": f"{curr_el:.6f}",
+                        "target_ctrl_az": f"{target_az:.6f}",
+                        "target_ctrl_el": f"{target_el:.6f}",
+                        "err_az": f"{err_az:.6f}",
+                        "err_el": f"{err_el:.6f}",
+                    })
                     last_progress_log_t = now_t
 
                 if err_az < GIMBAL_SETTLE_THRESHOLD and err_el < GIMBAL_SETTLE_THRESHOLD:
@@ -879,38 +1151,101 @@ def gimbal_control_thread(gimbal):
                         active_cmd_id = shared_state.active_cmd_id
                         active_track_id = shared_state.active_track_id
 
-                    print(
-                        f"[GimbalSettled] cmd_id={active_cmd_id}, track_id={active_track_id}, "
-                        f"settle_time={settle_dt:.3f}s, "
-                        f"actual_ctrl=(Az={curr_az:.2f}°, El={curr_el:.2f}°), "
-                        f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°), "
-                        f"err=(dAz={err_az:.2f}°, dEl={err_el:.2f}°)"
-                    )
+                    if PRINT_EVENT_LOGS:
+                        print(
+                            f"[GimbalSettled] cmd_id={active_cmd_id}, track_id={active_track_id}, "
+                            f"settle_time={settle_dt:.3f}s, "
+                            f"actual_ctrl=(Az={curr_az:.2f}°, El={curr_el:.2f}°), "
+                            f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°), "
+                            f"err=(dAz={err_az:.2f}°, dEl={err_el:.2f}°)"
+                        )
+                    field_log_gimbal({
+                        "timestamp": f"{now_t:.6f}",
+                        "event": "GIMBAL_SETTLED",
+                        "cmd_id": int(active_cmd_id),
+                        "track_id": int(active_track_id),
+                        "gimbal_ui_az": f"{curr_ui_az:.6f}",
+                        "gimbal_ui_el": f"{curr_el:.6f}",
+                        "gimbal_ctrl_az": f"{curr_az:.6f}",
+                        "gimbal_ctrl_el": f"{curr_el:.6f}",
+                        "target_ctrl_az": f"{target_az:.6f}",
+                        "target_ctrl_el": f"{target_el:.6f}",
+                        "err_az": f"{err_az:.6f}",
+                        "err_el": f"{err_el:.6f}",
+                        "is_settled": 1,
+                        "settle_time": f"{settle_dt:.6f}",
+                    })
 
                     laser_dist = read_laser_distance()
+                    laser_source = "mock_mono" if USE_MOCK_LASER else "sddm"
                     if laser_dist is not None:
                         trigger_t = time.time()
                         with shared_state.lock:
                             prev_laser_ts = shared_state.laser_ts
+                            raw_laser_ts = shared_state.raw_laser_ts
                             shared_state.valid_laser_dist = laser_dist
                             shared_state.latest_dist = laser_dist
                             shared_state.laser_ts = trigger_t
                             shared_state.laser_track_id = shared_state.active_track_id
                             active_cmd_id = shared_state.active_cmd_id
                             active_track_id = shared_state.active_track_id
+                        dt_laser = trigger_t - prev_laser_ts if prev_laser_ts > 0 else None
+                        field_log_gimbal({
+                            "timestamp": f"{trigger_t:.6f}",
+                            "event": "LASER_TRIGGER",
+                            "cmd_id": int(active_cmd_id),
+                            "track_id": int(active_track_id),
+                            "gimbal_ui_az": f"{curr_ui_az:.6f}",
+                            "gimbal_ui_el": f"{curr_el:.6f}",
+                            "gimbal_ctrl_az": f"{curr_az:.6f}",
+                            "gimbal_ctrl_el": f"{curr_el:.6f}",
+                            "target_ctrl_az": f"{target_az:.6f}",
+                            "target_ctrl_el": f"{target_el:.6f}",
+                            "err_az": f"{err_az:.6f}",
+                            "err_el": f"{err_el:.6f}",
+                            "is_settled": 1,
+                            "settle_time": f"{settle_dt:.6f}",
+                            "laser_valid": 1,
+                            "laser_dist": f"{laser_dist:.6f}",
+                            "laser_source": laser_source,
+                            "laser_ts": f"{raw_laser_ts:.6f}",
+                            "laser_age": f"{trigger_t - raw_laser_ts:.6f}" if raw_laser_ts > 0 else "",
+                            "laser_interval": "" if dt_laser is None else f"{dt_laser:.6f}",
+                        })
                         if prev_laser_ts > 0:
-                            dt_laser = trigger_t - prev_laser_ts
-                            print(
-                                f"[Laser] Triggered cmd_id={active_cmd_id}, track_id={active_track_id}, "
-                                f"dist={laser_dist:.2f}m, interval={dt_laser:.3f}s"
-                            )
+                            if PRINT_EVENT_LOGS:
+                                print(
+                                    f"[Laser] Triggered cmd_id={active_cmd_id}, track_id={active_track_id}, "
+                                    f"dist={laser_dist:.2f}m, interval={dt_laser:.3f}s"
+                                )
                         else:
-                            print(
-                                f"[Laser] Triggered cmd_id={active_cmd_id}, track_id={active_track_id}, "
-                                f"dist={laser_dist:.2f}m, interval=first"
-                            )
+                            if PRINT_EVENT_LOGS:
+                                print(
+                                    f"[Laser] Triggered cmd_id={active_cmd_id}, track_id={active_track_id}, "
+                                    f"dist={laser_dist:.2f}m, interval=first"
+                                )
                     else:
-                        print("[Laser] No valid laser distance, use mono distance")
+                        trigger_t = time.time()
+                        field_log_gimbal({
+                            "timestamp": f"{trigger_t:.6f}",
+                            "event": "LASER_TRIGGER",
+                            "cmd_id": int(active_cmd_id),
+                            "track_id": int(active_track_id),
+                            "gimbal_ui_az": f"{curr_ui_az:.6f}",
+                            "gimbal_ui_el": f"{curr_el:.6f}",
+                            "gimbal_ctrl_az": f"{curr_az:.6f}",
+                            "gimbal_ctrl_el": f"{curr_el:.6f}",
+                            "target_ctrl_az": f"{target_az:.6f}",
+                            "target_ctrl_el": f"{target_el:.6f}",
+                            "err_az": f"{err_az:.6f}",
+                            "err_el": f"{err_el:.6f}",
+                            "is_settled": 1,
+                            "settle_time": f"{settle_dt:.6f}",
+                            "laser_valid": 0,
+                            "laser_source": laser_source,
+                        })
+                        if PRINT_EVENT_LOGS:
+                            print("[Laser] No valid laser distance, use mono distance")
                     active_cmd = None
                     continue
 
@@ -919,18 +1254,32 @@ def gimbal_control_thread(gimbal):
                 cmd_id = int(active_cmd["cmd_id"]) if active_cmd is not None else -1
                 track_id = int(active_cmd.get("track_id", -1)) if active_cmd is not None else -1
                 if real_att:
-                    print(
-                        f"[GimbalTimeout] cmd_id={cmd_id}, track_id={track_id}, "
-                        f"elapsed={elapsed:.3f}s, "
-                        f"actual_ctrl=(Az={curr_az:.2f}°, El={curr_el:.2f}°), "
-                        f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°), "
-                        f"err=(dAz={err_az:.2f}°, dEl={err_el:.2f}°)"
-                    )
+                    if PRINT_EVENT_LOGS:
+                        print(
+                            f"[GimbalTimeout] cmd_id={cmd_id}, track_id={track_id}, "
+                            f"elapsed={elapsed:.3f}s, "
+                            f"actual_ctrl=(Az={curr_az:.2f}°, El={curr_el:.2f}°), "
+                            f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°), "
+                            f"err=(dAz={err_az:.2f}°, dEl={err_el:.2f}°)"
+                        )
                 else:
-                    print(
-                        f"[GimbalTimeout] cmd_id={cmd_id}, track_id={track_id}, "
-                        f"elapsed={elapsed:.3f}s, no attitude feedback"
-                    )
+                    if PRINT_EVENT_LOGS:
+                        print(
+                            f"[GimbalTimeout] cmd_id={cmd_id}, track_id={track_id}, "
+                            f"elapsed={elapsed:.3f}s, no attitude feedback"
+                        )
+                field_log_gimbal({
+                    "timestamp": f"{now_t:.6f}",
+                    "event": "GIMBAL_TIMEOUT",
+                    "cmd_id": cmd_id,
+                    "track_id": track_id,
+                    "target_ctrl_az": f"{target_az:.6f}",
+                    "target_ctrl_el": f"{target_el:.6f}",
+                    "err_az": "" if not real_att else f"{err_az:.6f}",
+                    "err_el": "" if not real_att else f"{err_el:.6f}",
+                    "is_settled": 0,
+                    "settle_time": f"{elapsed:.6f}",
+                })
                 with shared_state.lock:
                     shared_state.is_settled = False
                 active_cmd = None
@@ -1026,7 +1375,7 @@ class StandardKalmanTrack:
         self.history.append((self.state.copy(), self.P.copy()))
         
         self.max_vel_az = 40.0
-        self.max_vel_el = 20.0
+        self.max_vel_el = 15.0
         self.min_dt = 0.001
         self.dist_thresh = 4.0
         self.last_mono_dist = None
@@ -1096,7 +1445,7 @@ class StandardKalmanTrack:
         self.state[0, 0] = self.state[0, 0] % 360.0
         self.P = np.dot(np.dot(F, self.P), F.T) + Q
         
-        self.time_since_update += 1
+        self.time_since_update += 1#若之后有轨迹匹配上就会清零time_since_update,判断目标是否丢失。
         self.history.append((self.state.copy(), self.P.copy()))
 
     def update(self, meas_az, meas_el, dt):
@@ -1115,16 +1464,16 @@ class StandardKalmanTrack:
         # 观测测量噪声 R
         R = np.diag([self.r_az, self.r_el])
         
-        # 计算残差 Y = Z - HX
+        # 计算残差 Y = Z - HX(测量位置-预测位置)
         Y = Z - np.dot(H, self.state)
         
         # 核心：处理 Azimuth 的残差，防止角度回环跳变
         Y[0, 0] = angular_diff(Z[0, 0], self.state[0, 0])
         
-        # S = H * P * H^T + R
+        # S = H * P * H^T + R,S = 预测位置的不确定性 + 测量位置的不确定性
         S = np.dot(np.dot(H, self.P), H.T) + R
         
-        # 卡尔曼增益 K = P * H^T * S^-1
+        # 卡尔曼增益 K = P * H^T * S^-1,根据 P 和 R 决定这次信检测多少(对预测值的修正力度)
         try:
             K = np.dot(np.dot(self.P, H.T), np.linalg.inv(S))
         except np.linalg.LinAlgError:
@@ -1136,7 +1485,7 @@ class StandardKalmanTrack:
         # 更新后再次对 Az 取模
         self.state[0, 0] = self.state[0, 0] % 360.0
         
-        # 速度限幅保护
+        # 速度限幅保护,目的就是防止检测框跳变、错匹配、噪声导致速度估计瞬间爆掉
         self.state[2, 0] = np.clip(self.state[2, 0], -self.max_vel_az, self.max_vel_az)
         self.state[3, 0] = np.clip(self.state[3, 0], -self.max_vel_el, self.max_vel_el)
         
@@ -1202,7 +1551,71 @@ class MultiTargetTracker:
         else:
             self.base_distance_threshold = float(base_distance_threshold)
 
-    def update(self, measurements, dt, params=None, now_t=None):
+    def _debug_context_row(self, debug_context, event):
+        debug_context = debug_context or {}
+        return {
+            "timestamp": f"{time.time():.6f}",
+            "mode": debug_context.get("mode", ""),
+            "frame_id": debug_context.get("frame_id", ""),
+            "event": event,
+            "meas_count": debug_context.get("meas_count", ""),
+        }
+
+    def _log_new_track(self, track, meas_idx, meas, debug_context):
+        if DEBUG_KALMAN_MATCH:
+            print(
+                f"[NEW_TRACK] track={track.id}, meas={meas_idx}, "
+                f"meas=(Az={meas['az']:.2f}, El={meas['el']:.2f}), "
+                f"mono={meas['mono_dist']}, dist_thresh={track.dist_thresh:.2f}, "
+                f"R=({track.r_az:.2f},{track.r_el:.2f}), "
+                f"Q=({track.q_pos:.2f},{track.q_vel:.2f})"
+            )
+        row = self._debug_context_row(debug_context, "NEW_TRACK")
+        field_log_event({
+            "timestamp": row["timestamp"],
+            "seq": row["frame_id"],
+            "mode": row["mode"],
+            "event": "NEW_TRACK",
+            "track_id": int(track.id),
+            "meas_idx": meas_idx,
+            "meas_az": f"{meas['az']:.6f}",
+            "meas_el": f"{meas['el']:.6f}",
+            "p_az": f"{track.P[0, 0]:.6f}",
+            "p_el": f"{track.P[1, 1]:.6f}",
+            "hit_streak": int(track.hit_streak),
+            "time_since_update": int(track.time_since_update),
+        })
+
+    def _prune_lost_tracks(self, debug_context=None):
+        kept_tracks = []
+        for track in self.tracks:
+            if track.time_since_update < self.max_lost_frames:
+                kept_tracks.append(track)
+                continue
+            if DEBUG_KALMAN_MATCH:
+                print(
+                    f"[TRACK_DELETE] track={track.id}, "
+                    f"lost={track.time_since_update}, max_lost={self.max_lost_frames}, "
+                    f"state=(Az={track.state[0,0]:.2f}, El={track.state[1,0]:.2f}), "
+                    f"hits={track.hit_streak}"
+                )
+            row = self._debug_context_row(debug_context, "TRACK_DELETE")
+            field_log_event({
+                "timestamp": row["timestamp"],
+                "seq": row["frame_id"],
+                "mode": row["mode"],
+                "event": "TRACK_DELETE",
+                "track_id": int(track.id),
+                "pred_az": f"{track.state[0, 0]:.6f}",
+                "pred_el": f"{track.state[1, 0]:.6f}",
+                "p_az": f"{track.P[0, 0]:.6f}",
+                "p_el": f"{track.P[1, 1]:.6f}",
+                "hit_streak": int(track.hit_streak),
+                "time_since_update": int(track.time_since_update),
+            })
+        self.tracks = kept_tracks
+
+    def update(self, measurements, dt, params=None, now_t=None, debug_context=None):
         """
         measurements: 当前帧所有检测目标，可为:
             1) [az, el]
@@ -1254,12 +1667,12 @@ class MultiTargetTracker:
             
         # 如果当前帧没检测到东西，直接清理丢失目标并返回
         if len(normalized_measurements) == 0:
-            self.tracks = [t for t in self.tracks if t.time_since_update < self.max_lost_frames]
+            self._prune_lost_tracks(debug_context=debug_context)
             return self.tracks
 
         if len(self.tracks) == 0:
-            # 全是新目标
-            for meas in normalized_measurements:
+            # 全是新目标,新建轨迹
+            for m_idx, meas in enumerate(normalized_measurements):
                 t = StandardKalmanTrack(meas["az"], meas["el"])
                 t.set_mono_distance(meas["mono_dist"], now_t)
                 if params:
@@ -1271,6 +1684,7 @@ class MultiTargetTracker:
                     else:
                         t.dist_thresh = self.base_distance_threshold
                 self.tracks.append(t)
+                self._log_new_track(t, m_idx, meas, debug_context)
             return self.tracks
 
         # 2. 计算代价矩阵 (角度欧氏距离)
@@ -1296,15 +1710,82 @@ class MultiTargetTracker:
             uncertainty = np.sqrt(track.P[0, 0] + track.P[1, 1])
             # 动态欧氏门限：基础残差 + 协方差不确定性 * 膨胀系数(1.5)
             dynamic_thresh = track.dist_thresh + (uncertainty * 1.5)
+            cost = cost_matrix[t_idx, m_idx]
+            meas = normalized_measurements[m_idx]
+            pred_az = float(track.state[0, 0])
+            pred_el = float(track.state[1, 0])
             
-            if cost_matrix[t_idx, m_idx] < dynamic_thresh:
-                meas = normalized_measurements[m_idx]
+            if cost < dynamic_thresh:
+                if DEBUG_KALMAN_MATCH:
+                    print(
+                        f"[MATCH_ACCEPT] track={track.id}, meas={m_idx}, "
+                        f"meas=(Az={meas['az']:.2f}, El={meas['el']:.2f}), "
+                        f"pred=(Az={pred_az:.2f}, El={pred_el:.2f}), "
+                        f"cost={cost:.2f}, thresh={dynamic_thresh:.2f}, "
+                        f"unc={uncertainty:.2f}, "
+                        f"Ppos=({track.P[0,0]:.2f},{track.P[1,1]:.2f}), "
+                        f"hits={track.hit_streak}, lost={track.time_since_update}, "
+                        f"R=({track.r_az:.2f},{track.r_el:.2f}), "
+                        f"Q=({track.q_pos:.2f},{track.q_vel:.2f})"
+                    )
+                row = self._debug_context_row(debug_context, "MATCH_ACCEPT")
+                field_log_event({
+                    "timestamp": row["timestamp"],
+                    "seq": row["frame_id"],
+                    "mode": row["mode"],
+                    "event": "MATCH_ACCEPT",
+                    "track_id": int(track.id),
+                    "meas_idx": m_idx,
+                    "meas_az": f"{meas['az']:.6f}",
+                    "meas_el": f"{meas['el']:.6f}",
+                    "pred_az": f"{pred_az:.6f}",
+                    "pred_el": f"{pred_el:.6f}",
+                    "cost": f"{cost:.6f}",
+                    "dynamic_thresh": f"{dynamic_thresh:.6f}",
+                    "uncertainty": f"{uncertainty:.6f}",
+                    "p_az": f"{track.P[0, 0]:.6f}",
+                    "p_el": f"{track.P[1, 1]:.6f}",
+                    "hit_streak": int(track.hit_streak),
+                    "time_since_update": int(track.time_since_update),
+                })
                 track.update(meas["az"], meas["el"], dt)
                 track.set_mono_distance(meas["mono_dist"], now_t)
                 unmatched_measurements.discard(m_idx)
                 matched_tracks.add(t_idx)
             else:
-                pass
+                if DEBUG_KALMAN_MATCH:
+                    print(
+                        f"[MATCH_REJECT] track={track.id}, meas={m_idx}, "
+                        f"meas=(Az={meas['az']:.2f}, El={meas['el']:.2f}), "
+                        f"pred=(Az={pred_az:.2f}, El={pred_el:.2f}), "
+                        f"cost={cost:.2f}, thresh={dynamic_thresh:.2f}, "
+                        f"unc={uncertainty:.2f}, "
+                        f"Ppos=({track.P[0,0]:.2f},{track.P[1,1]:.2f}), "
+                        f"dist_thresh={track.dist_thresh:.2f}, "
+                        f"hits={track.hit_streak}, lost={track.time_since_update}, "
+                        f"R=({track.r_az:.2f},{track.r_el:.2f}), "
+                        f"Q=({track.q_pos:.2f},{track.q_vel:.2f})"
+                    )
+                row = self._debug_context_row(debug_context, "MATCH_REJECT")
+                field_log_event({
+                    "timestamp": row["timestamp"],
+                    "seq": row["frame_id"],
+                    "mode": row["mode"],
+                    "event": "MATCH_REJECT",
+                    "track_id": int(track.id),
+                    "meas_idx": m_idx,
+                    "meas_az": f"{meas['az']:.6f}",
+                    "meas_el": f"{meas['el']:.6f}",
+                    "pred_az": f"{pred_az:.6f}",
+                    "pred_el": f"{pred_el:.6f}",
+                    "cost": f"{cost:.6f}",
+                    "dynamic_thresh": f"{dynamic_thresh:.6f}",
+                    "uncertainty": f"{uncertainty:.6f}",
+                    "p_az": f"{track.P[0, 0]:.6f}",
+                    "p_el": f"{track.P[1, 1]:.6f}",
+                    "hit_streak": int(track.hit_streak),
+                    "time_since_update": int(track.time_since_update),
+                })
 
         # 未匹配轨迹衰减稳定帧，避免历史累计导致“永久霸榜”
         for t_idx, track in enumerate(self.tracks):
@@ -1325,9 +1806,10 @@ class MultiTargetTracker:
                 else:
                     t.dist_thresh = self.base_distance_threshold
             self.tracks.append(t)
+            self._log_new_track(t, m_idx, meas, debug_context)
 
         # 6. 删除丢失太久的 Track
-        self.tracks = [t for t in self.tracks if t.time_since_update < self.max_lost_frames]
+        self._prune_lost_tracks(debug_context=debug_context)
 
         return self.tracks
 
@@ -1412,6 +1894,7 @@ def format_selection_candidates(ranked_candidates, topk=MASTER_SELECTION_LOG_TOP
 # 6. 主逻辑 V9 (多目标预测与云台调度)
 # ==========================================
 def main():
+    global FIELD_LOGGER
     if LOG_TO_FILE:
         try:
             log_path = _setup_log_mirror(LOG_DIR)
@@ -1419,6 +1902,13 @@ def main():
                 print(f"[Log] stdout/stderr -> {log_path}")
         except Exception as e:
             print(f"[Log][Warn] 日志文件初始化失败: {e}")
+
+    if FIELD_LOG:
+        try:
+            FIELD_LOGGER = FieldLogger(FIELD_LOG_DIR)
+        except Exception as e:
+            FIELD_LOGGER = None
+            print(f"[FieldLog][Warn] 初始化失败: {e}")
 
     sender = UISender(UI_IP, UI_PORT)
     if not USE_MOCK_GIMBAL:
@@ -1520,6 +2010,37 @@ def main():
     ui_send_total = 0
     ui_send_counter = Counter()  # {target_id: send_count}
     stats_last_print = last_time
+    live_last_print = last_time
+    live_packet_count = 0
+    live_obj_count = 0
+    live_last_packet_t = 0.0
+    live_last_meas_count = 0
+    live_last_track_count = 0
+    live_last_valid_count = 0
+
+    def maybe_print_live_status(now_t, meas_count=0, active_tracks=None, valid_tracks=None):
+        nonlocal live_last_print, live_packet_count, live_obj_count
+        nonlocal live_last_meas_count, live_last_track_count, live_last_valid_count
+        if meas_count is not None:
+            live_last_meas_count = meas_count
+        if active_tracks is not None:
+            live_last_track_count = len(active_tracks)
+        if valid_tracks is not None:
+            live_last_valid_count = len(valid_tracks)
+        if (not PRINT_LIVE_STATUS) or ((now_t - live_last_print) < LIVE_STATUS_INTERVAL):
+            return
+        interval = max(now_t - live_last_print, 1e-6)
+        udp_rate = live_packet_count / interval
+        obj_rate = live_obj_count / interval
+        last_udp_age = "" if live_last_packet_t <= 0 else f"{now_t - live_last_packet_t:.2f}s"
+        print(
+            f"[LIVE] udp={udp_rate:.1f}/s, objs={obj_rate:.1f}/s, "
+            f"last_udp={last_udp_age}, meas={live_last_meas_count}, "
+            f"tracks={live_last_track_count}, valid={live_last_valid_count}, master={master_id}"
+        )
+        live_last_print = now_t
+        live_packet_count = 0
+        live_obj_count = 0
 
     while True:
         try:
@@ -1532,6 +2053,22 @@ def main():
 
             # --- 1. 获取 UDP 数据 (如果有) ---
             if not packet_queue:
+                if tracker.tracks and (curr_time - last_time) >= NO_PACKET_TRACKER_UPDATE_INTERVAL:
+                    dt = curr_time - last_time
+                    if dt > MAX_DT:
+                        dt = MAX_DT
+                    tracker.update(
+                        [],
+                        dt,
+                        now_t=curr_time,
+                        debug_context={
+                            "mode": "no_packet",
+                            "frame_id": "",
+                            "meas_count": 0,
+                        },
+                    )
+                    last_time = curr_time
+                maybe_print_live_status(curr_time, meas_count=None)
                 time.sleep(0.005) # 稍微让出 CPU
                 continue
             #计算两包UDP数据的间隔时间
@@ -1549,6 +2086,11 @@ def main():
             board_str = pkg.get("board", "Unknown") 
             cam_idx = int(pkg.get("cam", 0))
             raw_objs = pkg.get("objs", [])
+            sender_mode = pkg.get("mode", "")
+            sender_seq = pkg.get("seq", "")
+            live_packet_count += 1
+            live_obj_count += len(raw_objs) if isinstance(raw_objs, list) else 0
+            live_last_packet_t = curr_time
 
             logic_id, cfg = get_camera_params(board_str, cam_idx)
             if logic_id is None: continue 
@@ -1584,28 +2126,59 @@ def main():
                     d_az_to_target = angular_diff(ui_az, shared_gimbal_az)
                     d_el_to_target = ui_el - shared_gimbal_el
                     # turn_dir = get_turn_direction_label(d_az_to_target, d_el_to_target)
+                    meas_idx = len(current_measurements)
                     current_measurements.append({
                         "az": ui_az,
                         "el": ui_el,
                         "mono_dist": mono_dist,
                     })
-                    # === 新增：Phase 1 打印 ===
-                    if mono_dist is not None:
-                        print(
-                            f"\n[Phase 1: 视觉解析] 收到目标 cx={cx:.1f}, cy={cy:.1f}, mono={mono_dist:.1f}m"
-                            f" -> 解算绝对角度: Az={ui_az:.2f}°, El={ui_el:.2f}°"
-                        )
-                    else:
-                        print(
-                            f"\n[Phase 1: 视觉解析] 收到目标 cx={cx:.1f}, cy={cy:.1f}"
-                            f" -> 解算绝对角度: Az={ui_az:.2f}°, El={ui_el:.2f}°"
-                        )
+                    if FIELD_LOGGER is not None:
+                        FIELD_LOGGER.write_measurement({
+                            "timestamp": f"{curr_time:.6f}",
+                            "seq": sender_seq,
+                            "mode": sender_mode,
+                            "board": board_str,
+                            "cam": cam_idx,
+                            "meas_idx": meas_idx,
+                            "bbox_x1": f"{rect[0]:.3f}",
+                            "bbox_y1": f"{rect[1]:.3f}",
+                            "bbox_x2": f"{rect[2]:.3f}",
+                            "bbox_y2": f"{rect[3]:.3f}",
+                            "bbox_cx": f"{cx:.3f}",
+                            "bbox_cy": f"{cy:.3f}",
+                            "bbox_w": f"{rect[2] - rect[0]:.3f}",
+                            "bbox_h": f"{rect[3] - rect[1]:.3f}",
+                            "mono_dist": "" if mono_dist is None else f"{mono_dist:.6f}",
+                            "meas_az": f"{ui_az:.6f}",
+                            "meas_el": f"{ui_el:.6f}",
+                        })
+                    if PRINT_PHASE_LOGS:
+                        if mono_dist is not None:
+                            print(
+                                f"\n[Phase 1: 视觉解析] 收到目标 cx={cx:.1f}, cy={cy:.1f}, mono={mono_dist:.1f}m"
+                                f" -> 解算绝对角度: Az={ui_az:.2f}°, El={ui_el:.2f}°"
+                            )
+                        else:
+                            print(
+                                f"\n[Phase 1: 视觉解析] 收到目标 cx={cx:.1f}, cy={cy:.1f}"
+                                f" -> 解算绝对角度: Az={ui_az:.2f}°, El={ui_el:.2f}°"
+                            )
                     # print(
                     #     f"[DirCheck] gimbal_ui=(Az={shared_gimbal_az:.2f}°, El={shared_gimbal_el:.2f}°) "
                     #     f"target_delta=(dAz={d_az_to_target:.2f}°, dEl={d_el_to_target:.2f}°) => turn={turn_dir}"
                     # )
             # --- 3. 喂给 Tracker 更新所有目标轨迹 ---
-            active_tracks = tracker.update(current_measurements, dt, now_t=curr_time)
+            debug_context = {
+                "mode": sender_mode,
+                "frame_id": sender_seq,
+                "meas_count": len(current_measurements),
+            }
+            active_tracks = tracker.update(
+                current_measurements,
+                dt,
+                now_t=curr_time,
+                debug_context=debug_context,
+            )
 
             # 将最新激光结果绑定到对应轨迹，避免目标切换时距离串目标
             if (curr_time - laser_ts) <= LASER_DIST_TTL and laser_track_id >= 0:
@@ -1628,10 +2201,19 @@ def main():
             lock_expired = (master_track is not None and lock_timer <= 0)
 
             if master_lost:
-                print(
-                    f"[TargetLost] master_id={prev_master_id} 不再满足锁定条件: "
-                    f"valid_ids={[int(t.id) for t in valid_tracks]}"
-                )
+                if PRINT_EVENT_LOGS:
+                    print(
+                        f"[TargetLost] master_id={prev_master_id} 不再满足锁定条件: "
+                        f"valid_ids={[int(t.id) for t in valid_tracks]}"
+                    )
+                field_log_event({
+                    "timestamp": f"{curr_time:.6f}",
+                    "seq": sender_seq,
+                    "mode": sender_mode,
+                    "event": "TargetLost",
+                    "track_id": int(prev_master_id),
+                    "reason": "not_in_valid_tracks",
+                })
             
             if master_track is None or lock_timer <= 0:
                 # 状态 A：寻找/切换新目标 (SEARCHING)
@@ -1658,20 +2240,74 @@ def main():
                     best_eval = ranked_candidates[0]
                     candidates_text = format_selection_candidates(ranked_candidates)
                     if prev_master_id is None:
-                        print(
-                            f"[TargetAcquire] reason={selection_reason}, master_id={master_id}, "
-                            f"score={best_eval['threat_score']:.2f}, candidates={candidates_text}"
-                        )
+                        if PRINT_EVENT_LOGS:
+                            print(
+                                f"[TargetAcquire] reason={selection_reason}, master_id={master_id}, "
+                                f"score={best_eval['threat_score']:.2f}, candidates={candidates_text}"
+                            )
                     elif prev_master_id != master_id:
-                        print(
-                            f"[TargetSwitch] reason={selection_reason}, from={prev_master_id}, to={master_id}, "
-                            f"score={best_eval['threat_score']:.2f}, candidates={candidates_text}"
-                        )
+                        if PRINT_EVENT_LOGS:
+                            print(
+                                f"[TargetSwitch] reason={selection_reason}, from={prev_master_id}, to={master_id}, "
+                                f"score={best_eval['threat_score']:.2f}, candidates={candidates_text}"
+                            )
                     else:
-                        print(
-                            f"[TargetKeep] reason={selection_reason}, master_id={master_id}, "
-                            f"score={best_eval['threat_score']:.2f}, candidates={candidates_text}"
-                        )
+                        if PRINT_EVENT_LOGS:
+                            print(
+                                f"[TargetKeep] reason={selection_reason}, master_id={master_id}, "
+                                f"score={best_eval['threat_score']:.2f}, candidates={candidates_text}"
+                            )
+                    field_log_event({
+                        "timestamp": f"{curr_time:.6f}",
+                        "seq": sender_seq,
+                        "mode": sender_mode,
+                        "event": (
+                            "TargetAcquire" if prev_master_id is None
+                            else "TargetSwitch" if prev_master_id != master_id
+                            else "TargetKeep"
+                        ),
+                        "track_id": int(master_id),
+                        "reason": selection_reason,
+                    })
+            track_ids = [int(t.id) for t in active_tracks]
+            valid_ids = [int(t.id) for t in valid_tracks]
+            hit_values = [int(t.hit_streak) for t in active_tracks]
+            lost_values = [int(t.time_since_update) for t in active_tracks]
+            track_states = ";".join(
+                f"{int(t.id)}:{t.state[0,0]:.4f},{t.state[1,0]:.4f},{t.state[2,0]:.4f},{t.state[3,0]:.4f}"
+                for t in active_tracks
+            )
+            if FIELD_LOGGER is not None:
+                FIELD_LOGGER.write_summary({
+                    "timestamp": f"{curr_time:.6f}",
+                    "seq": sender_seq,
+                    "mode": sender_mode,
+                    "dt": f"{dt:.6f}",
+                    "meas_count": len(current_measurements),
+                    "track_count": len(active_tracks),
+                    "valid_count": len(valid_tracks),
+                    "track_ids": ";".join(str(x) for x in track_ids),
+                    "valid_ids": ";".join(str(x) for x in valid_ids),
+                    "master_id": "" if master_id is None else int(master_id),
+                    "hit_streaks": ";".join(str(x) for x in hit_values),
+                    "time_since_updates": ";".join(str(x) for x in lost_values),
+                    "track_states": track_states,
+                    "cmd_az": "" if last_sent_ctrl_az is None else f"{last_sent_ctrl_az:.6f}",
+                    "cmd_el": "" if last_sent_ctrl_el is None else f"{last_sent_ctrl_el:.6f}",
+                    "gimbal_ui_az": f"{shared_gimbal_az:.6f}",
+                    "gimbal_ui_el": f"{shared_gimbal_el:.6f}",
+                })
+            if DEBUG_TRACKER:
+                print(
+                    f"[TRACK_SUMMARY] meas={len(current_measurements)}, "
+                    f"tracks={len(active_tracks)}, "
+                    f"valid={len(valid_tracks)}, "
+                    f"ids={track_ids}, "
+                    f"valid_ids={valid_ids}, "
+                    f"master={master_id}, "
+                    f"hits={hit_values}, "
+                    f"lost={lost_values}"
+                )
             # --- 5. 状态机：物理执行与测距 (LOCKED) ---
             if master_track is not None:
                 lock_timer -= dt
@@ -1689,9 +2325,9 @@ def main():
                 
                 # B. 转换为云台控制角
                 ctrl_az, ctrl_el = ui_to_ctrl_angles(fut_az, fut_el)
-                # === 新增：Phase 3 打印 ===
-                print(f"[Phase 3: 预测控制] 目标当前估算Az={master_track.state[0, 0]:.2f}°, 速度={master_track.state[2, 0]:.2f}°/s")
-                print(f"                   -> 打提前量({PREDICT_DELAY}s后)Az={fut_az:.2f}°, El={fut_el:.2f}° | 下发云台指令: Az={ctrl_az:.2f}°, El={ctrl_el:.2f}°")
+                if PRINT_PHASE_LOGS:
+                    print(f"[Phase 3: 预测控制] 目标当前估算Az={master_track.state[0, 0]:.2f}°, 速度={master_track.state[2, 0]:.2f}°/s")
+                    print(f"                   -> 打提前量({PREDICT_DELAY}s后)Az={fut_az:.2f}°, El={fut_el:.2f}° | 下发云台指令: Az={ctrl_az:.2f}°, El={ctrl_el:.2f}°")
                 # C. 非阻塞下发：只推送最新控制指令给云台线程
                 need_send = True
                 if (last_sent_ctrl_az is not None) and (last_sent_ctrl_el is not None):
@@ -1711,6 +2347,18 @@ def main():
                     })
                     last_sent_ctrl_az = ctrl_az
                     last_sent_ctrl_el = ctrl_el
+                    field_log_gimbal({
+                        "timestamp": f"{curr_time:.6f}",
+                        "event": "GIMBAL_CMD",
+                        "cmd_id": int(global_cmd_id),
+                        "track_id": "" if master_id is None else int(master_id),
+                        "cmd_az": f"{ctrl_az:.6f}",
+                        "cmd_el": f"{ctrl_el:.6f}",
+                        "gimbal_ui_az": f"{shared_gimbal_az:.6f}",
+                        "gimbal_ui_el": f"{shared_gimbal_el:.6f}",
+                        "target_ctrl_az": f"{ctrl_az:.6f}",
+                        "target_ctrl_el": f"{ctrl_el:.6f}",
+                    })
 
                 # E. 向 UI 发送数据包 (遍历所有合法的追踪档案)
                 # 这样即使云台在打 ID 1，UI 上也能看到 ID 2, 3 的平滑轨迹
@@ -1725,12 +2373,38 @@ def main():
                         elevation=t.state[1, 0], 
                         distance=send_dist
                     )
+                    field_log_event({
+                        "timestamp": f"{curr_time:.6f}",
+                        "seq": sender_seq,
+                        "mode": sender_mode,
+                        "event": "UI_STATUS_SEND",
+                        "track_id": int(t.id),
+                        "pred_az": f"{t.state[0, 0]:.6f}",
+                        "pred_el": f"{t.state[1, 0]:.6f}",
+                        "hit_streak": int(t.hit_streak),
+                        "time_since_update": int(t.time_since_update),
+                        "master_id": "" if master_id is None else int(master_id),
+                        "is_master": 1 if t.id == master_id else 0,
+                        "laser_track_id": int(laser_track_id),
+                        "distance": "" if not math.isfinite(send_dist) else f"{send_dist:.6f}",
+                        "distance_source": dist_source,
+                        "track_laser_dist": "" if t.last_laser_dist is None else f"{t.last_laser_dist:.6f}",
+                        "track_laser_ts": "" if t.last_laser_dist is None else f"{t.laser_ts:.6f}",
+                        "track_laser_age": "" if t.last_laser_dist is None else f"{curr_time - t.laser_ts:.6f}",
+                    })
                     ui_send_total += 1
                     ui_send_counter[int(t.id)] += 1
             elif USE_MOCK_LASER:
                 update_mock_laser_distance(None, curr_time)
 
-            if (curr_time - stats_last_print) >= STATS_PRINT_INTERVAL:
+            maybe_print_live_status(
+                curr_time,
+                meas_count=len(current_measurements),
+                active_tracks=active_tracks,
+                valid_tracks=valid_tracks,
+            )
+
+            if PRINT_STATS and (curr_time - stats_last_print) >= STATS_PRINT_INTERVAL:
                 top_id_text = "none"
                 if ui_send_counter:
                     top_id_text = ", ".join([f"{tid}:{cnt}" for tid, cnt in ui_send_counter.most_common(8)])
@@ -1756,6 +2430,10 @@ def main():
         laser.close()
     if 'gimbal' in locals():
         gimbal.close()
+    if FIELD_LOGGER is not None:
+        logger = FIELD_LOGGER
+        FIELD_LOGGER = None
+        logger.close()
     final_id_text = "none"
     if ui_send_counter:
         final_id_text = ", ".join([f"{tid}:{cnt}" for tid, cnt in ui_send_counter.most_common()])
