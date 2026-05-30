@@ -174,6 +174,20 @@ _LOG_MIRROR_INITIALIZED = False
 _LOG_MIRROR_PATH = None
 
 
+def _create_run_log_dir(base_dir):
+    os.makedirs(base_dir, exist_ok=True)
+    timestamp = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+    run_dir = os.path.join(base_dir, timestamp)
+    suffix = 1
+    while True:
+        try:
+            os.makedirs(run_dir, exist_ok=False)
+            return run_dir
+        except FileExistsError:
+            run_dir = os.path.join(base_dir, f"{timestamp}_{suffix:02d}")
+            suffix += 1
+
+
 def _setup_log_mirror(log_dir):
     global _LOG_MIRROR_INITIALIZED, _LOG_MIRROR_PATH
     if _LOG_MIRROR_INITIALIZED:
@@ -215,7 +229,18 @@ def _env_flag(name, default=True):
     return str(val).strip().lower() not in ("0", "false", "no", "off")
 
 
-UI_IP = os.getenv("UI_IP", "192.168.2.200")
+def _env_float(name, default):
+    val = os.getenv(name)
+    if val is None:
+        return float(default)
+    try:
+        return float(str(val).strip())
+    except (TypeError, ValueError):
+        print(f"[Config][Warn] {name}={val} 不是有效浮点数，使用默认值 {default}.")
+        return float(default)
+
+
+UI_IP = os.getenv("UI_IP", "192.168.0.200")
 # UI_IP="172.28.3.80"
 UI_PORT = int(os.getenv("UI_PORT", "9999"))
 LOCAL_PORT = int(os.getenv("LOCAL_PORT", "8888"))
@@ -234,6 +259,7 @@ GPS_FIX_TIMEOUT_SECONDS = 5
 GPS_STATUS_INTERVAL = 5.0
 GPS_UI_SEND_INTERVAL = 10.0
 GPS_DEBUG_RAW = _env_flag("GPS_DEBUG_RAW", False)
+DEVICE_HEADING_DEG = _env_float("DEVICE_HEADING_DEG", 180) % 360.0  # 设备自身0度方向的地图方位：北0/东90/南180
 GIMBAL_AZ_BASE = 59.3  # 云台水平基准角（UI绝对方位 0° 映射到控制角的基准）
 GIMBAL_INIT_EL = 0.0  # 启动时俯仰归位角，目标通常从该方向进入
 GIMBAL_CMD_DEADBAND_AZ = 0.20
@@ -268,6 +294,7 @@ PRINT_LIVE_STATUS = _env_flag("PRINT_LIVE_STATUS", True)
 LIVE_STATUS_INTERVAL = float(os.getenv("LIVE_STATUS_INTERVAL", "1.0"))
 FIELD_LOG = _env_flag("FIELD_LOG", True)
 FIELD_LOG_DIR = os.getenv("FIELD_LOG_DIR", LOG_DIR)
+MEAS_FUSION_THRESHOLD_DEG = _env_float("MEAS_FUSION_THRESHOLD_DEG", 0.5)
 
 IMG_W = 3840.0
 IMG_H = 2160.0
@@ -296,14 +323,16 @@ class FieldLogger:
             "bbox_w", "bbox_h", "mono_dist", "meas_az", "meas_el",
         ]
         self.summary_fields = [
-            "timestamp", "seq", "mode", "dt", "meas_count", "track_count",
+            "timestamp", "seq", "mode", "dt",
+            "raw_meas_count", "fused_meas_count", "fusion_groups",
+            "meas_count", "track_count",
             "valid_count", "track_ids", "valid_ids", "master_id",
             "hit_streaks", "time_since_updates", "track_states",
             "cmd_az", "cmd_el", "gimbal_ui_az", "gimbal_ui_el",
         ]
         self.events_fields = [
             "timestamp", "seq", "mode", "event", "track_id", "meas_idx",
-            "meas_az", "meas_el", "pred_az", "pred_el", "cost",
+            "meas_az", "meas_el", "pred_az", "map_az", "pred_el", "cost",
             "dynamic_thresh", "uncertainty", "p_az", "p_el",
             "hit_streak", "time_since_update", "reason",
             "master_id", "is_master", "laser_track_id",
@@ -829,7 +858,8 @@ def gps_sender_thread(sender):
 def parse_udp_objects(raw_objs):
     """
     归一化 UDP 目标列表，输出:
-        [{"box": [x1, y1, x2, y2], "mono_dist": float|None}, ...]
+        [{"box": [x1, y1, x2, y2], "mono_dist": float|None,
+          "cam": int|None, "board": str|None}, ...]
 
     支持格式:
     1) [x1, y1, x2, y2]
@@ -839,11 +869,25 @@ def parse_udp_objects(raw_objs):
     """
     parsed = []
 
+    def append_obj(box, mono_dist=None, cam=None, board=None):
+        parsed.append({
+            "box": [box[0], box[1], box[2], box[3]],
+            "mono_dist": mono_dist,
+            "cam": cam,
+            "board": board,
+        })
+
+    def first_present(obj, keys):
+        for key in keys:
+            if key in obj and obj.get(key) not in (None, ""):
+                return obj.get(key)
+        return None
+
     # 兼容单目标扁平格式:
     # objs = [x1, y1, x2, y2] / [x1, y1, x2, y2, dist]
     if isinstance(raw_objs, (list, tuple)) and len(raw_objs) >= 4 and not isinstance(raw_objs[0], (list, tuple, dict)):
         mono_dist = _parse_positive_float(raw_objs[4]) if len(raw_objs) >= 5 else None
-        return [{"box": [raw_objs[0], raw_objs[1], raw_objs[2], raw_objs[3]], "mono_dist": mono_dist}]
+        return [{"box": [raw_objs[0], raw_objs[1], raw_objs[2], raw_objs[3]], "mono_dist": mono_dist, "cam": None, "board": None}]
 
     # 兼容单目标字典:
     # objs = {"box":[...], "distance":...}
@@ -855,6 +899,8 @@ def parse_udp_objects(raw_objs):
 
     for obj_item in raw_objs:
         if isinstance(obj_item, dict):
+            obj_cam = first_present(obj_item, ("cam", "cam_id", "camera", "camera_id", "cameraId"))
+            obj_board = first_present(obj_item, ("board", "board_id", "boardId"))
             default_dist = _parse_positive_float(
                 obj_item.get(
                     "distance_m",
@@ -872,7 +918,7 @@ def parse_udp_objects(raw_objs):
                     mono_dist = default_dist
                     if isinstance(dist_list, list) and i < len(dist_list):
                         mono_dist = _parse_positive_float(dist_list[i]) or mono_dist
-                    parsed.append({"box": [b[0], b[1], b[2], b[3]], "mono_dist": mono_dist})
+                    append_obj([b[0], b[1], b[2], b[3]], mono_dist, obj_cam, obj_board)
                 continue
 
             # 单目标 box
@@ -882,31 +928,33 @@ def parse_udp_objects(raw_objs):
                 if len(box) > 0 and isinstance(box[0], (list, tuple)):
                     for b in box:
                         if isinstance(b, (list, tuple)) and len(b) >= 4:
-                            parsed.append({"box": [b[0], b[1], b[2], b[3]], "mono_dist": default_dist})
+                            append_obj([b[0], b[1], b[2], b[3]], default_dist, obj_cam, obj_board)
                 elif len(box) >= 4:
-                    parsed.append({"box": [box[0], box[1], box[2], box[3]], "mono_dist": default_dist})
+                    append_obj([box[0], box[1], box[2], box[3]], default_dist, obj_cam, obj_board)
                 continue
 
             # 兼容坐标键值形式
             if all(k in obj_item for k in ("x1", "y1", "x2", "y2")):
-                parsed.append({
-                    "box": [obj_item["x1"], obj_item["y1"], obj_item["x2"], obj_item["y2"]],
-                    "mono_dist": default_dist,
-                })
+                append_obj(
+                    [obj_item["x1"], obj_item["y1"], obj_item["x2"], obj_item["y2"]],
+                    default_dist,
+                    obj_cam,
+                    obj_board,
+                )
                 continue
             if all(k in obj_item for k in ("x", "y", "w", "h")):
                 x = float(obj_item["x"])
                 y = float(obj_item["y"])
                 w = float(obj_item["w"])
                 h = float(obj_item["h"])
-                parsed.append({"box": [x, y, x + w, y + h], "mono_dist": default_dist})
+                append_obj([x, y, x + w, y + h], default_dist, obj_cam, obj_board)
                 continue
 
         elif isinstance(obj_item, (list, tuple)):
             # 单目标: [x1, y1, x2, y2, (optional)dist]
             if len(obj_item) >= 4 and not isinstance(obj_item[0], (list, tuple, dict)):
                 mono_dist = _parse_positive_float(obj_item[4]) if len(obj_item) >= 5 else None
-                parsed.append({"box": [obj_item[0], obj_item[1], obj_item[2], obj_item[3]], "mono_dist": mono_dist})
+                append_obj([obj_item[0], obj_item[1], obj_item[2], obj_item[3]], mono_dist)
                 continue
 
             # 批量: [[x1,y1,x2,y2], [..], ...]
@@ -914,7 +962,7 @@ def parse_udp_objects(raw_objs):
                 for b in obj_item:
                     if isinstance(b, (list, tuple)) and len(b) >= 4:
                         mono_dist = _parse_positive_float(b[4]) if len(b) >= 5 else None
-                        parsed.append({"box": [b[0], b[1], b[2], b[3]], "mono_dist": mono_dist})
+                        append_obj([b[0], b[1], b[2], b[3]], mono_dist)
                 continue
 
     return parsed
@@ -959,6 +1007,101 @@ from scipy.optimize import linear_sum_assignment
 def angular_diff(target, source):
     """计算两个绝对角度之间的最短物理距离 (-180 到 180度)"""
     return (target - source + 180.0) % 360.0 - 180.0
+
+
+def circular_mean_deg(values):
+    if not values:
+        return 0.0
+    sin_sum = sum(math.sin(math.radians(v)) for v in values)
+    cos_sum = sum(math.cos(math.radians(v)) for v in values)
+    if abs(sin_sum) < 1e-12 and abs(cos_sum) < 1e-12:
+        return float(values[0]) % 360.0
+    return math.degrees(math.atan2(sin_sum, cos_sum)) % 360.0
+
+
+def angle_measurement_distance(a, b):
+    return math.hypot(
+        angular_diff(float(a["az"]), float(b["az"])),
+        float(a["el"]) - float(b["el"]),
+    )
+
+
+def build_fused_measurement(items):
+    az_values = [float(item["az"]) for item in items]
+    el_values = [float(item["el"]) for item in items]
+    mono_values = []
+    for item in items:
+        mono_dist = _parse_positive_float(item.get("mono_dist"))
+        if mono_dist is not None:
+            mono_values.append(mono_dist)
+    fused = {
+        "az": circular_mean_deg(az_values),
+        "el": sum(el_values) / len(el_values),
+        "mono_dist": (sum(mono_values) / len(mono_values)) if mono_values else None,
+        "source_meas_indices": [int(item.get("raw_meas_idx", idx)) for idx, item in enumerate(items)],
+        "source_cams": [str(item.get("cam", "")) for item in items],
+    }
+    if items:
+        fused["board"] = items[0].get("board")
+        fused["cam"] = items[0].get("cam")
+    return fused
+
+
+def fuse_measurements_by_angle(measurements, threshold_deg=MEAS_FUSION_THRESHOLD_DEG):
+    """
+    同一帧内的跨相机重复观测先在角度空间融合，再进入 SORT/Kalman。
+    这里仅做帧内去重，不跨帧维护状态，避免改动 tracker 主体逻辑。
+    """
+    if not measurements:
+        return [], []
+    if threshold_deg <= 0:
+        fused = []
+        groups = []
+        for i, meas in enumerate(measurements):
+            item = dict(meas)
+            item["source_meas_indices"] = [int(meas.get("raw_meas_idx", i))]
+            item["source_cams"] = [str(meas.get("cam", ""))]
+            fused.append(item)
+            groups.append([item])
+        return fused, groups
+
+    groups = []
+    for meas in measurements:
+        best_idx = None
+        best_dist = None
+        for idx, group in enumerate(groups):
+            dist = angle_measurement_distance(meas, group["center"])
+            if dist <= threshold_deg and (best_dist is None or dist < best_dist):
+                best_idx = idx
+                best_dist = dist
+
+        if best_idx is None:
+            groups.append({"items": [dict(meas)], "center": dict(meas)})
+            continue
+
+        group = groups[best_idx]
+        group["items"].append(dict(meas))
+        group["center"] = build_fused_measurement(group["items"])
+
+    fused = [build_fused_measurement(group["items"]) for group in groups]
+    return fused, [group["items"] for group in groups]
+
+
+def format_fusion_groups(groups):
+    parts = []
+    for idx, group in enumerate(groups):
+        raw_indices = ",".join(str(item.get("raw_meas_idx", "")) for item in group)
+        sources = ",".join(
+            f"{item.get('board', '')}/{item.get('cam', '')}"
+            for item in group
+        )
+        parts.append(f"{idx}:n={len(group)},raw={raw_indices},src={sources}")
+    return ";".join(parts)
+
+
+def relative_to_map_azimuth(relative_az, device_heading_deg=DEVICE_HEADING_DEG):
+    """将设备自身坐标系方位角转换为正北为0度的地图绝对方位角。"""
+    return (float(relative_az) + float(device_heading_deg)) % 360.0
 
 
 def get_turn_direction_label(delta_az, delta_el, deadband_az=0.35, deadband_el=0.25):
@@ -1895,9 +2038,17 @@ def format_selection_candidates(ranked_candidates, topk=MASTER_SELECTION_LOG_TOP
 # ==========================================
 def main():
     global FIELD_LOGGER
+    run_log_dir = None
+    if LOG_TO_FILE or FIELD_LOG:
+        try:
+            run_log_dir = _create_run_log_dir(LOG_DIR)
+        except Exception as e:
+            run_log_dir = LOG_DIR
+            print(f"[Log][Warn] 运行日志目录创建失败，回退到 {LOG_DIR}: {e}")
+
     if LOG_TO_FILE:
         try:
-            log_path = _setup_log_mirror(LOG_DIR)
+            log_path = _setup_log_mirror(run_log_dir or LOG_DIR)
             if log_path:
                 print(f"[Log] stdout/stderr -> {log_path}")
         except Exception as e:
@@ -1905,12 +2056,13 @@ def main():
 
     if FIELD_LOG:
         try:
-            FIELD_LOGGER = FieldLogger(FIELD_LOG_DIR)
+            FIELD_LOGGER = FieldLogger(run_log_dir or FIELD_LOG_DIR)
         except Exception as e:
             FIELD_LOGGER = None
             print(f"[FieldLog][Warn] 初始化失败: {e}")
 
     sender = UISender(UI_IP, UI_PORT)
+    print(f"[Config] DEVICE_HEADING_DEG={DEVICE_HEADING_DEG:.2f} (map north=0, east=90, south=180)")
     if not USE_MOCK_GIMBAL:
         _validate_serial_port("GIMBAL_PORT", GIMBAL_PORT)
     if not USE_MOCK_LASER:
@@ -2084,7 +2236,10 @@ def main():
             pkg = packet_queue.popleft()
             
             board_str = pkg.get("board", "Unknown") 
-            cam_idx = int(pkg.get("cam", 0))
+            try:
+                cam_idx = int(pkg.get("cam", 0))
+            except (TypeError, ValueError):
+                cam_idx = 0
             raw_objs = pkg.get("objs", [])
             sender_mode = pkg.get("mode", "")
             sender_seq = pkg.get("seq", "")
@@ -2092,11 +2247,8 @@ def main():
             live_obj_count += len(raw_objs) if isinstance(raw_objs, list) else 0
             live_last_packet_t = curr_time
 
-            logic_id, cfg = get_camera_params(board_str, cam_idx)
-            if logic_id is None: continue 
-
             # --- 2. 坐标解析为绝对角度 ---
-            current_measurements = []
+            raw_measurements = []
             parsed_objs = parse_udp_objects(raw_objs)
 
             with shared_state.lock:
@@ -2109,6 +2261,16 @@ def main():
             for obj_item in parsed_objs:
                 rect = obj_item["box"]
                 mono_dist = obj_item["mono_dist"]
+                obj_board = obj_item.get("board") or board_str
+                obj_cam_raw = obj_item.get("cam")
+                try:
+                    obj_cam_idx = int(obj_cam_raw if obj_cam_raw is not None else cam_idx)
+                except (TypeError, ValueError):
+                    print(f"[Warning] 无效摄像头ID: board={obj_board}, cam={obj_cam_raw}")
+                    continue
+                logic_id, cfg = get_camera_params(obj_board, obj_cam_idx)
+                if logic_id is None:
+                    continue
                 recv_obj_total += 1
                 recv_unique_boxes.add((
                     int(round(rect[0])),
@@ -2126,19 +2288,22 @@ def main():
                     d_az_to_target = angular_diff(ui_az, shared_gimbal_az)
                     d_el_to_target = ui_el - shared_gimbal_el
                     # turn_dir = get_turn_direction_label(d_az_to_target, d_el_to_target)
-                    meas_idx = len(current_measurements)
-                    current_measurements.append({
+                    meas_idx = len(raw_measurements)
+                    raw_measurements.append({
                         "az": ui_az,
                         "el": ui_el,
                         "mono_dist": mono_dist,
+                        "board": obj_board,
+                        "cam": obj_cam_idx,
+                        "raw_meas_idx": meas_idx,
                     })
                     if FIELD_LOGGER is not None:
                         FIELD_LOGGER.write_measurement({
                             "timestamp": f"{curr_time:.6f}",
                             "seq": sender_seq,
                             "mode": sender_mode,
-                            "board": board_str,
-                            "cam": cam_idx,
+                            "board": obj_board,
+                            "cam": obj_cam_idx,
                             "meas_idx": meas_idx,
                             "bbox_x1": f"{rect[0]:.3f}",
                             "bbox_y1": f"{rect[1]:.3f}",
@@ -2168,6 +2333,11 @@ def main():
                     #     f"target_delta=(dAz={d_az_to_target:.2f}°, dEl={d_el_to_target:.2f}°) => turn={turn_dir}"
                     # )
             # --- 3. 喂给 Tracker 更新所有目标轨迹 ---
+            current_measurements, fusion_groups = fuse_measurements_by_angle(
+                raw_measurements,
+                threshold_deg=MEAS_FUSION_THRESHOLD_DEG,
+            )
+            fusion_groups_text = format_fusion_groups(fusion_groups)
             debug_context = {
                 "mode": sender_mode,
                 "frame_id": sender_seq,
@@ -2283,6 +2453,9 @@ def main():
                     "seq": sender_seq,
                     "mode": sender_mode,
                     "dt": f"{dt:.6f}",
+                    "raw_meas_count": len(raw_measurements),
+                    "fused_meas_count": len(current_measurements),
+                    "fusion_groups": fusion_groups_text,
                     "meas_count": len(current_measurements),
                     "track_count": len(active_tracks),
                     "valid_count": len(valid_tracks),
@@ -2299,7 +2472,8 @@ def main():
                 })
             if DEBUG_TRACKER:
                 print(
-                    f"[TRACK_SUMMARY] meas={len(current_measurements)}, "
+                    f"[TRACK_SUMMARY] raw_meas={len(raw_measurements)}, "
+                    f"fused_meas={len(current_measurements)}, "
                     f"tracks={len(active_tracks)}, "
                     f"valid={len(valid_tracks)}, "
                     f"ids={track_ids}, "
@@ -2366,10 +2540,12 @@ def main():
                     send_dist, dist_source = select_track_distance(t, master_id, curr_time)
                     if math.isfinite(send_dist) and dist_source.startswith("mono"):
                         t.last_sent_dist = send_dist
+
+                    map_az = relative_to_map_azimuth(t.state[0, 0])
                     
                     sender.send_status(
                         board_str, cam_idx, t.id,  # 这里传入的是持续追踪的 ID，而不是一闪而过的数组下标
-                        azimuth=t.state[0, 0],        # 发送卡尔曼平滑后的位置
+                        azimuth=map_az,
                         elevation=t.state[1, 0], 
                         distance=send_dist
                     )
@@ -2380,6 +2556,7 @@ def main():
                         "event": "UI_STATUS_SEND",
                         "track_id": int(t.id),
                         "pred_az": f"{t.state[0, 0]:.6f}",
+                        "map_az": f"{map_az:.6f}",
                         "pred_el": f"{t.state[1, 0]:.6f}",
                         "hit_streak": int(t.hit_streak),
                         "time_since_update": int(t.time_since_update),
