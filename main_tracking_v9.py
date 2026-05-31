@@ -820,7 +820,7 @@ def gps_sender_thread(sender):
 
     while True:
         cycle_start = time.monotonic()
-        print("[GPS] Searching satellites and waiting for valid latitude/longitude...")
+        #print("[GPS] Searching satellites and waiting for valid latitude/longitude...")
         longitude, latitude, source = read_gps_fix(
             port=GPS_PORT,
             baudrate=GPS_BAUDRATE,
@@ -845,10 +845,10 @@ def gps_sender_thread(sender):
             send_source = "default"
 
         sender.send_gps_location(latitude=latitude, longitude=longitude)
-        print(
-            f"[GPS] Sent location to UI: "
-            f"source={send_source}, latitude={latitude:.6f}, longitude={longitude:.6f}"
-        )
+        # print(
+        #     f"[GPS] Sent location to UI: "
+        #     f"source={send_source}, latitude={latitude:.6f}, longitude={longitude:.6f}"
+        # )
 
         sleep_time = GPS_UI_SEND_INTERVAL - (time.monotonic() - cycle_start)
         if sleep_time > 0:
