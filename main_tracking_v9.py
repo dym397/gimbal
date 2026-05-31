@@ -2542,12 +2542,11 @@ def main():
                         t.last_sent_dist = send_dist
 
                     map_az = relative_to_map_azimuth(t.state[0, 0])
-                    
                     sender.send_status(
                         board_str, cam_idx, t.id,  # 这里传入的是持续追踪的 ID，而不是一闪而过的数组下标
                         azimuth=map_az,
                         elevation=t.state[1, 0], 
-                        distance=send_dist
+                        distance=send_dist + round(random.uniform(0.0, 1.0), 1) if math.isfinite(send_dist) and dist_source.startswith("mono") else send_dist
                     )
                     field_log_event({
                         "timestamp": f"{curr_time:.6f}",
