@@ -249,6 +249,7 @@ LASER_PORT = _serial_port("LASER_PORT", "laser")
 GPS_PORT = _serial_port("GPS_PORT", "gps")
 USE_MOCK_GIMBAL = _env_flag("USE_MOCK_GIMBAL", False)  # True: 使用 mock_gimbal.py; False: 使用真实 GT06Z
 USE_MOCK_LASER = _env_flag("USE_MOCK_LASER", False)   # True: 激光通道使用 mono 模拟值; False: 使用真实 SDDM 激光
+UI_REAL_LASER_ONLY = _env_flag("UI_REAL_LASER_ONLY", True)  # True: UI距离只发送新鲜真实激光，不使用mono/hold兜底
 ENABLE_GPS = _env_flag("ENABLE_GPS", True)
 ENABLE_IMU = _env_flag("ENABLE_IMU", False)      # Manual switch: True to enable IMU read/print
 IMU_PORT = _serial_port("IMU_PORT", "imu")
@@ -295,6 +296,7 @@ LIVE_STATUS_INTERVAL = float(os.getenv("LIVE_STATUS_INTERVAL", "1.0"))
 FIELD_LOG = _env_flag("FIELD_LOG", True)
 FIELD_LOG_DIR = os.getenv("FIELD_LOG_DIR", LOG_DIR)
 MEAS_FUSION_THRESHOLD_DEG = _env_float("MEAS_FUSION_THRESHOLD_DEG", 0.5)
+MEAS_FUSION_WINDOW_SECONDS = _env_float("MEAS_FUSION_WINDOW_SECONDS", 0.20)
 
 IMG_W = 3840.0
 IMG_H = 2160.0
@@ -695,6 +697,7 @@ def rk3588_thread():
             recv_ts = time.time()
             pkg = json.loads(data.decode("utf-8"))
             if isinstance(pkg, dict) and "objs" in pkg:
+                pkg["_recv_ts"] = recv_ts
                 if FIELD_LOGGER is not None:
                     FIELD_LOGGER.write_raw_udp({
                         "recv_ts": recv_ts,
@@ -975,6 +978,10 @@ def select_track_distance(track, master_id, curr_time):
         if (track.last_laser_dist is not None and (curr_time - track.laser_ts) <= LASER_DIST_TTL)
         else None
     )
+    if UI_REAL_LASER_ONLY:
+        if USE_MOCK_LASER:
+            return float("nan"), "mock_laser_disabled_for_real_only"
+        return (fresh_laser, "laser") if fresh_laser is not None else (float("nan"), "no_fresh_real_laser")
     held_laser = (
         track.last_laser_dist
         if (track.last_laser_dist is not None and (curr_time - track.laser_ts) <= LASER_UI_HOLD_TTL)
@@ -1682,7 +1689,7 @@ class StandardKalmanTrack:
 class MultiTargetTracker:
     def __init__(
         self,
-        max_lost_frames=15,
+        max_lost_frames=30,
         base_distance_threshold=4.0,
         distance_threshold=None,
     ):
@@ -2063,6 +2070,9 @@ def main():
 
     sender = UISender(UI_IP, UI_PORT)
     print(f"[Config] DEVICE_HEADING_DEG={DEVICE_HEADING_DEG:.2f} (map north=0, east=90, south=180)")
+    print(f"[Config] UI_REAL_LASER_ONLY={UI_REAL_LASER_ONLY}")
+    if UI_REAL_LASER_ONLY and USE_MOCK_LASER:
+        print("[Config][Warn] UI_REAL_LASER_ONLY=True but USE_MOCK_LASER=True; UI距离将发送NaN，不适合真实激光测试。")
     if not USE_MOCK_GIMBAL:
         _validate_serial_port("GIMBAL_PORT", GIMBAL_PORT)
     if not USE_MOCK_LASER:
@@ -2142,7 +2152,7 @@ def main():
     print("=== System V9.0 (Predictive Tracking & Scheduling) Running ===")
 
     # 初始化追踪大脑
-    tracker = MultiTargetTracker(max_lost_frames=12, distance_threshold=1.2)
+    tracker = MultiTargetTracker(max_lost_frames=30, distance_threshold=1.2)
     
     # 状态机与调度变量
     master_id = None
@@ -2169,6 +2179,8 @@ def main():
     live_last_meas_count = 0
     live_last_track_count = 0
     live_last_valid_count = 0
+    fusion_packet_buffer = []
+    fusion_window_start_t = 0.0
 
     def maybe_print_live_status(now_t, meas_count=0, active_tracks=None, valid_tracks=None):
         nonlocal live_last_print, live_packet_count, live_obj_count
@@ -2194,6 +2206,17 @@ def main():
         live_packet_count = 0
         live_obj_count = 0
 
+    def summarize_window_field(pkgs, field):
+        values = []
+        for item in pkgs:
+            value = item.get(field, "")
+            if value in (None, ""):
+                continue
+            value = str(value)
+            if value not in values:
+                values.append(value)
+        return ";".join(values)
+
     while True:
         try:
             curr_time = time.time()
@@ -2203,8 +2226,19 @@ def main():
                 print(f"ANGLE: {roll:6.2f} {pitch:6.2f} {yaw:6.2f}")
                 last_imu_print = curr_time
 
-            # --- 1. 获取 UDP 数据 (如果有) ---
-            if not packet_queue:
+            # --- 1. 获取 UDP 数据：短时间窗内的分摄像头包合成一个逻辑帧 ---
+            while packet_queue:
+                pkg = packet_queue.popleft()
+                if not fusion_packet_buffer:
+                    fusion_window_start_t = float(pkg.get("_recv_ts", curr_time) or curr_time)
+                fusion_packet_buffer.append(pkg)
+
+                raw_objs = pkg.get("objs", [])
+                live_packet_count += 1
+                live_obj_count += len(raw_objs) if isinstance(raw_objs, list) else 0
+                live_last_packet_t = curr_time
+
+            if not fusion_packet_buffer:
                 if tracker.tracks and (curr_time - last_time) >= NO_PACKET_TRACKER_UPDATE_INTERVAL:
                     dt = curr_time - last_time
                     if dt > MAX_DT:
@@ -2223,7 +2257,17 @@ def main():
                 maybe_print_live_status(curr_time, meas_count=None)
                 time.sleep(0.005) # 稍微让出 CPU
                 continue
-            #计算两包UDP数据的间隔时间
+
+            if (curr_time - fusion_window_start_t) < MEAS_FUSION_WINDOW_SECONDS:
+                maybe_print_live_status(curr_time, meas_count=None)
+                time.sleep(0.005)
+                continue
+
+            window_pkgs = fusion_packet_buffer
+            fusion_packet_buffer = []
+            fusion_window_start_t = 0.0
+
+            #计算两次逻辑观测帧的间隔时间
             dt = curr_time - last_time
             if dt <= 0:
                 dt = 1.0 / 10.0
@@ -2232,24 +2276,17 @@ def main():
                 dt = MAX_DT
             last_time = curr_time
 
-            while len(packet_queue) > 1: packet_queue.popleft()
-            pkg = packet_queue.popleft()
-            
-            board_str = pkg.get("board", "Unknown") 
+            frame_ref_pkg = window_pkgs[-1]
+            board_str = frame_ref_pkg.get("board", "Unknown")
             try:
-                cam_idx = int(pkg.get("cam", 0))
+                cam_idx = int(frame_ref_pkg.get("cam", 0))
             except (TypeError, ValueError):
                 cam_idx = 0
-            raw_objs = pkg.get("objs", [])
-            sender_mode = pkg.get("mode", "")
-            sender_seq = pkg.get("seq", "")
-            live_packet_count += 1
-            live_obj_count += len(raw_objs) if isinstance(raw_objs, list) else 0
-            live_last_packet_t = curr_time
+            sender_mode = summarize_window_field(window_pkgs, "mode")
+            sender_seq = summarize_window_field(window_pkgs, "seq")
 
             # --- 2. 坐标解析为绝对角度 ---
             raw_measurements = []
-            parsed_objs = parse_udp_objects(raw_objs)
 
             with shared_state.lock:
                 shared_gimbal_az = shared_state.gimbal_az
@@ -2258,80 +2295,90 @@ def main():
                 laser_ts = shared_state.laser_ts
                 laser_track_id = shared_state.laser_track_id
 
-            for obj_item in parsed_objs:
-                rect = obj_item["box"]
-                mono_dist = obj_item["mono_dist"]
-                obj_board = obj_item.get("board") or board_str
-                obj_cam_raw = obj_item.get("cam")
+            for pkt in window_pkgs:
+                pkt_board_str = pkt.get("board", "Unknown")
                 try:
-                    obj_cam_idx = int(obj_cam_raw if obj_cam_raw is not None else cam_idx)
+                    pkt_cam_idx = int(pkt.get("cam", 0))
                 except (TypeError, ValueError):
-                    print(f"[Warning] 无效摄像头ID: board={obj_board}, cam={obj_cam_raw}")
-                    continue
-                logic_id, cfg = get_camera_params(obj_board, obj_cam_idx)
-                if logic_id is None:
-                    continue
-                recv_obj_total += 1
-                recv_unique_boxes.add((
-                    int(round(rect[0])),
-                    int(round(rect[1])),
-                    int(round(rect[2])),
-                    int(round(rect[3])),
-                ))
-                
-                cx = (rect[0] + rect[2]) / 2.0
-                cy = (rect[1] + rect[3]) / 2.0
-                
-                res = calculate_angles(logic_id, cx, cy, cfg)
-                if res:
-                    ui_az, ui_el = res
-                    d_az_to_target = angular_diff(ui_az, shared_gimbal_az)
-                    d_el_to_target = ui_el - shared_gimbal_el
-                    # turn_dir = get_turn_direction_label(d_az_to_target, d_el_to_target)
-                    meas_idx = len(raw_measurements)
-                    raw_measurements.append({
-                        "az": ui_az,
-                        "el": ui_el,
-                        "mono_dist": mono_dist,
-                        "board": obj_board,
-                        "cam": obj_cam_idx,
-                        "raw_meas_idx": meas_idx,
-                    })
-                    if FIELD_LOGGER is not None:
-                        FIELD_LOGGER.write_measurement({
-                            "timestamp": f"{curr_time:.6f}",
-                            "seq": sender_seq,
-                            "mode": sender_mode,
+                    pkt_cam_idx = 0
+                pkt_mode = pkt.get("mode", "")
+                pkt_seq = pkt.get("seq", "")
+                parsed_objs = parse_udp_objects(pkt.get("objs", []))
+
+                for obj_item in parsed_objs:
+                    rect = obj_item["box"]
+                    mono_dist = obj_item["mono_dist"]
+                    obj_board = obj_item.get("board") or pkt_board_str
+                    obj_cam_raw = obj_item.get("cam")
+                    try:
+                        obj_cam_idx = int(obj_cam_raw if obj_cam_raw is not None else pkt_cam_idx)
+                    except (TypeError, ValueError):
+                        print(f"[Warning] 无效摄像头ID: board={obj_board}, cam={obj_cam_raw}")
+                        continue
+                    logic_id, cfg = get_camera_params(obj_board, obj_cam_idx)
+                    if logic_id is None:
+                        continue
+                    recv_obj_total += 1
+                    recv_unique_boxes.add((
+                        int(round(rect[0])),
+                        int(round(rect[1])),
+                        int(round(rect[2])),
+                        int(round(rect[3])),
+                    ))
+
+                    cx = (rect[0] + rect[2]) / 2.0
+                    cy = (rect[1] + rect[3]) / 2.0
+
+                    res = calculate_angles(logic_id, cx, cy, cfg)
+                    if res:
+                        ui_az, ui_el = res
+                        d_az_to_target = angular_diff(ui_az, shared_gimbal_az)
+                        d_el_to_target = ui_el - shared_gimbal_el
+                        # turn_dir = get_turn_direction_label(d_az_to_target, d_el_to_target)
+                        meas_idx = len(raw_measurements)
+                        raw_measurements.append({
+                            "az": ui_az,
+                            "el": ui_el,
+                            "mono_dist": mono_dist,
                             "board": obj_board,
                             "cam": obj_cam_idx,
-                            "meas_idx": meas_idx,
-                            "bbox_x1": f"{rect[0]:.3f}",
-                            "bbox_y1": f"{rect[1]:.3f}",
-                            "bbox_x2": f"{rect[2]:.3f}",
-                            "bbox_y2": f"{rect[3]:.3f}",
-                            "bbox_cx": f"{cx:.3f}",
-                            "bbox_cy": f"{cy:.3f}",
-                            "bbox_w": f"{rect[2] - rect[0]:.3f}",
-                            "bbox_h": f"{rect[3] - rect[1]:.3f}",
-                            "mono_dist": "" if mono_dist is None else f"{mono_dist:.6f}",
-                            "meas_az": f"{ui_az:.6f}",
-                            "meas_el": f"{ui_el:.6f}",
+                            "raw_meas_idx": meas_idx,
                         })
-                    if PRINT_PHASE_LOGS:
-                        if mono_dist is not None:
-                            print(
-                                f"\n[Phase 1: 视觉解析] 收到目标 cx={cx:.1f}, cy={cy:.1f}, mono={mono_dist:.1f}m"
-                                f" -> 解算绝对角度: Az={ui_az:.2f}°, El={ui_el:.2f}°"
-                            )
-                        else:
-                            print(
-                                f"\n[Phase 1: 视觉解析] 收到目标 cx={cx:.1f}, cy={cy:.1f}"
-                                f" -> 解算绝对角度: Az={ui_az:.2f}°, El={ui_el:.2f}°"
-                            )
-                    # print(
-                    #     f"[DirCheck] gimbal_ui=(Az={shared_gimbal_az:.2f}°, El={shared_gimbal_el:.2f}°) "
-                    #     f"target_delta=(dAz={d_az_to_target:.2f}°, dEl={d_el_to_target:.2f}°) => turn={turn_dir}"
-                    # )
+                        if FIELD_LOGGER is not None:
+                            FIELD_LOGGER.write_measurement({
+                                "timestamp": f"{curr_time:.6f}",
+                                "seq": pkt_seq,
+                                "mode": pkt_mode,
+                                "board": obj_board,
+                                "cam": obj_cam_idx,
+                                "meas_idx": meas_idx,
+                                "bbox_x1": f"{rect[0]:.3f}",
+                                "bbox_y1": f"{rect[1]:.3f}",
+                                "bbox_x2": f"{rect[2]:.3f}",
+                                "bbox_y2": f"{rect[3]:.3f}",
+                                "bbox_cx": f"{cx:.3f}",
+                                "bbox_cy": f"{cy:.3f}",
+                                "bbox_w": f"{rect[2] - rect[0]:.3f}",
+                                "bbox_h": f"{rect[3] - rect[1]:.3f}",
+                                "mono_dist": "" if mono_dist is None else f"{mono_dist:.6f}",
+                                "meas_az": f"{ui_az:.6f}",
+                                "meas_el": f"{ui_el:.6f}",
+                            })
+                        if PRINT_PHASE_LOGS:
+                            if mono_dist is not None:
+                                print(
+                                    f"\n[Phase 1: 视觉解析] 收到目标 cx={cx:.1f}, cy={cy:.1f}, mono={mono_dist:.1f}m"
+                                    f" -> 解算绝对角度: Az={ui_az:.2f}°, El={ui_el:.2f}°"
+                                )
+                            else:
+                                print(
+                                    f"\n[Phase 1: 视觉解析] 收到目标 cx={cx:.1f}, cy={cy:.1f}"
+                                    f" -> 解算绝对角度: Az={ui_az:.2f}°, El={ui_el:.2f}°"
+                                )
+                        # print(
+                        #     f"[DirCheck] gimbal_ui=(Az={shared_gimbal_az:.2f}°, El={shared_gimbal_el:.2f}°) "
+                        #     f"target_delta=(dAz={d_az_to_target:.2f}°, dEl={d_el_to_target:.2f}°) => turn={turn_dir}"
+                        # )
             # --- 3. 喂给 Tracker 更新所有目标轨迹 ---
             current_measurements, fusion_groups = fuse_measurements_by_angle(
                 raw_measurements,

@@ -1,0 +1,6 @@
+timestamp,seq,mode,dt,raw_meas_count,fused_meas_count,fusion_groups,meas_count,track_count,valid_count,track_ids,valid_ids,master_id,hit_streaks,time_since_updates,track_states,cmd_az,cmd_el,gimbal_ui_az,gimbal_ui_el
+1780308442.320927,0;1;2,codex_window_split_cam,0.203014,3,1,"0:n=3,raw=0,1,2,src=BOARD_1/2,BOARD_2/1,BOARD_2/2",1,1,0,1,,,1,0,"1:6.9305,4.6614,0.0000,0.0000",,,359.889380,-0.090207
+1780308442.720752,3;4;5,codex_window_split_cam,0.250000,3,1,"0:n=3,raw=0,1,2,src=BOARD_1/2,BOARD_2/1,BOARD_2/2",1,1,0,1,,,2,0,"1:6.9305,4.6614,0.0000,0.0000",,,0.102892,0.121716
+1780308443.124052,6;7;8,codex_window_split_cam,0.250000,3,1,"0:n=3,raw=0,1,2,src=BOARD_1/2,BOARD_2/1,BOARD_2/2",1,1,1,1,1,1,3,0,"1:6.9305,4.6614,0.0000,0.0000",,,359.952076,0.030901
+1780308443.530504,9;10;11,codex_window_split_cam,0.250000,3,1,"0:n=3,raw=0,1,2,src=BOARD_1/2,BOARD_2/1,BOARD_2/2",1,1,1,1,1,1,4,0,"1:6.9305,4.6614,0.0000,0.0000",66.230531,4.661394,6.799940,4.643419
+1780308443.929765,12;13;14,codex_window_split_cam,0.250000,3,1,"0:n=3,raw=0,1,2,src=BOARD_1/2,BOARD_2/1,BOARD_2/2",1,1,1,1,1,1,5,0,"1:6.9305,4.6614,0.0000,0.0000",66.230531,4.661394,6.830450,4.849281

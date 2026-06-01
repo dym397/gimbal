@@ -1,0 +1,15 @@
+{"recv_ts":1780308442.1179125,"addr":"127.0.0.1:49665","packet_len":126,"seq":0,"mode":"codex_window_split_cam","board":"BOARD_1","cam":2,"raw_obj_count":1,"raw_objs":[[3394.06,46.36,3474.06,106.36,300.0]]}
+{"recv_ts":1780308442.1687,"addr":"127.0.0.1:49665","packet_len":120,"seq":1,"mode":"codex_window_split_cam","board":"BOARD_2","cam":1,"raw_obj_count":1,"raw_objs":[[0.0,2099.0,80.0,2159.0,300.0]]}
+{"recv_ts":1780308442.2194066,"addr":"127.0.0.1:49665","packet_len":125,"seq":2,"mode":"codex_window_split_cam","board":"BOARD_2","cam":2,"raw_obj_count":1,"raw_objs":[[3377.4,2099.0,3457.4,2159.0,300.0]]}
+{"recv_ts":1780308442.520224,"addr":"127.0.0.1:49665","packet_len":126,"seq":3,"mode":"codex_window_split_cam","board":"BOARD_1","cam":2,"raw_obj_count":1,"raw_objs":[[3394.06,46.36,3474.06,106.36,300.0]]}
+{"recv_ts":1780308442.5708275,"addr":"127.0.0.1:49665","packet_len":120,"seq":4,"mode":"codex_window_split_cam","board":"BOARD_2","cam":1,"raw_obj_count":1,"raw_objs":[[0.0,2099.0,80.0,2159.0,300.0]]}
+{"recv_ts":1780308442.6211796,"addr":"127.0.0.1:49665","packet_len":125,"seq":5,"mode":"codex_window_split_cam","board":"BOARD_2","cam":2,"raw_obj_count":1,"raw_objs":[[3377.4,2099.0,3457.4,2159.0,300.0]]}
+{"recv_ts":1780308442.9223135,"addr":"127.0.0.1:49665","packet_len":126,"seq":6,"mode":"codex_window_split_cam","board":"BOARD_1","cam":2,"raw_obj_count":1,"raw_objs":[[3394.06,46.36,3474.06,106.36,300.0]]}
+{"recv_ts":1780308442.9730332,"addr":"127.0.0.1:49665","packet_len":120,"seq":7,"mode":"codex_window_split_cam","board":"BOARD_2","cam":1,"raw_obj_count":1,"raw_objs":[[0.0,2099.0,80.0,2159.0,300.0]]}
+{"recv_ts":1780308443.0235684,"addr":"127.0.0.1:49665","packet_len":125,"seq":8,"mode":"codex_window_split_cam","board":"BOARD_2","cam":2,"raw_obj_count":1,"raw_objs":[[3377.4,2099.0,3457.4,2159.0,300.0]]}
+{"recv_ts":1780308443.325044,"addr":"127.0.0.1:49665","packet_len":126,"seq":9,"mode":"codex_window_split_cam","board":"BOARD_1","cam":2,"raw_obj_count":1,"raw_objs":[[3394.06,46.36,3474.06,106.36,300.0]]}
+{"recv_ts":1780308443.3754482,"addr":"127.0.0.1:49665","packet_len":121,"seq":10,"mode":"codex_window_split_cam","board":"BOARD_2","cam":1,"raw_obj_count":1,"raw_objs":[[0.0,2099.0,80.0,2159.0,300.0]]}
+{"recv_ts":1780308443.425977,"addr":"127.0.0.1:49665","packet_len":126,"seq":11,"mode":"codex_window_split_cam","board":"BOARD_2","cam":2,"raw_obj_count":1,"raw_objs":[[3377.4,2099.0,3457.4,2159.0,300.0]]}
+{"recv_ts":1780308443.726788,"addr":"127.0.0.1:49665","packet_len":127,"seq":12,"mode":"codex_window_split_cam","board":"BOARD_1","cam":2,"raw_obj_count":1,"raw_objs":[[3394.06,46.36,3474.06,106.36,300.0]]}
+{"recv_ts":1780308443.7775059,"addr":"127.0.0.1:49665","packet_len":121,"seq":13,"mode":"codex_window_split_cam","board":"BOARD_2","cam":1,"raw_obj_count":1,"raw_objs":[[0.0,2099.0,80.0,2159.0,300.0]]}
+{"recv_ts":1780308443.8280883,"addr":"127.0.0.1:49665","packet_len":126,"seq":14,"mode":"codex_window_split_cam","board":"BOARD_2","cam":2,"raw_obj_count":1,"raw_objs":[[3377.4,2099.0,3457.4,2159.0,300.0]]}
