@@ -1,0 +1,108 @@
+[Log] stdout/stderr -> logs\20260601_193533\main_tracking_v9_20260601_193533.log
+[FieldLog] enabled: C:\Users\cv1124\dym\gimbal\logs\20260601_193533
+[Config] DEVICE_HEADING_DEG=180.00 (map north=0, east=90, south=180)
+[Config] UI_REAL_LASER_ONLY=True
+[GPS] Thread started, periodic UI updates enabled on COM8@115200, fix_timeout=5s, ui_interval=10.0s
+[Init] Connecting to Gimbal at COM9...
+[GT06Z] Driver Ready on COM9.
+[Adapter] GT06Z 云台已连接: COM9
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.4, lat=30.408260454166665, lon=104.08874505666667
+[LaserThread] 激光读取线程已启动
+[Init] Real laser enabled on COM10
+[Init] Queue gimbal initial posture: Az=59.30°, El=0.00°
+[Laser] start_measurement mode=continuous
+[GimbalThread] 控制线程已启动
+[Net] Listening RK3588 on 8888...=== System V9.0 (Predictive Tracking & Scheduling) Running ===
+
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.22s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.21s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.52s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.52s, meas=1, tracks=1, valid=1, master=1
+[GPS] GGA fix_quality=1, num_sats=10, hdop=1.4, lat=30.4082584545, lon=104.0887483765
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.16s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.15s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.15s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.79s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.79s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.79s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=3.80s, meas=1, tracks=1, valid=1, master=2
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.4, lat=30.408277722166666, lon=104.08876739666667
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=4.80s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=5.80s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=0, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.07s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.39s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.39s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.40s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.03s, meas=1, tracks=1, valid=1, master=4
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.4, lat=30.408275081333333, lon=104.08876733966666
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.01s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.33s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.32s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.33s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.33s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.29s, meas=1, tracks=1, valid=0, master=4
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.61s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.26s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.25s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.4, lat=30.408282058666668, lon=104.08876302033333
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.24s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.22s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.15s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.15s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.10s, meas=1, tracks=1, valid=0, master=5
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.4, lat=30.408269517333334, lon=104.088753287
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=6
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.07s, meas=1, tracks=1, valid=1, master=6
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=6
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.03s, meas=1, tracks=1, valid=1, master=6
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=6
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.34s, meas=1, tracks=1, valid=1, master=6
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.99s, meas=1, tracks=1, valid=1, master=6
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=6
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.31s, meas=1, tracks=1, valid=1, master=6
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.31s, meas=1, tracks=1, valid=1, master=6
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.4, lat=30.408274795166665, lon=104.08875973366666
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.25s, meas=1, tracks=1, valid=0, master=6
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=7
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=1, valid=1, master=7
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.53s, meas=1, tracks=1, valid=1, master=7
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.84s, meas=1, tracks=1, valid=1, master=7
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.84s, meas=1, tracks=1, valid=1, master=7
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.84s, meas=1, tracks=1, valid=1, master=7
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=3.85s, meas=1, tracks=1, valid=1, master=7
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=4.85s, meas=1, tracks=1, valid=1, master=7
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=5.85s, meas=1, tracks=1, valid=1, master=7
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.4, lat=30.408288245, lon=104.08876428033334
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=6.86s, meas=1, tracks=1, valid=1, master=7
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=7.86s, meas=1, tracks=1, valid=1, master=7
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=8.86s, meas=1, tracks=1, valid=1, master=7
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=7
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.11s, meas=1, tracks=1, valid=0, master=7
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.76s, meas=1, tracks=1, valid=0, master=7
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.42s, meas=1, tracks=1, valid=1, master=8
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=8
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=8
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.41s, meas=1, tracks=1, valid=1, master=8
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.4, lat=30.408286196166667, lon=104.08875720983333
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.41s, meas=1, tracks=1, valid=1, master=8
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=8
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.01s, meas=1, tracks=1, valid=1, master=8
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.01s, meas=1, tracks=1, valid=1, master=8
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.33s, meas=1, tracks=1, valid=1, master=8

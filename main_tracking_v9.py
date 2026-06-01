@@ -1837,7 +1837,7 @@ class MultiTargetTracker:
                 self._log_new_track(t, m_idx, meas, debug_context)
             return self.tracks
 
-        # 2. 计算代价矩阵 (角度欧氏距离)
+        # 2. 计算代价dxfcs矩阵 (角度欧氏距离)
         cost_matrix = np.zeros((len(self.tracks), len(normalized_measurements)))
         for t, track in enumerate(self.tracks):
             for m, meas in enumerate(normalized_measurements):
@@ -2152,7 +2152,7 @@ def main():
     print("=== System V9.0 (Predictive Tracking & Scheduling) Running ===")
 
     # 初始化追踪大脑
-    tracker = MultiTargetTracker(max_lost_frames=30, distance_threshold=1.2)
+    tracker = MultiTargetTracker(max_lost_frames=50, distance_threshold=1.2)
     
     # 状态机与调度变量
     master_id = None

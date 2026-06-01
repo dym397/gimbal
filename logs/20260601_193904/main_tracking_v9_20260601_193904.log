@@ -1,0 +1,1524 @@
+[Log] stdout/stderr -> logs\20260601_193904\main_tracking_v9_20260601_193904.log
+[FieldLog] enabled: C:\Users\cv1124\dym\gimbal\logs\20260601_193904
+[Config] DEVICE_HEADING_DEG=180.00 (map north=0, east=90, south=180)
+[Config] UI_REAL_LASER_ONLY=True
+[GPS] Thread started, periodic UI updates enabled on COM8@115200, fix_timeout=5s, ui_interval=10.0s
+[Init] Connecting to Gimbal at COM9...
+[GT06Z] Driver Ready on COM9.
+[Adapter] GT06Z 云台已连接: COM9
+[GPS] GGA fix_quality=1, num_sats=09, hdop=1.7, lat=30.408342406833334, lon=104.08870464883333
+[LaserThread] 激光读取线程已启动
+[Init] Real laser enabled on COM10
+[Init] Queue gimbal initial posture: Az=59.30°, El=0.00°
+[Laser] start_measurement mode=continuous
+[GimbalThread] 控制线程已启动
+[Net] Listening RK3588 on 8888...
+=== System V9.0 (Predictive Tracking & Scheduling) Running ===
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.33s, meas=1, tracks=1, valid=0, master=None
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.30s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.26s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.21s, meas=1, tracks=1, valid=1, master=1
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.1, lat=30.408349275166668, lon=104.08868940466667
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.18s, meas=1, tracks=1, valid=1, master=1
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.49s, meas=1, tracks=2, valid=0, master=1
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.49s, meas=1, tracks=2, valid=0, master=1
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.48s, meas=1, tracks=2, valid=0, master=1
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.80s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.80s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=2
+[GPS] GGA fix_quality=1, num_sats=09, hdop=1.7, lat=30.408349858166666, lon=104.08868836633333
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.07s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=4.0/s, objs=4.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.43s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=2
+[GPS] GGA fix_quality=1, num_sats=08, hdop=1.6, lat=30.408352080833332, lon=104.08868766033333
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.38s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=4.0/s, objs=4.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.01s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.34s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.29s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.29s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.59s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=2
+[GPS] GGA fix_quality=1, num_sats=10, hdop=1.4, lat=30.408350416166666, lon=104.08869042883333
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.95s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.28s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.94s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.95s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.93s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.25s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.21s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=1, valid=1, master=2
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.3, lat=30.40835096016667, lon=104.08868069216666
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.16s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.11s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.07s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.75s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=2
+[GPS] GGA fix_quality=1, num_sats=13, hdop=1.3, lat=30.408360238, lon=104.088697544
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.71s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.00s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.33s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.33s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.30s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.28s, meas=1, tracks=1, valid=1, master=2
+[GPS] GGA fix_quality=1, num_sats=12, hdop=2.3, lat=30.408360974666667, lon=104.088702798
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.25s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.26s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.25s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.22s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.55s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.25s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.24s, meas=1, tracks=1, valid=1, master=2
+[GPS] GGA fix_quality=1, num_sats=08, hdop=3.7, lat=30.4083575685, lon=104.08869952366666
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.24s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=3.25s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=4.25s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=5.25s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=6.26s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=7.26s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=8.26s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=9.26s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=10.26s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=11.26s, meas=1, tracks=1, valid=1, master=2
+[GPS] GGA fix_quality=1, num_sats=08, hdop=1.6, lat=30.408368011333334, lon=104.08869923
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=12.27s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=13.27s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=14.27s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=15.27s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=16.28s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=17.28s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=18.28s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=19.28s, meas=1, tracks=1, valid=1, master=2
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.24s, meas=1, tracks=1, valid=0, master=2
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=3
+[GPS] GGA fix_quality=1, num_sats=08, hdop=3.4, lat=30.4083728165, lon=104.08870474933333
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.11s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.11s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.44s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.44s, meas=1, tracks=1, valid=1, master=3
+[GPS] Waiting for NMEA data on COM8, elapsed=0.0s/5.0s
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.07s, meas=1, tracks=1, valid=1, master=3
+[GPS] GGA fix_quality=1, num_sats=11, hdop=2.0, lat=30.4083777565, lon=104.0887021815
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.08s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.08s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=3.08s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=3
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.05s, meas=1, tracks=1, valid=0, master=3
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.05s, meas=1, tracks=1, valid=0, master=3
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=3.06s, meas=1, tracks=1, valid=0, master=3
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.04s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.04s, meas=1, tracks=1, valid=1, master=4
+[GPS] GGA fix_quality=1, num_sats=11, hdop=2.0, lat=30.40837732683333, lon=104.08870521816667
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.69s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.36s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.69s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.35s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.33s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.66s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.32s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.32s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.33s, meas=1, tracks=1, valid=1, master=4
+[GPS] GGA fix_quality=1, num_sats=10, hdop=2.2, lat=30.408378339333332, lon=104.08871071966666
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.33s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.97s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.66s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.01s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.01s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.02s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=3.02s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=4.02s, meas=1, tracks=1, valid=1, master=4
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=1.00s, meas=1, tracks=1, valid=0, master=4
+[GPS] GGA fix_quality=1, num_sats=10, hdop=2.2, lat=30.408376505166668, lon=104.08871257233334
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.65s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.98s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.29s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.28s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.62s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.62s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.32s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.31s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.29s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=09, hdop=3.3, lat=30.408376863666668, lon=104.088712512
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.28s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.26s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.29s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.26s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.26s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.25s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=08, hdop=1.6, lat=30.408384581500002, lon=104.088712986
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.21s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.16s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.15s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.5, lat=30.408383073166668, lon=104.0887135195
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.15s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.11s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.07s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.4, lat=30.408388764833333, lon=104.08871030566667
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.03s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.01s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.5, lat=30.408395005666666, lon=104.088709052
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.00s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.03s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.03s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.01s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.34s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.32s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.30s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=4.0/s, objs=4.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=10, hdop=1.5, lat=30.408394648333335, lon=104.08870653566666
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.01s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.33s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.32s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.30s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.29s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.28s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.30s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=4.0/s, objs=4.0/s, last_udp=0.00s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.3, lat=30.40839523, lon=104.088707297
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.33s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.30s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.29s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=4.0/s, objs=4.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.34s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.33s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.32s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=07, hdop=1.7, lat=30.408389971, lon=104.08870829316666
+[LIVE] udp=4.0/s, objs=4.0/s, last_udp=0.00s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.33s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.30s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.30s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.29s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.29s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.28s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=10, hdop=1.7, lat=30.408386185666668, lon=104.08870244666667
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.26s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.26s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.22s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.21s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=10, hdop=2.2, lat=30.408386718333333, lon=104.08870773316667
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=4.0/s, objs=5.0/s, last_udp=0.10s, meas=2, tracks=3, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=3, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.16s, meas=1, tracks=3, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.15s, meas=1, tracks=3, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=3, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=3, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=3, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=2, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=10, hdop=1.7, lat=30.408386880666665, lon=104.08871148183333
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.07s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.03s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.33s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=4.0/s, objs=4.0/s, last_udp=0.03s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.03s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.03s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=06, hdop=3.4, lat=30.408386369666665, lon=104.08871525633333
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.03s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.01s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.01s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.33s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.32s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.32s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=4.0/s, objs=4.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408385962, lon=104.088715869
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.03s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.07s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408387999, lon=104.08871960883333
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.07s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=08, hdop=2.5, lat=30.408389554333333, lon=104.08872254966667
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.16s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.16s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.21s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.25s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.29s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408389501166667, lon=104.08872255383334
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.28s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.28s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.29s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=4.0/s, objs=4.0/s, last_udp=0.01s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.01s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.33s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.33s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.30s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.29s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408389539166667, lon=104.088722743
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.28s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.26s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.26s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.25s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.21s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=4.0/s, objs=5.0/s, last_udp=0.07s, meas=2, tracks=2, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=09, hdop=1.6, lat=30.408391856666668, lon=104.08872836066666
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=2, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=2, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.15s, meas=1, tracks=2, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=2, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=2, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=2, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.11s, meas=1, tracks=2, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.5, lat=30.408394210666668, lon=104.08872229116666
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=4.0/s, objs=4.0/s, last_udp=0.03s, meas=1, tracks=2, valid=1, master=5
+[LIVE] udp=4.0/s, objs=4.0/s, last_udp=0.02s, meas=1, tracks=2, valid=1, master=5
+[LIVE] udp=4.0/s, objs=4.0/s, last_udp=0.01s, meas=1, tracks=2, valid=1, master=5
+[LIVE] udp=4.0/s, objs=5.0/s, last_udp=0.02s, meas=2, tracks=2, valid=1, master=5
+[LIVE] udp=2.0/s, objs=3.0/s, last_udp=0.33s, meas=2, tracks=2, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=2, valid=1, master=5
+[LIVE] udp=4.0/s, objs=4.0/s, last_udp=0.02s, meas=1, tracks=2, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.01s, meas=1, tracks=2, valid=1, master=5
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.33s, meas=1, tracks=2, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.6, lat=30.408394194666666, lon=104.08872331133334
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.32s, meas=1, tracks=2, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=2, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.29s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.32s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.30s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.28s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.28s, meas=1, tracks=1, valid=1, master=5
+[GPS] GGA fix_quality=1, num_sats=13, hdop=1.5, lat=30.408393664666665, lon=104.08871616066666
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.28s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.29s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=3.29s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=4.29s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=5.29s, meas=1, tracks=1, valid=1, master=5
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.21s, meas=1, tracks=1, valid=0, master=5
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.21s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.6, lat=30.40839502, lon=104.0887146725
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.4, lat=30.4084019975, lon=104.08871170233333
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.03s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.00s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.01s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.01s, meas=1, tracks=1, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.6, lat=30.4084022555, lon=104.08870592816666
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.01s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.30s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.25s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=4.0/s, last_udp=0.23s, meas=1, tracks=2, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.21s, meas=1, tracks=2, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.22s, meas=1, tracks=2, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=2, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=2, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.5, lat=30.408396831166666, lon=104.0886999045
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=2, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=2, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.15s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=1, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.5, lat=30.408401205333334, lon=104.08870749333333
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.11s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.07s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.03s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.33s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.5, lat=30.408394473333335, lon=104.0887055785
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.30s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.26s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.26s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.21s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=4.0/s, objs=4.0/s, last_udp=0.17s, meas=2, tracks=2, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.15s, meas=1, tracks=2, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=14, hdop=1.4, lat=30.408395219333332, lon=104.08871679266667
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=2, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=2, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=2, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.07s, meas=1, tracks=2, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.07s, meas=1, tracks=2, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=13, hdop=1.5, lat=30.408399621, lon=104.08871123333333
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.01s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.28s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.28s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.30s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.28s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.5, lat=30.408407973166668, lon=104.088723294
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.26s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.25s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.21s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=1, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=15, hdop=1.3, lat=30.40841330883333, lon=104.08873540866666
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.15s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.11s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.11s, meas=1, tracks=1, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.6, lat=30.408410435, lon=104.08873775033334
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.07s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.07s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.03s, meas=1, tracks=1, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=14, hdop=1.4, lat=30.408402558666666, lon=104.088736109
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.01s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.34s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.30s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.26s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.26s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=12, hdop=0.9, lat=30.408409636166667, lon=104.08875203233333
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.22s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.23s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.21s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=1, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=13, hdop=1.4, lat=30.4084116855, lon=104.088760932
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.15s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.11s, meas=1, tracks=1, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.5, lat=30.4084110565, lon=104.08875926633333
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.11s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=1, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=10, hdop=2.6, lat=30.408400322333332, lon=104.08874725183334
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.15s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=10, hdop=2.9, lat=30.408400307166666, lon=104.08874277133333
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.02s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.02s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=3.03s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=4.03s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=5.03s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=6.04s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=7.04s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=8.04s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=9.05s, meas=1, tracks=1, valid=1, master=10
+[GPS] GGA fix_quality=1, num_sats=11, hdop=2.7, lat=30.4084011395, lon=104.08874372216667
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=10.05s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=11.05s, meas=1, tracks=1, valid=1, master=10
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.28s, meas=1, tracks=1, valid=0, master=10
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.26s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.25s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.29s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.28s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.27s, meas=1, tracks=1, valid=1, master=13
+[GPS] GGA fix_quality=1, num_sats=11, hdop=2.7, lat=30.408397906166666, lon=104.08874252233333
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.25s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.22s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.21s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.20s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.16s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.15s, meas=1, tracks=1, valid=1, master=13
+[GPS] GGA fix_quality=1, num_sats=11, hdop=2.7, lat=30.408394048166667, lon=104.08874361666666
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.16s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.03s, meas=1, tracks=1, valid=1, master=13
+[GPS] GGA fix_quality=1, num_sats=10, hdop=1.4, lat=30.408392475, lon=104.08874463883333
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.01s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.01s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.33s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.32s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.30s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.30s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.29s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.28s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.26s, meas=1, tracks=1, valid=1, master=13
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.8, lat=30.4083924775, lon=104.088744516
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.25s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.25s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.24s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.21s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.16s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.16s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.15s, meas=1, tracks=1, valid=1, master=13
+[GPS] GGA fix_quality=1, num_sats=09, hdop=2.1, lat=30.408391969833332, lon=104.08874444216667
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.13s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.13s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.38s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.31s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.02s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.68s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.69s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.69s, meas=1, tracks=1, valid=1, master=13
+[GPS] GGA fix_quality=1, num_sats=06, hdop=1.6, lat=30.408389743166666, lon=104.08874143583333
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=3.69s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=4.69s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=5.70s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=6.70s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=7.70s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=8.70s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=9.71s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=10.71s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=11.71s, meas=1, tracks=1, valid=1, master=13
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=13
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408389597, lon=104.08874287383334
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.07s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.11s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408387858333334, lon=104.08874660766666
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=10, hdop=1.5, lat=30.408371578333334, lon=104.0887382385
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.19s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.18s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.17s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.78s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=06, hdop=1.6, lat=30.4083695265, lon=104.08873630766666
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.78s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.44s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=4.0/s, objs=4.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.27s, meas=2, tracks=2, valid=1, master=14
+[LIVE] udp=4.0/s, objs=5.0/s, last_udp=0.05s, meas=1, tracks=2, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.06s, meas=1, tracks=2, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=2, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=2, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=2, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=10, hdop=1.5, lat=30.408382425833334, lon=104.08875624816666
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=2, valid=1, master=14
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.43s, meas=1, tracks=2, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.44s, meas=1, tracks=2, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.44s, meas=1, tracks=2, valid=1, master=14
+[LIVE] udp=1.0/s, objs=1.0/s, last_udp=0.14s, meas=1, tracks=2, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.14s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.13s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408388580666667, lon=104.08876651916667
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.11s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.08s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.4, lat=30.4083995085, lon=104.0887814875
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.07s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.03s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.04s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.12s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.11s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.10s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=10, hdop=1.5, lat=30.408403226833332, lon=104.08878881883334
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.09s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.07s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.07s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.05s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=3.0/s, objs=3.0/s, last_udp=0.06s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=2.0/s, objs=2.0/s, last_udp=0.40s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=1.40s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=2.40s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=3.40s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=10, hdop=1.8, lat=30.408405488, lon=104.08879542016666
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=4.40s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=5.40s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=6.41s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=7.41s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=8.41s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=9.41s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=10.42s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=11.42s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=12.43s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=13.43s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408405436, lon=104.088806364
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=14.43s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=15.44s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=16.44s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=17.44s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=18.44s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=19.45s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=20.45s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=21.45s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=22.45s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=23.46s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.8, lat=30.408398062333333, lon=104.0888007815
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=24.46s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=25.46s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=26.47s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=27.47s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=28.47s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=29.47s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=30.47s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=31.48s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=32.48s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=33.48s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=14, hdop=1.6, lat=30.408404481333335, lon=104.0888471885
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=34.48s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=35.49s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=36.49s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=37.49s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=38.49s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=39.49s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=40.50s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=41.50s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=42.51s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=43.51s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.4083914735, lon=104.0888600595
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=44.51s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=45.51s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=46.52s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=47.52s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=48.52s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=49.53s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=50.53s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=51.53s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=52.54s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=53.54s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=13, hdop=1.0, lat=30.408393356333335, lon=104.08887657233333
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=54.54s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=55.55s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=56.55s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=57.55s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=58.55s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=59.56s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=60.56s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=61.57s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=62.57s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=63.57s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=14, hdop=0.9, lat=30.408385405166666, lon=104.0888823945
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=64.57s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=65.57s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=66.58s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=67.58s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=68.59s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=69.59s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=70.59s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=71.59s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=72.59s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=13, hdop=1.8, lat=30.408387332333334, lon=104.08886190233333
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=73.59s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=74.60s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=75.60s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=76.60s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=77.60s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=78.61s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=79.61s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=80.61s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=81.62s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=82.62s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=15, hdop=1.1, lat=30.408373640333334, lon=104.08880333
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=83.63s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=84.63s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=85.63s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=86.63s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=87.64s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=88.64s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=89.65s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=90.65s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=91.65s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=92.66s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=15, hdop=1.1, lat=30.408375234333334, lon=104.08879996066666
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=93.66s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=94.66s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=95.66s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=96.67s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=97.67s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=98.67s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=99.68s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=100.68s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=101.68s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=102.68s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=14, hdop=1.6, lat=30.40837481333333, lon=104.088801301
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=103.69s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=104.69s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=105.69s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=106.69s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=107.70s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=108.70s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=109.70s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=110.71s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=111.71s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=112.71s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=13, hdop=1.8, lat=30.408375795166666, lon=104.088808078
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=113.72s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=114.72s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=115.72s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=116.72s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=117.73s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=118.73s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=119.73s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=120.74s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=121.74s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=122.74s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408370201, lon=104.0887987625
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=123.74s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=124.74s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=125.74s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=126.75s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=127.75s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=128.75s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=129.76s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=130.76s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=131.76s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=132.77s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.4083724695, lon=104.08880762066667
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=133.77s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=134.77s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=135.77s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=136.77s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=137.77s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=138.77s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=139.77s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=140.78s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=141.78s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=142.78s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=08, hdop=2.0, lat=30.40836476733333, lon=104.0887905865
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=143.78s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=144.78s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=145.78s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=146.78s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=147.79s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=148.79s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=149.79s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=150.79s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=151.80s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=152.80s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=06, hdop=2.5, lat=30.408351550666666, lon=104.08876315433334
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=153.80s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=154.80s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=155.80s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=156.81s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=157.81s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=158.82s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=159.82s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=160.82s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=161.83s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=162.83s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=09, hdop=3.2, lat=30.408345178, lon=104.08875311916667
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=163.83s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=164.83s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=165.83s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=166.83s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=167.83s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=168.84s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=169.84s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=170.84s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=171.85s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=172.85s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.5, lat=30.408331344833332, lon=104.08872790816666
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=173.85s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=174.85s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=175.85s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=176.85s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=177.85s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=178.86s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=179.86s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=180.86s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=181.87s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=182.87s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.0, lat=30.408318254166666, lon=104.0887058155
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=183.87s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=184.88s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=185.88s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=186.88s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=187.88s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=188.88s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=189.89s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=190.89s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=191.90s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=192.90s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=13, hdop=1.0, lat=30.408322351, lon=104.0887050625
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=193.90s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=194.90s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=195.90s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=196.90s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=197.90s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=198.91s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=199.91s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=200.91s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=201.91s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=202.92s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.0, lat=30.408324517166665, lon=104.088695698
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=203.92s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=204.92s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=205.93s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=206.93s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=207.93s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=208.94s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=209.94s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=210.94s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=211.95s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=212.95s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=15, hdop=1.0, lat=30.408321088166666, lon=104.088691267
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=213.95s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=214.95s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=215.95s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=216.95s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=217.96s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=218.96s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=219.96s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=220.96s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=221.97s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=222.97s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=10, hdop=1.1, lat=30.40832161233333, lon=104.0886944085
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=223.97s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=224.97s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=225.98s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=226.98s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=227.98s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=228.98s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=229.98s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=230.99s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=231.99s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=233.00s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=10, hdop=1.2, lat=30.4083233115, lon=104.0886926345
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=234.00s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=235.00s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=236.01s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=237.01s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=238.01s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=239.01s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=240.01s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=241.02s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=242.02s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=243.02s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=13, hdop=1.4, lat=30.408323914333334, lon=104.0886925385
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=244.03s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=245.03s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=246.04s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=247.04s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=248.04s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=249.04s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=250.04s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=251.05s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=252.05s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=253.05s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.8, lat=30.408323503166667, lon=104.08869429266667
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=254.06s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=255.06s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=256.06s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=257.06s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=258.07s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=259.07s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=260.07s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=261.07s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=262.08s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=263.08s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.2, lat=30.408323805666665, lon=104.0886943295
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=264.08s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=265.09s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=266.09s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=267.09s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=268.10s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=269.10s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=270.10s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=271.10s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=272.10s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=273.11s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=10, hdop=1.3, lat=30.4083240495, lon=104.0886954
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=274.11s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=275.12s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=276.12s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=277.12s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=278.12s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=279.13s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=280.13s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=281.13s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=282.13s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=283.14s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408326645833334, lon=104.08870137133333
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=284.14s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=285.14s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=286.14s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=287.14s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=288.15s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=289.15s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=290.15s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=291.15s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=292.15s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=293.16s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.3, lat=30.408325310166667, lon=104.08870044566666
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=294.16s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=295.16s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=296.16s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=297.16s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=298.17s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=299.17s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=300.17s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=301.17s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=302.18s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=303.18s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.7, lat=30.408325698833334, lon=104.08870538433334
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=304.18s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=305.18s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=306.18s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=307.19s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=308.19s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=309.20s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=310.20s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=311.20s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=312.20s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=313.21s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=13, hdop=1.2, lat=30.408327133333334, lon=104.0887044435
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=314.21s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=315.21s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=316.21s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=317.22s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=318.22s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=319.22s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=320.23s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=321.23s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=322.23s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=323.23s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.2, lat=30.40833711066667, lon=104.08869260433333
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=324.23s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=325.24s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=326.24s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=327.25s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=328.25s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=329.25s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=330.25s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=331.26s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=332.26s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=333.26s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=09, hdop=2.2, lat=30.408338238333332, lon=104.08866575966667
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=334.27s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=335.27s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=336.28s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=337.28s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=338.28s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=339.29s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=340.29s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=341.29s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=342.30s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=343.30s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=09, hdop=1.8, lat=30.4083392585, lon=104.08865669616667
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=344.30s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=345.31s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=346.31s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=347.31s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=348.32s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=349.32s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=350.32s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=351.32s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=352.33s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=353.33s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=10, hdop=1.5, lat=30.408355844666666, lon=104.0886981145
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=354.33s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=355.34s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=356.34s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=357.34s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=358.34s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=359.34s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=360.34s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=361.35s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=362.35s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=363.36s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.4, lat=30.408358613666667, lon=104.08871038266666
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=364.36s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=365.37s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=366.37s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=367.37s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=368.37s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=369.38s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=370.38s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=371.38s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=372.38s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=373.38s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.4, lat=30.408357484, lon=104.0887050275
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=374.39s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=375.39s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=376.39s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=377.40s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=378.40s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=379.40s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=380.40s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=381.40s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=382.40s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=383.41s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408356027666667, lon=104.0887015915
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=384.41s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=385.41s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=386.42s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=387.42s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=388.42s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=389.42s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=390.42s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=391.42s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=392.43s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=393.43s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.0, lat=30.408365394166665, lon=104.08872634233333
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=394.43s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=395.44s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=396.44s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=397.44s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=398.45s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=399.45s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=400.45s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=401.46s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=402.46s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=403.46s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=10, hdop=1.4, lat=30.40836204, lon=104.0887206685
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=404.46s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=405.46s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=406.47s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=407.47s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=408.47s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=409.47s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=410.47s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=411.48s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=412.48s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=413.48s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=08, hdop=1.2, lat=30.408365322333335, lon=104.0887326755
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=414.49s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=415.49s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=416.50s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=417.50s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=418.50s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=419.51s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=420.51s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=421.51s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=422.51s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=423.52s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.4, lat=30.408364835, lon=104.0887314745
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=424.52s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=425.52s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=426.53s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=427.53s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=428.53s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=429.54s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=430.54s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=431.55s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=432.55s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=433.55s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=09, hdop=1.7, lat=30.408369394, lon=104.08873573116666
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=434.55s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=435.56s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=436.56s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=437.56s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=438.56s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=439.56s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=440.57s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=441.57s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=442.57s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.4, lat=30.408358751, lon=104.08871648766667
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=443.58s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=444.58s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=445.58s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=446.58s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=447.59s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=448.59s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=449.59s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=450.59s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=451.59s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=452.59s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408347173333333, lon=104.08870312783333
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=453.60s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=454.60s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=455.60s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=456.61s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=457.61s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=458.61s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=459.62s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=460.62s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=461.62s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=462.62s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=10, hdop=1.8, lat=30.40834585016667, lon=104.08870181983333
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=463.63s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=464.63s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=465.63s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=466.64s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=467.64s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=468.64s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=469.64s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=470.65s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=471.65s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=472.65s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.4, lat=30.408349490666666, lon=104.08870621566666
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=473.65s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=474.66s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=475.66s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=476.66s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=477.67s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=478.67s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=479.67s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=480.68s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=481.68s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=482.68s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.2, lat=30.4083394045, lon=104.08868458483333
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=483.69s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=484.69s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=485.70s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=486.70s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=487.70s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=488.71s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=489.71s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=490.71s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=491.72s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=492.72s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.6, lat=30.408343895333335, lon=104.08869767616666
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=493.72s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=494.72s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=495.72s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=496.73s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=497.73s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=498.73s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=499.73s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=500.74s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=501.74s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=502.74s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=10, hdop=1.7, lat=30.408344666666668, lon=104.08869720833333
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=503.75s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=504.75s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=505.75s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=506.76s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=507.76s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=508.76s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=509.76s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=510.76s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=511.77s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=512.77s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=09, hdop=1.3, lat=30.408340693333333, lon=104.08869379116666
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=513.77s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=514.78s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=515.78s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=516.78s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=517.78s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=518.79s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=519.79s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=520.79s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=521.79s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=522.80s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408347512666666, lon=104.0887032295
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=523.80s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=524.80s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=525.81s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=526.81s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=527.81s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=528.82s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=529.82s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=530.82s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=531.82s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=532.82s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.5, lat=30.408353634666668, lon=104.08871452733334
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=533.82s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=534.83s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=535.83s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=536.84s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=537.84s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=538.84s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=539.84s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=540.85s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=541.85s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=542.85s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.4, lat=30.408352688, lon=104.0887219065
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=543.86s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=544.86s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=545.86s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=546.86s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=547.86s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=548.87s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=549.87s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=550.87s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=551.88s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=552.88s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=11, hdop=1.4, lat=30.408366522666668, lon=104.0887367485
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=553.88s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=554.88s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=555.88s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=556.88s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=557.89s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=558.89s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=559.89s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=560.89s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=561.90s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=562.90s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=12, hdop=1.6, lat=30.408367578, lon=104.08874811516667
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=563.90s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=564.90s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=565.91s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=566.91s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=567.91s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=568.91s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=569.92s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=570.92s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=571.92s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=572.92s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=10, hdop=2.3, lat=30.408376966, lon=104.08877375833333
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=573.93s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=574.93s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=575.93s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=576.94s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=577.94s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=578.94s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=579.94s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=580.95s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=581.95s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=582.95s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=10, hdop=2.1, lat=30.408381671, lon=104.088781481
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=583.96s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=584.96s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=585.97s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=586.97s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=587.97s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=588.98s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=589.98s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=590.99s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=591.99s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=592.99s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=10, hdop=2.3, lat=30.408392312666667, lon=104.08879774616666
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=594.00s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=595.00s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=596.00s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=597.00s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=598.00s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=599.01s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=600.01s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=601.01s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=602.01s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=603.02s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=10, hdop=2.4, lat=30.4084075685, lon=104.08882799933333
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=604.02s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=605.03s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=606.03s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=607.03s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=608.03s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=609.03s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=610.03s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=611.04s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=612.04s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=613.04s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408417777833332, lon=104.08882626416667
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=614.04s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=615.05s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=616.05s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=617.05s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=618.05s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=619.05s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=620.05s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=621.06s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=622.06s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=623.07s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.40842938833333, lon=104.08883936933333
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=624.07s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=625.07s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=626.08s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=627.08s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=628.08s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=629.08s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=630.08s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=631.09s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=632.09s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=633.09s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.4084368825, lon=104.08885895533334
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=634.10s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=635.10s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=636.10s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=637.10s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=638.11s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=639.11s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=640.11s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=641.11s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=642.11s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=643.12s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.4084401755, lon=104.0888460395
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=644.12s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=645.12s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=646.13s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=647.13s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=648.13s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=649.13s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=650.14s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=651.14s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=652.14s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=653.15s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408443873, lon=104.08886666716667
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=654.15s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=655.15s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=656.15s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=657.15s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=658.15s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=659.16s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=660.16s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=661.16s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=662.17s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=663.17s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408454355666667, lon=104.08886861983333
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=664.17s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=665.18s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=666.18s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=667.18s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=668.18s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=669.19s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=670.19s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=671.19s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=672.20s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=673.20s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.4084615685, lon=104.08886555933333
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=674.20s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=675.21s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=676.21s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=677.21s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=678.22s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=679.22s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=680.22s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=681.22s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=682.23s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=683.23s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408468249666665, lon=104.088872291
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=684.23s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=685.24s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=686.24s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=687.24s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=688.24s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=689.25s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=690.25s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=691.25s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=692.25s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=693.26s, meas=1, tracks=1, valid=1, master=14
+[GPS] GGA fix_quality=1, num_sats=00, hdop=9999.0, lat=30.408473568833333, lon=104.088877605
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=694.26s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=695.26s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=696.27s, meas=1, tracks=1, valid=1, master=14
+[LIVE] udp=0.0/s, objs=0.0/s, last_udp=697.27s, meas=1, tracks=1, valid=1, master=14
