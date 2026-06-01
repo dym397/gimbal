@@ -1,0 +1,1 @@
+timestamp,seq,mode,board,cam,meas_idx,bbox_x1,bbox_y1,bbox_x2,bbox_y2,bbox_cx,bbox_cy,bbox_w,bbox_h,mono_dist,meas_az,meas_el

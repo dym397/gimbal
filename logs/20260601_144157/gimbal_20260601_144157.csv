@@ -1,0 +1,2 @@
+timestamp,event,cmd_id,track_id,cmd_az,cmd_el,gimbal_ui_az,gimbal_ui_el,gimbal_ctrl_az,gimbal_ctrl_el,target_ctrl_az,target_ctrl_el,err_az,err_el,is_settled,settle_time,laser_valid,laser_dist,laser_source,laser_ts,laser_age,laser_interval
+1780296118.081128,GIMBAL_CMD_SEND,0,-1,,,,,,,59.300000,0.000000,,,,,,,,,,

@@ -1,0 +1,1 @@
+timestamp,seq,mode,dt,raw_meas_count,fused_meas_count,fusion_groups,meas_count,track_count,valid_count,track_ids,valid_ids,master_id,hit_streaks,time_since_updates,track_states,cmd_az,cmd_el,gimbal_ui_az,gimbal_ui_el

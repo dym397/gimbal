@@ -41,9 +41,9 @@ except ImportError:
 def _platform_serial_defaults():
     if os.name == "nt":
         return {
-            "gimbal": "COM3",
-            "laser": "COM4",
-            "imu": "COM5",
+            "gimbal": "COM9",
+            "laser": "COM10",
+            "imu": "COM11",
             "gps": "COM8",
         }
     return {
