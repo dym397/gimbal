@@ -146,8 +146,14 @@ def parse_args() -> argparse.Namespace:
             "two_crossing",
             "multi_stable",
         ),
-        required=True,
+        default="static_single",
     )
+    parser.add_argument("--replay-jsonl", default="", help="Replay a raw_udp_*.jsonl capture instead of generated packets")
+    parser.add_argument("--replay-speed", type=float, default=1.0, help="Replay speed multiplier for --replay-jsonl")
+    parser.add_argument("--replay-max-gap", type=float, default=1.0, help="Maximum sleep gap in seconds while replaying")
+    parser.add_argument("--replay-start-ts", type=float, default=None, help="Only replay packets with recv_ts >= this value")
+    parser.add_argument("--replay-end-ts", type=float, default=None, help="Only replay packets with recv_ts <= this value")
+    parser.add_argument("--limit", type=int, default=0, help="Maximum packets to send while replaying; 0 means no limit")
     parser.add_argument("--ip", default="127.0.0.1", help="Receiver IP")
     parser.add_argument("--port", type=int, default=8888, help="Receiver UDP port")
     parser.add_argument("--board", default="BOARD_1", help="Board id")
@@ -172,6 +178,14 @@ def parse_args() -> argparse.Namespace:
 
 
 def validate_args(args: argparse.Namespace) -> None:
+    if args.replay_jsonl:
+        if args.replay_speed <= 0:
+            raise ValueError("replay-speed must be > 0")
+        if args.replay_max_gap < 0:
+            raise ValueError("replay-max-gap must be >= 0")
+        if args.limit < 0:
+            raise ValueError("limit must be >= 0")
+        return
     if args.fps <= 0:
         raise ValueError("fps must be > 0")
     if args.duration <= 0:
@@ -188,9 +202,89 @@ def validate_args(args: argparse.Namespace) -> None:
         raise ValueError("drop-count must be smaller than drop-every")
 
 
+def replay_jsonl(args: argparse.Namespace) -> None:
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sent = 0
+    skipped = 0
+    first_recv_ts = None
+    replay_start_t = time.time()
+
+    print(
+        f"[MockSender][Replay] target={args.ip}:{args.port}, "
+        f"jsonl={args.replay_jsonl}, speed={args.replay_speed}, max_gap={args.replay_max_gap}"
+    )
+
+    try:
+        with open(args.replay_jsonl, "r", encoding="utf-8-sig") as f:
+            for line_no, line in enumerate(f, start=1):
+                if args.limit and sent >= args.limit:
+                    break
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError as exc:
+                    skipped += 1
+                    print(f"[MockSender][Replay][Warn] skip line={line_no}, json error={exc}")
+                    continue
+
+                raw_objs = rec.get("raw_objs", [])
+                if not isinstance(raw_objs, list):
+                    skipped += 1
+                    continue
+                recv_ts = rec.get("recv_ts")
+                try:
+                    recv_ts = float(recv_ts)
+                except (TypeError, ValueError):
+                    recv_ts = None
+                if recv_ts is not None and args.replay_start_ts is not None and recv_ts < args.replay_start_ts:
+                    continue
+                if recv_ts is not None and args.replay_end_ts is not None and recv_ts > args.replay_end_ts:
+                    break
+
+                if recv_ts is not None:
+                    if first_recv_ts is None:
+                        first_recv_ts = recv_ts
+                    target_elapsed = (recv_ts - first_recv_ts) / args.replay_speed
+                    sleep_time = replay_start_t + target_elapsed - time.time()
+                    if args.replay_max_gap > 0:
+                        sleep_time = min(sleep_time, args.replay_max_gap)
+                    if sleep_time > 0:
+                        time.sleep(sleep_time)
+
+                packet = {
+                    "board": rec.get("board", args.board),
+                    "cam": rec.get("cam", args.cam),
+                    "objs": raw_objs,
+                    "seq": rec.get("seq", ""),
+                    "mode": rec.get("mode", "replay_jsonl") or "replay_jsonl",
+                    "ts_sender": time.time(),
+                    "replay_recv_ts": recv_ts,
+                }
+                raw = json.dumps(packet, ensure_ascii=False).encode("utf-8")
+                if args.dry_run:
+                    print(raw.decode("utf-8"))
+                else:
+                    sock.sendto(raw, (args.ip, args.port))
+                sent += 1
+                if sent == 1 or sent % 50 == 0:
+                    print(
+                        f"[MockSender][Replay] sent={sent}, line={line_no}, "
+                        f"objs={len(raw_objs)}, board={packet['board']}, cam={packet['cam']}"
+                    )
+    finally:
+        sock.close()
+
+    print(f"[MockSender][Replay] done, sent={sent}, skipped={skipped}")
+
+
 def main() -> None:
     args = parse_args()
     validate_args(args)
+    if args.replay_jsonl:
+        replay_jsonl(args)
+        return
 
     interval = 1.0 / args.fps
     total_frames = max(1, int(round(args.duration * args.fps)))

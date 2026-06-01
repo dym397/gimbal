@@ -244,6 +244,9 @@ UI_IP = os.getenv("UI_IP", "192.168.0.200")
 # UI_IP="172.28.3.80"
 UI_PORT = int(os.getenv("UI_PORT", "9999"))
 LOCAL_PORT = int(os.getenv("LOCAL_PORT", "8888"))
+ENABLE_UDP_DISTANCE = _env_flag("ENABLE_UDP_DISTANCE", False)  # True: 启用UDP距离输入; False: 不启用UDP距离输入
+UDP_DISTANCE_PORT = int(os.getenv("UDP_DISTANCE_PORT", "1234"))
+UDP_DISTANCE_TTL = _env_float("UDP_DISTANCE_TTL", 5.0)
 GIMBAL_PORT = _serial_port("GIMBAL_PORT", "gimbal")
 LASER_PORT = _serial_port("LASER_PORT", "laser")
 GPS_PORT = _serial_port("GPS_PORT", "gps")
@@ -282,7 +285,7 @@ STABILITY_HIT_CAP = 20
 STABILITY_WEIGHT = 0.8
 STATS_PRINT_INTERVAL = 2.0
 MASTER_SELECTION_LOG_TOPK = 5
-NO_PACKET_TRACKER_UPDATE_INTERVAL = 1.0 / 15.0
+NO_PACKET_TRACKER_UPDATE_INTERVAL = 1.0 / 5.0
 LOG_TO_FILE = _env_flag("LOG_TO_FILE", True)
 LOG_DIR = os.getenv("LOG_DIR", "logs")
 DEBUG_TRACKER = _env_flag("DEBUG_TRACKER", False)
@@ -321,8 +324,13 @@ class FieldLogger:
 
         self.measurements_fields = [
             "timestamp", "seq", "mode", "board", "cam", "meas_idx",
+            "raw_bbox_x1", "raw_bbox_y1", "raw_bbox_x2", "raw_bbox_y2",
+            "raw_bbox_w", "raw_bbox_h",
+            "clipped_bbox_x1", "clipped_bbox_y1", "clipped_bbox_x2", "clipped_bbox_y2",
+            "clipped_bbox_w", "clipped_bbox_h",
             "bbox_x1", "bbox_y1", "bbox_x2", "bbox_y2", "bbox_cx", "bbox_cy",
-            "bbox_w", "bbox_h", "mono_dist", "meas_az", "meas_el",
+            "bbox_w", "bbox_h", "is_edge_bbox", "visible_ratio",
+            "mono_dist", "meas_az", "meas_el",
         ]
         self.summary_fields = [
             "timestamp", "seq", "mode", "dt",
@@ -337,9 +345,13 @@ class FieldLogger:
             "meas_az", "meas_el", "pred_az", "map_az", "pred_el", "cost",
             "dynamic_thresh", "uncertainty", "p_az", "p_el",
             "hit_streak", "time_since_update", "reason",
+            "internal_track_id", "ui_id",
             "master_id", "is_master", "laser_track_id",
             "distance", "distance_source", "track_laser_dist",
             "track_laser_ts", "track_laser_age",
+            "raw_bbox_x1", "raw_bbox_y1", "raw_bbox_x2", "raw_bbox_y2",
+            "clipped_bbox_x1", "clipped_bbox_y1", "clipped_bbox_x2", "clipped_bbox_y2",
+            "is_edge_bbox", "visible_ratio",
         ]
         self.gimbal_fields = [
             "timestamp", "event", "cmd_id", "track_id", "cmd_az", "cmd_el",
@@ -665,6 +677,10 @@ class SharedHardwareState:
         self.laser_track_id = -1
         self.settled_ts = 0.0
         self.is_settled = False
+        self.udp_distance = None
+        self.udp_distance_ts = 0.0
+        self.udp_distance_status = ""
+        self.udp_distance_addr = ""
 
 shared_state = SharedHardwareState()
 gimbal_cmd_queue = queue.Queue(maxsize=1)
@@ -739,6 +755,73 @@ def rk3588_thread():
             print(f"[Net][Unexpected] count={err_other}, type={type(e).__name__}, err={e}")
             continue
 
+
+def udp_distance_thread():
+    print(f"[DistanceUDP] Listening JSON distance on 0.0.0.0:{UDP_DISTANCE_PORT}...")
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.settimeout(1.0)
+
+    try:
+        sock.bind(("0.0.0.0", UDP_DISTANCE_PORT))
+    except OSError as e:
+        print(f"[DistanceUDP][Fatal] 端口 {UDP_DISTANCE_PORT} 绑定失败: {e}")
+        return
+
+    err_decode = 0
+    err_json = 0
+    err_other = 0
+
+    while True:
+        try:
+            data, addr = sock.recvfrom(4096)
+            recv_ts = time.time()
+            text = data.decode("utf-8")
+            pkg = json.loads(text)
+            if not isinstance(pkg, dict):
+                err_json += 1
+                if err_json % 50 == 1:
+                    print(f"[DistanceUDP][JSONError] count={err_json}, JSON根节点不是对象: {pkg!r}")
+                continue
+
+            raw_distance = pkg.get("distance")
+            distance = _parse_positive_float(raw_distance)
+            status = pkg.get("status", "")
+            height = pkg.get("height")
+            timestamp = pkg.get("timestamp")
+
+            with shared_state.lock:
+                shared_state.udp_distance = distance
+                shared_state.udp_distance_ts = recv_ts
+                shared_state.udp_distance_status = "" if status is None else str(status)
+                shared_state.udp_distance_addr = f"{addr[0]}:{addr[1]}"
+
+            print(
+                f"[DistanceUDP] from {addr[0]}:{addr[1]} "
+                f"height={height}, distance={raw_distance}, parsed_distance={distance}, "
+                f"status={status}, timestamp={timestamp}",
+                flush=True,
+            )
+
+        except socket.timeout:
+            continue
+
+        except UnicodeDecodeError as e:
+            err_decode += 1
+            if err_decode % 50 == 1:
+                print(f"[DistanceUDP][DecodeError] count={err_decode}, err={e}")
+            continue
+
+        except json.JSONDecodeError as e:
+            err_json += 1
+            if err_json % 50 == 1:
+                print(f"[DistanceUDP][JSONError] count={err_json}, err={e}, raw={data!r}")
+            continue
+
+        except Exception as e:
+            err_other += 1
+            print(f"[DistanceUDP][Unexpected] count={err_other}, type={type(e).__name__}, err={e}")
+            continue
+
 def push_latest_gimbal_cmd(cmd):
     while True:
         try:
@@ -766,6 +849,19 @@ def read_laser_distance():
     if (time.time() - dist_ts) > LASER_DIST_TTL:
         return None
     return _parse_positive_float(dist)
+
+
+def read_udp_distance():
+    if not ENABLE_UDP_DISTANCE:
+        return None
+    with shared_state.lock:
+        dist = shared_state.udp_distance
+        dist_ts = shared_state.udp_distance_ts
+    if dist is None:
+        return None
+    if (time.time() - dist_ts) > UDP_DISTANCE_TTL:
+        return None
+    return dist
 
 
 def update_mock_laser_distance(dist, ts):
@@ -971,17 +1067,51 @@ def parse_udp_objects(raw_objs):
     return parsed
 
 
+def sanitize_bbox(rect):
+    try:
+        x1, y1, x2, y2 = (float(rect[0]), float(rect[1]), float(rect[2]), float(rect[3]))
+    except (TypeError, ValueError, IndexError):
+        return None, "non_numeric_bbox"
+
+    raw_w = x2 - x1
+    raw_h = y2 - y1
+    if raw_w <= 0 or raw_h <= 0:
+        return None, "invalid_raw_bbox"
+
+    clipped_x1 = min(max(x1, 0.0), IMG_W)
+    clipped_y1 = min(max(y1, 0.0), IMG_H)
+    clipped_x2 = min(max(x2, 0.0), IMG_W)
+    clipped_y2 = min(max(y2, 0.0), IMG_H)
+    clipped_w = clipped_x2 - clipped_x1
+    clipped_h = clipped_y2 - clipped_y1
+    if clipped_w <= 0 or clipped_h <= 0:
+        return None, "invalid_clipped_bbox"
+
+    raw_area = raw_w * raw_h
+    clipped_area = clipped_w * clipped_h
+    is_edge_bbox = (x1 < 0.0 or y1 < 0.0 or x2 > IMG_W or y2 > IMG_H)
+    return {
+        "raw": [x1, y1, x2, y2],
+        "clipped": [clipped_x1, clipped_y1, clipped_x2, clipped_y2],
+        "raw_w": raw_w,
+        "raw_h": raw_h,
+        "clipped_w": clipped_w,
+        "clipped_h": clipped_h,
+        "visible_ratio": clipped_area / raw_area,
+        "is_edge_bbox": is_edge_bbox,
+    }, ""
+
+
 def select_track_distance(track, master_id, curr_time):
-    is_master = (track.id == master_id)
+    udp_distance = read_udp_distance()
+    if udp_distance is not None:
+        return udp_distance, "udp_distance"
+
     fresh_laser = (
         track.last_laser_dist
         if (track.last_laser_dist is not None and (curr_time - track.laser_ts) <= LASER_DIST_TTL)
         else None
     )
-    if UI_REAL_LASER_ONLY:
-        if USE_MOCK_LASER:
-            return float("nan"), "mock_laser_disabled_for_real_only"
-        return (fresh_laser, "laser") if fresh_laser is not None else (float("nan"), "no_fresh_real_laser")
     held_laser = (
         track.last_laser_dist
         if (track.last_laser_dist is not None and (curr_time - track.laser_ts) <= LASER_UI_HOLD_TTL)
@@ -993,11 +1123,10 @@ def select_track_distance(track, master_id, curr_time):
         else None
     )
 
-    if is_master:
-        if fresh_laser is not None:
-            return fresh_laser, "laser"
-        if held_laser is not None:
-            return held_laser, "laser_hold"
+    if fresh_laser is not None:
+        return fresh_laser, "laser"
+    if held_laser is not None:
+        return held_laser, "laser_hold"
     if fresh_mono is not None:
         return fresh_mono, "mono"
     if track.last_mono_dist is not None:
@@ -1047,7 +1176,17 @@ def build_fused_measurement(items):
         "mono_dist": (sum(mono_values) / len(mono_values)) if mono_values else None,
         "source_meas_indices": [int(item.get("raw_meas_idx", idx)) for idx, item in enumerate(items)],
         "source_cams": [str(item.get("cam", "")) for item in items],
+        "is_edge_bbox": any(bool(item.get("is_edge_bbox", False)) for item in items),
     }
+    visible_values = []
+    for item in items:
+        try:
+            visible_values.append(float(item.get("visible_ratio")))
+        except (TypeError, ValueError):
+            pass
+    if visible_values:
+        fused["visible_ratio"] = min(visible_values)
+        fused["source_visible_ratios"] = visible_values
     if items:
         fused["board"] = items[0].get("board")
         fused["cam"] = items[0].get("cam")
@@ -2122,6 +2261,14 @@ def main():
                 print(f"[Laser][Warn] Init failed on {LASER_PORT}: {e}")
                 laser = None
 
+    if ENABLE_UDP_DISTANCE:
+        print(
+            f"[Init] UI distance priority: UDP JSON distance on port {UDP_DISTANCE_PORT} "
+            f"(ttl={UDP_DISTANCE_TTL:.1f}s) -> laser -> mono"
+        )
+    else:
+        print("[Init] UI distance priority: laser -> mono; UDP distance disabled")
+
     # start background threads for network and gimbal control
     push_latest_gimbal_cmd({
         "cmd_id": 0,
@@ -2136,6 +2283,8 @@ def main():
     )
     threading.Thread(target=gimbal_control_thread, args=(gimbal,), daemon=True).start()
     threading.Thread(target=rk3588_thread, daemon=True).start()
+    if ENABLE_UDP_DISTANCE:
+        threading.Thread(target=udp_distance_thread, daemon=True).start()
 
     imu = None
     last_imu_print = 0.0
@@ -2171,6 +2320,8 @@ def main():
     recv_unique_boxes = set()  # {(x1,y1,x2,y2), ...}
     ui_send_total = 0
     ui_send_counter = Counter()  # {target_id: send_count}
+    next_ui_id = 1
+    track_to_ui_id = {}
     stats_last_print = last_time
     live_last_print = last_time
     live_packet_count = 0
@@ -2181,6 +2332,14 @@ def main():
     live_last_valid_count = 0
     fusion_packet_buffer = []
     fusion_window_start_t = 0.0
+
+    def get_or_assign_ui_id(track, curr_time):
+        nonlocal next_ui_id, track_to_ui_id
+        internal_id = int(track.id)
+        if internal_id not in track_to_ui_id:
+            track_to_ui_id[internal_id] = next_ui_id
+            next_ui_id += 1
+        return track_to_ui_id[internal_id]
 
     def maybe_print_live_status(now_t, meas_count=0, active_tracks=None, valid_tracks=None):
         nonlocal live_last_print, live_packet_count, live_obj_count
@@ -2305,8 +2464,8 @@ def main():
                 pkt_seq = pkt.get("seq", "")
                 parsed_objs = parse_udp_objects(pkt.get("objs", []))
 
-                for obj_item in parsed_objs:
-                    rect = obj_item["box"]
+                for obj_raw_idx, obj_item in enumerate(parsed_objs):
+                    raw_rect = obj_item["box"]
                     mono_dist = obj_item["mono_dist"]
                     obj_board = obj_item.get("board") or pkt_board_str
                     obj_cam_raw = obj_item.get("cam")
@@ -2319,12 +2478,52 @@ def main():
                     if logic_id is None:
                         continue
                     recv_obj_total += 1
+                    bbox_info, bbox_reject_reason = sanitize_bbox(raw_rect)
+                    if bbox_info is None:
+                        try:
+                            raw_log_values = [float(raw_rect[i]) for i in range(4)]
+                        except (TypeError, ValueError, IndexError):
+                            raw_log_values = ["", "", "", ""]
+                        field_log_event({
+                            "timestamp": f"{curr_time:.6f}",
+                            "seq": pkt_seq,
+                            "mode": pkt_mode,
+                            "event": "BBOX_REJECT",
+                            "meas_idx": obj_raw_idx,
+                            "reason": bbox_reject_reason,
+                            "raw_bbox_x1": "" if raw_log_values[0] == "" else f"{raw_log_values[0]:.3f}",
+                            "raw_bbox_y1": "" if raw_log_values[1] == "" else f"{raw_log_values[1]:.3f}",
+                            "raw_bbox_x2": "" if raw_log_values[2] == "" else f"{raw_log_values[2]:.3f}",
+                            "raw_bbox_y2": "" if raw_log_values[3] == "" else f"{raw_log_values[3]:.3f}",
+                        })
+                        continue
+                    rect = bbox_info["clipped"]
+                    raw_rect = bbox_info["raw"]
                     recv_unique_boxes.add((
-                        int(round(rect[0])),
-                        int(round(rect[1])),
-                        int(round(rect[2])),
-                        int(round(rect[3])),
+                        int(round(raw_rect[0])),
+                        int(round(raw_rect[1])),
+                        int(round(raw_rect[2])),
+                        int(round(raw_rect[3])),
                     ))
+                    if bbox_info["is_edge_bbox"]:
+                        field_log_event({
+                            "timestamp": f"{curr_time:.6f}",
+                            "seq": pkt_seq,
+                            "mode": pkt_mode,
+                            "event": "BBOX_CLIPPED",
+                            "meas_idx": obj_raw_idx,
+                            "reason": "bbox_out_of_image_bounds",
+                            "raw_bbox_x1": f"{raw_rect[0]:.3f}",
+                            "raw_bbox_y1": f"{raw_rect[1]:.3f}",
+                            "raw_bbox_x2": f"{raw_rect[2]:.3f}",
+                            "raw_bbox_y2": f"{raw_rect[3]:.3f}",
+                            "clipped_bbox_x1": f"{rect[0]:.3f}",
+                            "clipped_bbox_y1": f"{rect[1]:.3f}",
+                            "clipped_bbox_x2": f"{rect[2]:.3f}",
+                            "clipped_bbox_y2": f"{rect[3]:.3f}",
+                            "is_edge_bbox": 1,
+                            "visible_ratio": f"{bbox_info['visible_ratio']:.6f}",
+                        })
 
                     cx = (rect[0] + rect[2]) / 2.0
                     cy = (rect[1] + rect[3]) / 2.0
@@ -2343,6 +2542,8 @@ def main():
                             "board": obj_board,
                             "cam": obj_cam_idx,
                             "raw_meas_idx": meas_idx,
+                            "is_edge_bbox": bbox_info["is_edge_bbox"],
+                            "visible_ratio": bbox_info["visible_ratio"],
                         })
                         if FIELD_LOGGER is not None:
                             FIELD_LOGGER.write_measurement({
@@ -2352,6 +2553,18 @@ def main():
                                 "board": obj_board,
                                 "cam": obj_cam_idx,
                                 "meas_idx": meas_idx,
+                                "raw_bbox_x1": f"{raw_rect[0]:.3f}",
+                                "raw_bbox_y1": f"{raw_rect[1]:.3f}",
+                                "raw_bbox_x2": f"{raw_rect[2]:.3f}",
+                                "raw_bbox_y2": f"{raw_rect[3]:.3f}",
+                                "raw_bbox_w": f"{bbox_info['raw_w']:.3f}",
+                                "raw_bbox_h": f"{bbox_info['raw_h']:.3f}",
+                                "clipped_bbox_x1": f"{rect[0]:.3f}",
+                                "clipped_bbox_y1": f"{rect[1]:.3f}",
+                                "clipped_bbox_x2": f"{rect[2]:.3f}",
+                                "clipped_bbox_y2": f"{rect[3]:.3f}",
+                                "clipped_bbox_w": f"{bbox_info['clipped_w']:.3f}",
+                                "clipped_bbox_h": f"{bbox_info['clipped_h']:.3f}",
                                 "bbox_x1": f"{rect[0]:.3f}",
                                 "bbox_y1": f"{rect[1]:.3f}",
                                 "bbox_x2": f"{rect[2]:.3f}",
@@ -2360,6 +2573,8 @@ def main():
                                 "bbox_cy": f"{cy:.3f}",
                                 "bbox_w": f"{rect[2] - rect[0]:.3f}",
                                 "bbox_h": f"{rect[3] - rect[1]:.3f}",
+                                "is_edge_bbox": 1 if bbox_info["is_edge_bbox"] else 0,
+                                "visible_ratio": f"{bbox_info['visible_ratio']:.6f}",
                                 "mono_dist": "" if mono_dist is None else f"{mono_dist:.6f}",
                                 "meas_az": f"{ui_az:.6f}",
                                 "meas_el": f"{ui_el:.6f}",
@@ -2589,8 +2804,9 @@ def main():
                         t.last_sent_dist = send_dist
 
                     map_az = relative_to_map_azimuth(t.state[0, 0])
+                    ui_id = get_or_assign_ui_id(t, curr_time)
                     sender.send_status(
-                        board_str, cam_idx, t.id,  # 这里传入的是持续追踪的 ID，而不是一闪而过的数组下标
+                        board_str, cam_idx, ui_id,
                         azimuth=map_az,
                         elevation=t.state[1, 0], 
                         distance=send_dist + round(random.uniform(0.0, 1.0), 1) if math.isfinite(send_dist) and dist_source.startswith("mono") else send_dist
@@ -2606,6 +2822,9 @@ def main():
                         "pred_el": f"{t.state[1, 0]:.6f}",
                         "hit_streak": int(t.hit_streak),
                         "time_since_update": int(t.time_since_update),
+                        "reason": f"internal_id={int(t.id)},ui_id={int(ui_id)}",
+                        "internal_track_id": int(t.id),
+                        "ui_id": int(ui_id),
                         "master_id": "" if master_id is None else int(master_id),
                         "is_master": 1 if t.id == master_id else 0,
                         "laser_track_id": int(laser_track_id),
@@ -2616,7 +2835,7 @@ def main():
                         "track_laser_age": "" if t.last_laser_dist is None else f"{curr_time - t.laser_ts:.6f}",
                     })
                     ui_send_total += 1
-                    ui_send_counter[int(t.id)] += 1
+                    ui_send_counter[int(ui_id)] += 1
             elif USE_MOCK_LASER:
                 update_mock_laser_distance(None, curr_time)
 
