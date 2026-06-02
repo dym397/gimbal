@@ -2319,9 +2319,9 @@ def main():
     recv_obj_total = 0
     recv_unique_boxes = set()  # {(x1,y1,x2,y2), ...}
     ui_send_total = 0
-    ui_send_counter = Counter()  # {target_id: send_count}
+    ui_send_counter = Counter()  # {ui_id: send_count}
     next_ui_id = 1
-    track_to_ui_id = {}
+    track_to_ui_id = {}  # 只记录已经进入 UI 发送路径的主目标，不给非主目标预分配 UI ID。
     stats_last_print = last_time
     live_last_print = last_time
     live_packet_count = 0
@@ -2333,7 +2333,7 @@ def main():
     fusion_packet_buffer = []
     fusion_window_start_t = 0.0
 
-    def get_or_assign_ui_id(track, curr_time):
+    def get_or_assign_ui_id(track):
         nonlocal next_ui_id, track_to_ui_id
         internal_id = int(track.id)
         if internal_id not in track_to_ui_id:
@@ -2796,15 +2796,15 @@ def main():
                         "target_ctrl_el": f"{ctrl_el:.6f}",
                     })
 
-                # E. 向 UI 发送数据包 (遍历所有合法的追踪档案)
-                # 这样即使云台在打 ID 1，UI 上也能看到 ID 2, 3 的平滑轨迹
-                for t in valid_tracks:
+                # E. 向 UI 发送数据包：只发送当前正在跟踪的主目标。
+                # 追踪器内部仍保留多目标轨迹，供后续目标丢失或锁定超时时切换使用。
+                for t in (master_track,):
                     send_dist, dist_source = select_track_distance(t, master_id, curr_time)
                     if math.isfinite(send_dist) and dist_source.startswith("mono"):
                         t.last_sent_dist = send_dist
 
                     map_az = relative_to_map_azimuth(t.state[0, 0])
-                    ui_id = get_or_assign_ui_id(t, curr_time)
+                    ui_id = get_or_assign_ui_id(t)
                     sender.send_status(
                         board_str, cam_idx, ui_id,
                         azimuth=map_az,
