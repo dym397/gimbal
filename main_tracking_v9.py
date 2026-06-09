@@ -41,10 +41,10 @@ except ImportError:
 def _platform_serial_defaults():
     if os.name == "nt":
         return {
-            "gimbal": "COM14",
-            "laser": "COM13",
-            "imu": "COM9",
-            "gps": "COM12",
+            "gimbal": "COM8",
+            "laser": "COM12",
+            "imu": "COM11",
+            "gps": "COM8",
         }
     return {
         "gimbal": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.3:1.0-port0",
@@ -244,9 +244,21 @@ UI_IP = os.getenv("UI_IP", "192.168.0.200")
 # UI_IP="172.28.3.80"
 UI_PORT = int(os.getenv("UI_PORT", "9999"))
 LOCAL_PORT = int(os.getenv("LOCAL_PORT", "8888"))
-ENABLE_UDP_DISTANCE = _env_flag("ENABLE_UDP_DISTANCE", False)  # True: 启用UDP距离输入; False: 不启用UDP距离输入
+ENABLE_UDP_DISTANCE = _env_flag("ENABLE_UDP_DISTANCE", True)  # True: 启用UDP distance_2输入; False: 不启用UDP距离输入
 UDP_DISTANCE_PORT = int(os.getenv("UDP_DISTANCE_PORT", "1234"))
 UDP_DISTANCE_TTL = _env_float("UDP_DISTANCE_TTL", 5.0)
+UDP_DISTANCE_MIN_M = 30.0
+UDP_DISTANCE_MAX_M = 400.0
+ENABLE_STRIKE_SEND = _env_flag("ENABLE_STRIKE_SEND", False)
+STRIKE_IP = os.getenv("STRIKE_IP", "192.168.0.80")
+STRIKE_PORT = int(os.getenv("STRIKE_PORT", "10123"))
+STRIKE_SEND_HZ = _env_float("STRIKE_SEND_HZ", 10.0)
+STRIKE_WINDOW_SECONDS = _env_float("STRIKE_WINDOW_SECONDS", 1.0)
+STRIKE_LEAD_TIME = _env_float("STRIKE_LEAD_TIME", 0.3)
+STRIKE_SETTLED_EVENT_TTL = _env_float("STRIKE_SETTLED_EVENT_TTL", 0.5)
+STRIKE_ALLOW_MONO_FALLBACK = _env_flag("STRIKE_ALLOW_MONO_FALLBACK", True)
+STRIKE_MONO_TTL = _env_float("STRIKE_MONO_TTL", 0.8)
+STRIKE_LASER_HOLD_TTL = _env_float("STRIKE_LASER_HOLD_TTL", 0.8)
 GIMBAL_PORT = _serial_port("GIMBAL_PORT", "gimbal")
 LASER_PORT = _serial_port("LASER_PORT", "laser")
 GPS_PORT = _serial_port("GPS_PORT", "gps")
@@ -657,6 +669,65 @@ class UISender:
                 print(f"[Sender][GPS] Error: {e}")
 
 # ==========================================
+# 网络发送类 (打击端主控板)
+# ==========================================
+class StrikeSender:
+    FRAME_HEAD = b"\xAA\x55"
+    FRAME_TAIL = b"\x55\xAA"
+    FRAME_LENGTH = 0x0D
+    MIN_ELEVATION_DEG = -35.0
+    MAX_ELEVATION_DEG = 60.0
+
+    def __init__(self, ip, port):
+        self.ip = ip
+        self.port = port
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.lock = threading.Lock()
+
+    @staticmethod
+    def _xor_checksum(data):
+        checksum = 0
+        for byte in data:
+            checksum ^= byte
+        return checksum
+
+    @classmethod
+    def build_packet(cls, target_id, distance_m, azimuth_deg, elevation_deg):
+        target_id = int(target_id)
+        if target_id < 0 or target_id > 0xFF:
+            raise ValueError(f"strike target_id out of uint8 range: {target_id}")
+
+        distance_raw = int(round(float(distance_m) * 10.0))
+        if distance_raw <= 0 or distance_raw > 0xFFFF:
+            raise ValueError(f"strike distance out of uint16/0.1m range: {distance_m}")
+
+        az_raw = int(round((float(azimuth_deg) % 360.0) * 10.0))
+        if az_raw >= 3600:
+            az_raw = 0
+
+        elevation_deg = float(elevation_deg)
+        if elevation_deg < cls.MIN_ELEVATION_DEG or elevation_deg > cls.MAX_ELEVATION_DEG:
+            raise ValueError(f"strike elevation out of range: {elevation_deg}")
+        el_raw = int(round(elevation_deg * 10.0))
+
+        body = struct.pack(
+            "!2sBBHHh",
+            cls.FRAME_HEAD,
+            cls.FRAME_LENGTH,
+            target_id,
+            distance_raw,
+            az_raw,
+            el_raw,
+        )
+        return body + bytes([cls._xor_checksum(body)]) + cls.FRAME_TAIL
+
+    def send_target(self, target_id, distance_m, azimuth_deg, elevation_deg):
+        packet = self.build_packet(target_id, distance_m, azimuth_deg, elevation_deg)
+        with self.lock:
+            self.sock.sendto(packet, (self.ip, self.port))
+        return packet
+
+# ==========================================
 # 3. 激光与网络
 # ==========================================
 class SharedHardwareState:
@@ -757,7 +828,7 @@ def rk3588_thread():
 
 
 def udp_distance_thread():
-    print(f"[DistanceUDP] Listening JSON distance on 0.0.0.0:{UDP_DISTANCE_PORT}...")
+    print(f"[DistanceUDP] Listening JSON distance_2 on 0.0.0.0:{UDP_DISTANCE_PORT}...")
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(1.0)
 
@@ -783,22 +854,29 @@ def udp_distance_thread():
                     print(f"[DistanceUDP][JSONError] count={err_json}, JSON根节点不是对象: {pkg!r}")
                 continue
 
-            raw_distance = pkg.get("distance")
-            distance = _parse_positive_float(raw_distance)
-            status = pkg.get("status", "")
-            height = pkg.get("height")
+            if "distance_2" not in pkg:
+                raw_distance = None
+                distance = None
+                distance_status = "missing_distance_2"
+            else:
+                raw_distance = pkg.get("distance_2")
+                distance, distance_status = _parse_udp_distance2(raw_distance)
+
+            roi_status = pkg.get("roi_status", "")
+            ocr_confidence = pkg.get("ocr_confidence", "")
             timestamp = pkg.get("timestamp")
 
             with shared_state.lock:
                 shared_state.udp_distance = distance
                 shared_state.udp_distance_ts = recv_ts
-                shared_state.udp_distance_status = "" if status is None else str(status)
+                shared_state.udp_distance_status = distance_status
                 shared_state.udp_distance_addr = f"{addr[0]}:{addr[1]}"
 
             print(
                 f"[DistanceUDP] from {addr[0]}:{addr[1]} "
-                f"height={height}, distance={raw_distance}, parsed_distance={distance}, "
-                f"status={status}, timestamp={timestamp}",
+                f"distance_2={raw_distance}, parsed_distance={distance}, "
+                f"status={distance_status}, roi_status={roi_status}, "
+                f"ocr_confidence={ocr_confidence}, timestamp={timestamp}",
                 flush=True,
             )
 
@@ -879,6 +957,18 @@ def _parse_positive_float(value):
     except (TypeError, ValueError):
         pass
     return None
+
+
+def _parse_udp_distance2(value):
+    try:
+        distance = float(value)
+    except (TypeError, ValueError):
+        return None, "invalid_distance_2"
+    if math.isnan(distance):
+        return None, "nan_distance_2"
+    if distance < UDP_DISTANCE_MIN_M or distance > UDP_DISTANCE_MAX_M:
+        return None, "out_of_range_distance_2"
+    return distance, "valid_distance_2"
 
 
 def laser_reader_thread(laser, stop_event):
@@ -1105,35 +1195,24 @@ def sanitize_bbox(rect):
 def select_track_distance(track, master_id, curr_time):
     udp_distance = read_udp_distance()
     if udp_distance is not None:
-        return udp_distance, "udp_distance"
-
-    fresh_laser = (
-        track.last_laser_dist
-        if (track.last_laser_dist is not None and (curr_time - track.laser_ts) <= LASER_DIST_TTL)
-        else None
-    )
-    held_laser = (
-        track.last_laser_dist
-        if (track.last_laser_dist is not None and (curr_time - track.laser_ts) <= LASER_UI_HOLD_TTL)
-        else None
-    )
-    fresh_mono = (
-        track.last_mono_dist
-        if (track.last_mono_dist is not None and (curr_time - track.mono_ts) <= MONO_DIST_TTL)
-        else None
-    )
-
-    if fresh_laser is not None:
-        return fresh_laser, "laser"
-    if held_laser is not None:
-        return held_laser, "laser_hold"
-    if fresh_mono is not None:
-        return fresh_mono, "mono"
-    if track.last_mono_dist is not None:
-        return track.last_mono_dist, "mono_history"
-    if track.last_sent_dist is not None:
-        return track.last_sent_dist, "mono_sent_history"
+        return udp_distance, "udp_distance_2"
     return float("nan"), "none"
+
+
+def select_strike_distance(track, curr_time, strike_window):
+    udp_distance = read_udp_distance()
+    if udp_distance is not None:
+        return udp_distance, "udp_distance_2"
+    return None, "none"
+
+
+def clear_strike_window(strike_window):
+    strike_window["track_id"] = None
+    strike_window["distance"] = None
+    strike_window["source"] = "none"
+    strike_window["valid_until"] = 0.0
+    strike_window["last_send_ts"] = 0.0
+    strike_window["last_consumed_settled_cmd_id"] = -1
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
@@ -2208,8 +2287,15 @@ def main():
             print(f"[FieldLog][Warn] 初始化失败: {e}")
 
     sender = UISender(UI_IP, UI_PORT)
+    strike_sender = StrikeSender(STRIKE_IP, STRIKE_PORT) if ENABLE_STRIKE_SEND else None
     print(f"[Config] DEVICE_HEADING_DEG={DEVICE_HEADING_DEG:.2f} (map north=0, east=90, south=180)")
     print(f"[Config] UI_REAL_LASER_ONLY={UI_REAL_LASER_ONLY}")
+    if ENABLE_STRIKE_SEND:
+        print(
+            f"[Strike] Enabled target UDP sender: {STRIKE_IP}:{STRIKE_PORT}, "
+            f"hz={STRIKE_SEND_HZ:.1f}, window={STRIKE_WINDOW_SECONDS:.2f}s, "
+            f"lead={STRIKE_LEAD_TIME:.2f}s, settled_ttl={STRIKE_SETTLED_EVENT_TTL:.2f}s"
+        )
     if UI_REAL_LASER_ONLY and USE_MOCK_LASER:
         print("[Config][Warn] UI_REAL_LASER_ONLY=True but USE_MOCK_LASER=True; UI距离将发送NaN，不适合真实激光测试。")
     if not USE_MOCK_GIMBAL:
@@ -2263,11 +2349,12 @@ def main():
 
     if ENABLE_UDP_DISTANCE:
         print(
-            f"[Init] UI distance priority: UDP JSON distance on port {UDP_DISTANCE_PORT} "
-            f"(ttl={UDP_DISTANCE_TTL:.1f}s) -> laser -> mono"
+            f"[Init] UI/Strike distance source: UDP JSON distance_2 on port {UDP_DISTANCE_PORT} "
+            f"(ttl={UDP_DISTANCE_TTL:.1f}s, valid_range={UDP_DISTANCE_MIN_M:.0f}-{UDP_DISTANCE_MAX_M:.0f}m); "
+            f"laser/mono distance fallback disabled"
         )
     else:
-        print("[Init] UI distance priority: laser -> mono; UDP distance disabled")
+        print("[Init][Warn] UDP distance disabled; UI sends NaN and strike skips distance; laser/mono distance fallback disabled")
 
     # start background threads for network and gimbal control
     push_latest_gimbal_cmd({
@@ -2305,6 +2392,7 @@ def main():
     
     # 状态机与调度变量
     master_id = None
+    master_epoch_ts = 0.0
     lock_timer = 0.0
     LOCK_DURATION = 1.5      # 锁定目标的最长驻留时间
     PREDICT_DELAY = 0.3     # 系统与物理响应总延迟 (打提前量)
@@ -2313,6 +2401,14 @@ def main():
     global_cmd_id = 0
     last_sent_ctrl_az = None
     last_sent_ctrl_el = None
+    strike_window = {
+        "track_id": None,
+        "distance": None,
+        "source": "none",
+        "valid_until": 0.0,
+        "last_send_ts": 0.0,
+        "last_consumed_settled_cmd_id": -1,
+    }
     
     last_time = time.time()
     # 统计日志：接收坐标与UI发送ID
@@ -2453,6 +2549,9 @@ def main():
                 valid_laser_dist = shared_state.valid_laser_dist
                 laser_ts = shared_state.laser_ts
                 laser_track_id = shared_state.laser_track_id
+                settled_cmd_id = shared_state.settled_cmd_id
+                settled_track_id = shared_state.settled_track_id
+                settled_ts = shared_state.settled_ts
 
             for pkt in window_pkgs:
                 pkt_board_str = pkt.get("board", "Unknown")
@@ -2646,6 +2745,7 @@ def main():
                     "track_id": int(prev_master_id),
                     "reason": "not_in_valid_tracks",
                 })
+                clear_strike_window(strike_window)
             
             if master_track is None or lock_timer <= 0:
                 # 状态 A：寻找/切换新目标 (SEARCHING)
@@ -2669,6 +2769,8 @@ def main():
                     master_id = best_track.id
                     lock_timer = LOCK_DURATION
                     master_track = best_track
+                    if prev_master_id is None or prev_master_id != master_id:
+                        master_epoch_ts = curr_time
                     best_eval = ranked_candidates[0]
                     candidates_text = format_selection_candidates(ranked_candidates)
                     if prev_master_id is None:
@@ -2678,6 +2780,7 @@ def main():
                                 f"score={best_eval['threat_score']:.2f}, candidates={candidates_text}"
                             )
                     elif prev_master_id != master_id:
+                        clear_strike_window(strike_window)
                         if PRINT_EVENT_LOGS:
                             print(
                                 f"[TargetSwitch] reason={selection_reason}, from={prev_master_id}, to={master_id}, "
@@ -2796,6 +2899,106 @@ def main():
                         "target_ctrl_el": f"{ctrl_el:.6f}",
                     })
 
+                settled_age = curr_time - settled_ts
+                if (
+                    ENABLE_STRIKE_SEND
+                    and settled_cmd_id >= 0
+                    and settled_cmd_id != strike_window["last_consumed_settled_cmd_id"]
+                    and settled_track_id == master_id
+                    and settled_ts >= master_epoch_ts
+                    and 0.0 <= settled_age <= STRIKE_SETTLED_EVENT_TTL
+                ):
+                    strike_dist, strike_dist_source = select_strike_distance(
+                        master_track,
+                        curr_time,
+                        strike_window,
+                    )
+                    strike_window["last_consumed_settled_cmd_id"] = settled_cmd_id
+                    if strike_dist is not None:
+                        strike_window["track_id"] = master_id
+                        strike_window["distance"] = strike_dist
+                        strike_window["source"] = strike_dist_source
+                        strike_window["valid_until"] = curr_time + STRIKE_WINDOW_SECONDS
+                        if PRINT_EVENT_LOGS:
+                            print(
+                                f"[Strike] window open cmd_id={settled_cmd_id}, "
+                                f"track_id={master_id}, source={strike_dist_source}, "
+                                f"dist={strike_dist:.2f}m, valid={STRIKE_WINDOW_SECONDS:.2f}s"
+                            )
+                        field_log_event({
+                            "timestamp": f"{curr_time:.6f}",
+                            "seq": sender_seq,
+                            "mode": sender_mode,
+                            "event": "STRIKE_WINDOW_OPEN",
+                            "track_id": int(master_id),
+                            "master_id": int(master_id),
+                            "distance": f"{strike_dist:.6f}",
+                            "distance_source": strike_dist_source,
+                            "reason": f"settled_cmd_id={settled_cmd_id}",
+                        })
+                    else:
+                        field_log_event({
+                            "timestamp": f"{curr_time:.6f}",
+                            "seq": sender_seq,
+                            "mode": sender_mode,
+                            "event": "STRIKE_WINDOW_SKIP",
+                            "track_id": int(master_id),
+                            "master_id": int(master_id),
+                            "distance_source": strike_dist_source,
+                            "reason": f"no_distance_for_settled_cmd_id={settled_cmd_id}",
+                        })
+
+                strike_window_valid = (
+                    strike_window["track_id"] == master_id
+                    and master_track.time_since_update == 0
+                    and curr_time < strike_window["valid_until"]
+                )
+                if strike_window_valid and strike_sender is not None:
+                    strike_interval = 1.0 / max(STRIKE_SEND_HZ, 0.1)
+                    if (curr_time - strike_window["last_send_ts"]) >= strike_interval:
+                        try:
+                            strike_ui_id = get_or_assign_ui_id(master_track)
+                            strike_rel_az, strike_el = master_track.get_future_position(STRIKE_LEAD_TIME)
+                            strike_map_az = relative_to_map_azimuth(strike_rel_az)
+                            strike_packet = strike_sender.send_target(
+                                target_id=strike_ui_id,
+                                distance_m=strike_window["distance"],
+                                azimuth_deg=strike_map_az,
+                                elevation_deg=strike_el,
+                            )
+                            strike_window["last_send_ts"] = curr_time
+                            field_log_event({
+                                "timestamp": f"{curr_time:.6f}",
+                                "seq": sender_seq,
+                                "mode": sender_mode,
+                                "event": "STRIKE_SEND",
+                                "track_id": int(master_track.id),
+                                "pred_az": f"{strike_rel_az:.6f}",
+                                "map_az": f"{strike_map_az:.6f}",
+                                "pred_el": f"{strike_el:.6f}",
+                                "master_id": int(master_id),
+                                "is_master": 1,
+                                "internal_track_id": int(master_track.id),
+                                "ui_id": int(strike_ui_id),
+                                "distance": f"{float(strike_window['distance']):.6f}",
+                                "distance_source": strike_window["source"],
+                                "reason": f"settled_cmd_id={settled_cmd_id},packet={strike_packet.hex(' ')}",
+                            })
+                        except Exception as e:
+                            if PRINT_EVENT_LOGS:
+                                print(f"[Strike][Warn] send skipped: {e}")
+                            field_log_event({
+                                "timestamp": f"{curr_time:.6f}",
+                                "seq": sender_seq,
+                                "mode": sender_mode,
+                                "event": "STRIKE_SEND_SKIP",
+                                "track_id": int(master_track.id),
+                                "master_id": int(master_id),
+                                "internal_track_id": int(master_track.id),
+                                "distance_source": strike_window["source"],
+                                "reason": str(e),
+                            })
+
                 # E. 向 UI 发送数据包：只发送当前正在跟踪的主目标。
                 # 追踪器内部仍保留多目标轨迹，供后续目标丢失或锁定超时时切换使用。
                 for t in (master_track,):
@@ -2836,8 +3039,10 @@ def main():
                     })
                     ui_send_total += 1
                     ui_send_counter[int(ui_id)] += 1
-            elif USE_MOCK_LASER:
-                update_mock_laser_distance(None, curr_time)
+            else:
+                clear_strike_window(strike_window)
+                if USE_MOCK_LASER:
+                    update_mock_laser_distance(None, curr_time)
 
             maybe_print_live_status(
                 curr_time,
