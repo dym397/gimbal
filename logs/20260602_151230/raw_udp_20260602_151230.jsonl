@@ -1,0 +1,8 @@
+{"recv_ts":1780384352.543645,"addr":"192.168.0.2:42996","packet_len":87,"seq":"","mode":"","board":"BOARD_2","cam":4,"raw_obj_count":1,"raw_objs":[[186,1747,318,1839,47.25]]}
+{"recv_ts":1780384352.6045659,"addr":"192.168.0.6:42663","packet_len":89,"seq":"","mode":"","board":"BOARD_6","cam":0,"raw_obj_count":1,"raw_objs":[[2183,1505,2431,1685,25.15]]}
+{"recv_ts":1780384352.9016147,"addr":"192.168.0.5:52139","packet_len":88,"seq":"","mode":"","board":"BOARD_5","cam":0,"raw_obj_count":1,"raw_objs":[[1598,642,1638,693,155.93]]}
+{"recv_ts":1780384354.2380996,"addr":"192.168.0.8:55576","packet_len":87,"seq":"","mode":"","board":"BOARD_8","cam":1,"raw_obj_count":1,"raw_objs":[[3250,663,3314,782,97.46]]}
+{"recv_ts":1780384354.762341,"addr":"192.168.0.7:42687","packet_len":87,"seq":"","mode":"","board":"BOARD_7","cam":1,"raw_obj_count":1,"raw_objs":[[1563,369,1627,488,97.46]]}
+{"recv_ts":1780384355.1996863,"addr":"192.168.0.6:42663","packet_len":88,"seq":"","mode":"","board":"BOARD_6","cam":2,"raw_obj_count":1,"raw_objs":[[2419,955,2483,1074,97.46]]}
+{"recv_ts":1780384355.7040648,"addr":"192.168.0.5:52139","packet_len":88,"seq":"","mode":"","board":"BOARD_5","cam":2,"raw_obj_count":1,"raw_objs":[[1444,1630,1507,1749,99.0]]}
+{"recv_ts":1780384359.886583,"addr":"192.168.0.2:42996","packet_len":87,"seq":"","mode":"","board":"BOARD_2","cam":4,"raw_obj_count":1,"raw_objs":[[186,1754,318,1846,47.25]]}

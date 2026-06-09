@@ -41,10 +41,10 @@ except ImportError:
 def _platform_serial_defaults():
     if os.name == "nt":
         return {
-            "gimbal": "COM9",
-            "laser": "COM10",
-            "imu": "COM11",
-            "gps": "COM8",
+            "gimbal": "COM14",
+            "laser": "COM13",
+            "imu": "COM9",
+            "gps": "COM12",
         }
     return {
         "gimbal": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.3:1.0-port0",
