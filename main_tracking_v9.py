@@ -1,4 +1,4 @@
-﻿import random
+import random
 import socket
 import threading
 import time
@@ -240,15 +240,21 @@ def _env_float(name, default):
         return float(default)
 
 
+def _env_int(name, default):
+    val = os.getenv(name)
+    if val is None:
+        return int(default)
+    try:
+        return int(str(val).strip())
+    except (TypeError, ValueError):
+        print(f"[Config][Warn] {name}={val} 不是有效整数，使用默认值 {default}.")
+        return int(default)
+
+
 UI_IP = os.getenv("UI_IP", "192.168.0.200")
 # UI_IP="172.28.3.80"
 UI_PORT = int(os.getenv("UI_PORT", "9999"))
 LOCAL_PORT = int(os.getenv("LOCAL_PORT", "8888"))
-ENABLE_UDP_DISTANCE = _env_flag("ENABLE_UDP_DISTANCE", True)  # True: 启用UDP distance_2输入; False: 不启用UDP距离输入
-UDP_DISTANCE_PORT = int(os.getenv("UDP_DISTANCE_PORT", "1234"))
-UDP_DISTANCE_TTL = _env_float("UDP_DISTANCE_TTL", 5.0)
-UDP_DISTANCE_MIN_M = 30.0
-UDP_DISTANCE_MAX_M = 400.0
 ENABLE_STRIKE_SEND = _env_flag("ENABLE_STRIKE_SEND", False)
 STRIKE_IP = os.getenv("STRIKE_IP", "192.168.0.80")
 STRIKE_PORT = int(os.getenv("STRIKE_PORT", "10123"))
@@ -256,15 +262,12 @@ STRIKE_SEND_HZ = _env_float("STRIKE_SEND_HZ", 10.0)
 STRIKE_WINDOW_SECONDS = _env_float("STRIKE_WINDOW_SECONDS", 1.0)
 STRIKE_LEAD_TIME = _env_float("STRIKE_LEAD_TIME", 0.3)
 STRIKE_SETTLED_EVENT_TTL = _env_float("STRIKE_SETTLED_EVENT_TTL", 0.5)
-STRIKE_ALLOW_MONO_FALLBACK = _env_flag("STRIKE_ALLOW_MONO_FALLBACK", True)
-STRIKE_MONO_TTL = _env_float("STRIKE_MONO_TTL", 0.8)
-STRIKE_LASER_HOLD_TTL = _env_float("STRIKE_LASER_HOLD_TTL", 0.8)
+TRACK_DISTANCE_TTL = _env_float("TRACK_DISTANCE_TTL", 3.0)
 GIMBAL_PORT = _serial_port("GIMBAL_PORT", "gimbal")
 LASER_PORT = _serial_port("LASER_PORT", "laser")
 GPS_PORT = _serial_port("GPS_PORT", "gps")
 USE_MOCK_GIMBAL = _env_flag("USE_MOCK_GIMBAL", False)  # True: 使用 mock_gimbal.py; False: 使用真实 GT06Z
-USE_MOCK_LASER = _env_flag("USE_MOCK_LASER", False)   # True: 激光通道使用 mono 模拟值; False: 使用真实 SDDM 激光
-UI_REAL_LASER_ONLY = _env_flag("UI_REAL_LASER_ONLY", True)  # True: UI距离只发送新鲜真实激光，不使用mono/hold兜底
+USE_MOCK_LASER = _env_flag("USE_MOCK_LASER", False)   # True: do not open real laser; distance fusion still uses mono only.
 ENABLE_GPS = _env_flag("ENABLE_GPS", True)
 ENABLE_IMU = _env_flag("ENABLE_IMU", False)      # Manual switch: True to enable IMU read/print
 IMU_PORT = _serial_port("IMU_PORT", "imu")
@@ -286,8 +289,7 @@ GIMBAL_SETTLE_THRESHOLD = 0.3
 GIMBAL_SETTLE_TIMEOUT = 2.5
 GIMBAL_THREAD_SLEEP = 0.02
 GIMBAL_PROGRESS_LOG_INTERVAL = 0.10
-LASER_DIST_TTL = 2.0
-LASER_UI_HOLD_TTL = 5.0
+LASER_LOG_INTERVAL = _env_float("LASER_LOG_INTERVAL", 1.0)
 MONO_DIST_TTL = 1.2
 DEFAULT_TRACKING_DISTANCE_M = 450.0  # 仅用于内部参数冷启动（保持稳定）
 DEFAULT_DISTANCE_MIN_M = 200.0
@@ -312,6 +314,7 @@ FIELD_LOG = _env_flag("FIELD_LOG", True)
 FIELD_LOG_DIR = os.getenv("FIELD_LOG_DIR", LOG_DIR)
 MEAS_FUSION_THRESHOLD_DEG = _env_float("MEAS_FUSION_THRESHOLD_DEG", 0.5)
 MEAS_FUSION_WINDOW_SECONDS = _env_float("MEAS_FUSION_WINDOW_SECONDS", 0.20)
+MAX_LOCK_LOST_FRAMES = _env_int("MAX_LOCK_LOST_FRAMES", 8)  # 判定目标丢失/锁定丢失的宽限帧数（针对多相机交替发送）
 
 IMG_W = 3840.0
 IMG_H = 2160.0
@@ -355,12 +358,14 @@ class FieldLogger:
         self.events_fields = [
             "timestamp", "seq", "mode", "event", "track_id", "meas_idx",
             "meas_az", "meas_el", "pred_az", "map_az", "pred_el", "cost",
+            "pred_az_cv", "pred_el_cv", "map_az_cv",
+            "pred_az_ca", "pred_el_ca", "map_az_ca",
             "dynamic_thresh", "uncertainty", "p_az", "p_el",
             "hit_streak", "time_since_update", "reason",
             "internal_track_id", "ui_id",
-            "master_id", "is_master", "laser_track_id",
-            "distance", "distance_source", "track_laser_dist",
-            "track_laser_ts", "track_laser_age",
+            "master_id", "is_master",
+            "distance", "distance_source",
+            "dist_uncertainty", "radial_velocity",
             "raw_bbox_x1", "raw_bbox_y1", "raw_bbox_x2", "raw_bbox_y2",
             "clipped_bbox_x1", "clipped_bbox_y1", "clipped_bbox_x2", "clipped_bbox_y2",
             "is_edge_bbox", "visible_ratio",
@@ -733,11 +738,6 @@ class StrikeSender:
 class SharedHardwareState:
     def __init__(self):
         self.lock = threading.Lock()
-        self.raw_laser_dist = None
-        self.raw_laser_ts = 0.0
-        self.valid_laser_dist = None
-        self.latest_dist = None
-        self.laser_ts = 0.0
         self.gimbal_az = 0.0  # UI坐标系方位角
         self.gimbal_el = 0.0
         self.gimbal_att_ts = 0.0
@@ -745,13 +745,8 @@ class SharedHardwareState:
         self.active_track_id = -1
         self.settled_cmd_id = -1
         self.settled_track_id = -1
-        self.laser_track_id = -1
         self.settled_ts = 0.0
         self.is_settled = False
-        self.udp_distance = None
-        self.udp_distance_ts = 0.0
-        self.udp_distance_status = ""
-        self.udp_distance_addr = ""
 
 shared_state = SharedHardwareState()
 gimbal_cmd_queue = queue.Queue(maxsize=1)
@@ -826,80 +821,6 @@ def rk3588_thread():
             print(f"[Net][Unexpected] count={err_other}, type={type(e).__name__}, err={e}")
             continue
 
-
-def udp_distance_thread():
-    print(f"[DistanceUDP] Listening JSON distance_2 on 0.0.0.0:{UDP_DISTANCE_PORT}...")
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.settimeout(1.0)
-
-    try:
-        sock.bind(("0.0.0.0", UDP_DISTANCE_PORT))
-    except OSError as e:
-        print(f"[DistanceUDP][Fatal] 端口 {UDP_DISTANCE_PORT} 绑定失败: {e}")
-        return
-
-    err_decode = 0
-    err_json = 0
-    err_other = 0
-
-    while True:
-        try:
-            data, addr = sock.recvfrom(4096)
-            recv_ts = time.time()
-            text = data.decode("utf-8")
-            pkg = json.loads(text)
-            if not isinstance(pkg, dict):
-                err_json += 1
-                if err_json % 50 == 1:
-                    print(f"[DistanceUDP][JSONError] count={err_json}, JSON根节点不是对象: {pkg!r}")
-                continue
-
-            if "distance_2" not in pkg:
-                raw_distance = None
-                distance = None
-                distance_status = "missing_distance_2"
-            else:
-                raw_distance = pkg.get("distance_2")
-                distance, distance_status = _parse_udp_distance2(raw_distance)
-
-            roi_status = pkg.get("roi_status", "")
-            ocr_confidence = pkg.get("ocr_confidence", "")
-            timestamp = pkg.get("timestamp")
-
-            with shared_state.lock:
-                shared_state.udp_distance = distance
-                shared_state.udp_distance_ts = recv_ts
-                shared_state.udp_distance_status = distance_status
-                shared_state.udp_distance_addr = f"{addr[0]}:{addr[1]}"
-
-            print(
-                f"[DistanceUDP] from {addr[0]}:{addr[1]} "
-                f"distance_2={raw_distance}, parsed_distance={distance}, "
-                f"status={distance_status}, roi_status={roi_status}, "
-                f"ocr_confidence={ocr_confidence}, timestamp={timestamp}",
-                flush=True,
-            )
-
-        except socket.timeout:
-            continue
-
-        except UnicodeDecodeError as e:
-            err_decode += 1
-            if err_decode % 50 == 1:
-                print(f"[DistanceUDP][DecodeError] count={err_decode}, err={e}")
-            continue
-
-        except json.JSONDecodeError as e:
-            err_json += 1
-            if err_json % 50 == 1:
-                print(f"[DistanceUDP][JSONError] count={err_json}, err={e}, raw={data!r}")
-            continue
-
-        except Exception as e:
-            err_other += 1
-            print(f"[DistanceUDP][Unexpected] count={err_other}, type={type(e).__name__}, err={e}")
-            continue
-
 def push_latest_gimbal_cmd(cmd):
     while True:
         try:
@@ -920,35 +841,6 @@ def drain_latest_gimbal_cmd():
             break
     return latest_cmd
 
-def read_laser_distance():
-    with shared_state.lock:
-        dist = shared_state.raw_laser_dist
-        dist_ts = shared_state.raw_laser_ts
-    if (time.time() - dist_ts) > LASER_DIST_TTL:
-        return None
-    return _parse_positive_float(dist)
-
-
-def read_udp_distance():
-    if not ENABLE_UDP_DISTANCE:
-        return None
-    with shared_state.lock:
-        dist = shared_state.udp_distance
-        dist_ts = shared_state.udp_distance_ts
-    if dist is None:
-        return None
-    if (time.time() - dist_ts) > UDP_DISTANCE_TTL:
-        return None
-    return dist
-
-
-def update_mock_laser_distance(dist, ts):
-    parsed = _parse_positive_float(dist)
-    with shared_state.lock:
-        shared_state.raw_laser_dist = parsed
-        shared_state.raw_laser_ts = float(ts) if parsed is not None else 0.0
-
-
 def _parse_positive_float(value):
     try:
         f = float(value)
@@ -958,19 +850,6 @@ def _parse_positive_float(value):
         pass
     return None
 
-
-def _parse_udp_distance2(value):
-    try:
-        distance = float(value)
-    except (TypeError, ValueError):
-        return None, "invalid_distance_2"
-    if math.isnan(distance):
-        return None, "nan_distance_2"
-    if distance < UDP_DISTANCE_MIN_M or distance > UDP_DISTANCE_MAX_M:
-        return None, "out_of_range_distance_2"
-    return distance, "valid_distance_2"
-
-
 def laser_reader_thread(laser, stop_event):
     print("[LaserThread] 激光读取线程已启动")
     try:
@@ -979,14 +858,22 @@ def laser_reader_thread(laser, stop_event):
         print(f"[Laser][Fatal] 启动连续测量失败: {e}")
         return
 
+    last_log_t = 0.0
     while not stop_event.is_set():
         dist = laser.read_distance()
         if dist is None:
             continue
         now_t = time.time()
-        with shared_state.lock:
-            shared_state.raw_laser_dist = dist
-            shared_state.raw_laser_ts = now_t
+        if (now_t - last_log_t) >= LASER_LOG_INTERVAL:
+            field_log_gimbal({
+                "timestamp": f"{now_t:.6f}",
+                "event": "LASER_READ_ONLY",
+                "laser_valid": 1,
+                "laser_dist": f"{float(dist):.6f}",
+                "laser_source": "sddm",
+                "laser_ts": f"{now_t:.6f}",
+            })
+            last_log_t = now_t
 
 
 def gps_sender_thread(sender):
@@ -1192,18 +1079,25 @@ def sanitize_bbox(rect):
     }, ""
 
 
+def get_smoothed_track_distance(track, curr_time, ttl=TRACK_DISTANCE_TTL):
+    if track is None or track.dist_state is None:
+        return None, "none"
+    age = float(curr_time) - float(track.last_dist_ts)
+    if age < 0.0 or age > float(ttl):
+        return None, "stale_distance_kf"
+    return float(track.dist_state[0, 0]), f"{track.dist_source}_smooth"
+
+
 def select_track_distance(track, master_id, curr_time):
-    udp_distance = read_udp_distance()
-    if udp_distance is not None:
-        return udp_distance, "udp_distance_2"
-    return float("nan"), "none"
+    distance, source = get_smoothed_track_distance(track, curr_time)
+    if distance is None:
+        return float("nan"), source
+    return distance, source
 
 
 def select_strike_distance(track, curr_time, strike_window):
-    udp_distance = read_udp_distance()
-    if udp_distance is not None:
-        return udp_distance, "udp_distance_2"
-    return None, "none"
+    return get_smoothed_track_distance(track, curr_time)
+
 
 
 def clear_strike_window(strike_window):
@@ -1544,76 +1438,7 @@ def gimbal_control_thread(gimbal):
                         "settle_time": f"{settle_dt:.6f}",
                     })
 
-                    laser_dist = read_laser_distance()
-                    laser_source = "mock_mono" if USE_MOCK_LASER else "sddm"
-                    if laser_dist is not None:
-                        trigger_t = time.time()
-                        with shared_state.lock:
-                            prev_laser_ts = shared_state.laser_ts
-                            raw_laser_ts = shared_state.raw_laser_ts
-                            shared_state.valid_laser_dist = laser_dist
-                            shared_state.latest_dist = laser_dist
-                            shared_state.laser_ts = trigger_t
-                            shared_state.laser_track_id = shared_state.active_track_id
-                            active_cmd_id = shared_state.active_cmd_id
-                            active_track_id = shared_state.active_track_id
-                        dt_laser = trigger_t - prev_laser_ts if prev_laser_ts > 0 else None
-                        field_log_gimbal({
-                            "timestamp": f"{trigger_t:.6f}",
-                            "event": "LASER_TRIGGER",
-                            "cmd_id": int(active_cmd_id),
-                            "track_id": int(active_track_id),
-                            "gimbal_ui_az": f"{curr_ui_az:.6f}",
-                            "gimbal_ui_el": f"{curr_el:.6f}",
-                            "gimbal_ctrl_az": f"{curr_az:.6f}",
-                            "gimbal_ctrl_el": f"{curr_el:.6f}",
-                            "target_ctrl_az": f"{target_az:.6f}",
-                            "target_ctrl_el": f"{target_el:.6f}",
-                            "err_az": f"{err_az:.6f}",
-                            "err_el": f"{err_el:.6f}",
-                            "is_settled": 1,
-                            "settle_time": f"{settle_dt:.6f}",
-                            "laser_valid": 1,
-                            "laser_dist": f"{laser_dist:.6f}",
-                            "laser_source": laser_source,
-                            "laser_ts": f"{raw_laser_ts:.6f}",
-                            "laser_age": f"{trigger_t - raw_laser_ts:.6f}" if raw_laser_ts > 0 else "",
-                            "laser_interval": "" if dt_laser is None else f"{dt_laser:.6f}",
-                        })
-                        if prev_laser_ts > 0:
-                            if PRINT_EVENT_LOGS:
-                                print(
-                                    f"[Laser] Triggered cmd_id={active_cmd_id}, track_id={active_track_id}, "
-                                    f"dist={laser_dist:.2f}m, interval={dt_laser:.3f}s"
-                                )
-                        else:
-                            if PRINT_EVENT_LOGS:
-                                print(
-                                    f"[Laser] Triggered cmd_id={active_cmd_id}, track_id={active_track_id}, "
-                                    f"dist={laser_dist:.2f}m, interval=first"
-                                )
-                    else:
-                        trigger_t = time.time()
-                        field_log_gimbal({
-                            "timestamp": f"{trigger_t:.6f}",
-                            "event": "LASER_TRIGGER",
-                            "cmd_id": int(active_cmd_id),
-                            "track_id": int(active_track_id),
-                            "gimbal_ui_az": f"{curr_ui_az:.6f}",
-                            "gimbal_ui_el": f"{curr_el:.6f}",
-                            "gimbal_ctrl_az": f"{curr_az:.6f}",
-                            "gimbal_ctrl_el": f"{curr_el:.6f}",
-                            "target_ctrl_az": f"{target_az:.6f}",
-                            "target_ctrl_el": f"{target_el:.6f}",
-                            "err_az": f"{err_az:.6f}",
-                            "err_el": f"{err_el:.6f}",
-                            "is_settled": 1,
-                            "settle_time": f"{settle_dt:.6f}",
-                            "laser_valid": 0,
-                            "laser_source": laser_source,
-                        })
-                        if PRINT_EVENT_LOGS:
-                            print("[Laser] No valid laser distance, use mono distance")
+                    # Laser readings are logged by laser_reader_thread only; distance fusion uses mono only.
                     active_cmd = None
                     continue
 
@@ -1723,33 +1548,46 @@ class StandardKalmanTrack:
         StandardKalmanTrack._id_count += 1
         self.id = StandardKalmanTrack._id_count
         
-        # 状态矩阵: X = [[az], [el], [v_az], [v_el]]
+        # 1. 原始 4D CV 状态矩阵 (Active 主控制源)
         self.state = np.array([[ui_az], [ui_el], [0.0], [0.0]], dtype=float)
-        
-        # 协方差矩阵 P
         self.P = np.diag([1.0, 1.0, 10.0, 10.0])
-        
-        # 过程噪声 / 测量噪声默认值
         self.q_pos = 0.05
         self.q_vel = 0.2
         self.r_az = 3.5**2
         self.r_el = 1.8**2
         
+        # 2. 新增 6D CA 影子状态矩阵 (Shadow 验证源)
+        self.shadow_state = np.array([[ui_az], [ui_el], [0.0], [0.0], [0.0], [0.0]], dtype=float)
+        self.shadow_P = np.diag([1.0, 1.0, 10.0, 10.0, 5.0, 5.0])
+        self.shadow_q_pos = 0.05
+        self.shadow_q_vel = 0.2
+        self.shadow_q_acc = 0.1
+        
+        # 3. 1D 距离卡尔曼状态 (仅用于平滑去噪，不做长时预测)
+        self.dist_state = None  # 首次接收到距离时预测并初始化: [[d], [v_d]]
+        self.dist_P = np.diag([10.0, 5.0])
+        self.q_dist_pos = 0.1
+        self.q_dist_vel = 0.5
+        self.r_dist = 25.0**2  # 较大测量噪声，以实现强力平滑
+        self.last_dist_ts = 0.0
+        self.dist_source = "none"
+        self.dist_uncertainty = 0.0
+        
         self.hit_streak = 1        # 连续命中次数 (用于建轨确认)
         self.time_since_update = 0 # 连丢次数
         
-        # 历史队列
+        # 历史队列 (基于 Active 状态记录)
         self.history = deque(maxlen=30)
         self.history.append((self.state.copy(), self.P.copy()))
         
         self.max_vel_az = 40.0
         self.max_vel_el = 15.0
+        self.max_acc_az = 20.0  # 影子 CA 方位角加速度限幅
+        self.max_acc_el = 10.0  # 影子 CA 俯仰角加速度限幅
         self.min_dt = 0.001
         self.dist_thresh = 4.0
         self.last_mono_dist = None
         self.mono_ts = 0.0
-        self.last_laser_dist = None
-        self.laser_ts = 0.0
         self.last_sent_dist = None
 
     def set_mono_distance(self, dist, ts):
@@ -1758,23 +1596,69 @@ class StandardKalmanTrack:
             return
         self.last_mono_dist = d
         self.mono_ts = float(ts)
+        self._update_distance_filter(d, ts)
 
-    def set_laser_distance(self, dist, ts):
-        d = _parse_positive_float(dist)
-        if d is None:
+    def _update_distance_filter(self, dist_val, ts):
+        """1D 距离卡尔曼滤波，含异常门控与新鲜度管理"""
+        curr_t = float(ts)
+        
+        # Reset stale mono distance state instead of carrying old range into a new target interval.
+        if self.dist_state is not None and (curr_t - self.last_dist_ts) > TRACK_DISTANCE_TTL:
+            self.dist_state = None
+            
+        if self.dist_state is None:
+            self.dist_state = np.array([[dist_val], [0.0]], dtype=float)
+            self.last_dist_ts = curr_t
+            self.dist_source = "mono"
+            self.dist_uncertainty = np.sqrt(self.dist_P[0, 0])
             return
-        self.last_laser_dist = d
-        self.laser_ts = float(ts)
+            
+        # 异常门控：突变值 > 50m 判定为噪点，拒绝更新状态
+        expected_d = self.dist_state[0, 0]
+        if abs(dist_val - expected_d) > 50.0:
+            return
+            
+        dt = curr_t - self.last_dist_ts
+        if dt < self.min_dt:
+            dt = self.min_dt
+        self.last_dist_ts = curr_t
+        self.dist_source = "mono"
+        
+        # 1. Predict
+        F_d = np.array([[1.0, dt],
+                        [0.0, 1.0]], dtype=float)
+        Q_d = np.diag([self.q_dist_pos, self.q_dist_vel])
+        self.dist_state = np.dot(F_d, self.dist_state)
+        self.dist_P = np.dot(np.dot(F_d, self.dist_P), F_d.T) + Q_d
+        
+        # 2. Update
+        H_d = np.array([[1.0, 0.0]], dtype=float)
+        R_d = np.array([[self.r_dist]], dtype=float)
+        
+        Z = np.array([[dist_val]], dtype=float)
+        Y = Z - np.dot(H_d, self.dist_state)
+        S = np.dot(np.dot(H_d, self.dist_P), H_d.T) + R_d
+        
+        try:
+            K = np.dot(np.dot(self.dist_P, H_d.T), np.linalg.inv(S))
+        except np.linalg.LinAlgError:
+            K = np.zeros((2, 1), dtype=float)
+            
+        self.dist_state = self.dist_state + np.dot(K, Y)
+        # 限制径向速度在安全范围 ±25 m/s 内
+        self.dist_state[1, 0] = np.clip(self.dist_state[1, 0], -25.0, 25.0)
+        
+        I = np.eye(2)
+        self.dist_P = np.dot((I - np.dot(K, H_d)), self.dist_P)
+        self.dist_uncertainty = np.sqrt(self.dist_P[0, 0])
 
     def get_param_distance(self, curr_time):
-        if self.last_laser_dist is not None and (curr_time - self.laser_ts) <= LASER_DIST_TTL:
-            return self.last_laser_dist
+        if self.dist_state is not None and (curr_time - self.last_dist_ts) <= TRACK_DISTANCE_TTL:
+            return float(self.dist_state[0, 0])
         if self.last_mono_dist is not None and (curr_time - self.mono_ts) <= MONO_DIST_TTL:
             return self.last_mono_dist
         if self.last_mono_dist is not None:
             return self.last_mono_dist
-        if self.last_laser_dist is not None:
-            return self.last_laser_dist
         return None
 
     def set_dynamic_params(self, params):
@@ -1792,89 +1676,105 @@ class StandardKalmanTrack:
         self.dist_thresh = float(params.get('DIST_THRESH', self.dist_thresh))
 
     def predict(self, dt):
-        """标准 Kalman Predict"""
+        """Active CV 与 Shadow CA 平行角度预测"""
         if dt < self.min_dt:
             dt = self.min_dt
             
-        # 状态转移矩阵 F
+        # A. Active 4D CV Predict
         F = np.array([
             [1, 0, dt,  0],
             [0, 1,  0, dt],
             [0, 0,  1,  0],
             [0, 0,  0,  1]
         ], dtype=float)
-        
-        # 过程噪声 Q
         Q = np.diag([self.q_pos, self.q_pos, self.q_vel, self.q_vel])
-        
-        # 预测状态和协方差
         self.state = np.dot(F, self.state)
-        # 防止角度跳变，对 Azimuth 进行取模
         self.state[0, 0] = self.state[0, 0] % 360.0
         self.P = np.dot(np.dot(F, self.P), F.T) + Q
         
-        self.time_since_update += 1#若之后有轨迹匹配上就会清零time_since_update,判断目标是否丢失。
+        # B. Shadow 6D CA Predict
+        F_shadow = np.array([
+            [1.0, 0.0,  dt, 0.0, 0.5*dt**2,       0.0],
+            [0.0, 1.0, 0.0,  dt,       0.0, 0.5*dt**2],
+            [0.0, 0.0, 1.0, 0.0,        dt,       0.0],
+            [0.0, 0.0, 0.0, 1.0,       0.0,        dt],
+            [0.0, 0.0, 0.0, 0.0,       1.0,       0.0],
+            [0.0, 0.0, 0.0, 0.0,       0.0,       1.0]
+        ], dtype=float)
+        Q_shadow = np.diag([self.shadow_q_pos, self.shadow_q_pos, self.shadow_q_vel, self.shadow_q_vel, self.shadow_q_acc, self.shadow_q_acc])
+        self.shadow_state = np.dot(F_shadow, self.shadow_state)
+        self.shadow_state[0, 0] = self.shadow_state[0, 0] % 360.0
+        self.shadow_P = np.dot(np.dot(F_shadow, self.shadow_P), F_shadow.T) + Q_shadow
+        
+        self.time_since_update += 1
         self.history.append((self.state.copy(), self.P.copy()))
 
     def update(self, meas_az, meas_el, dt):
-        """标准 Kalman Update"""
+        """Active CV 与 Shadow CA 平行角度更新"""
         self.time_since_update = 0
         self.hit_streak += 1
 
+        # A. Active 4D CV Update
         Z = np.array([[meas_az], [meas_el]], dtype=float)
-        
-        # 观测矩阵 H
         H = np.array([
             [1, 0, 0, 0],
             [0, 1, 0, 0]
         ], dtype=float)
-        
-        # 观测测量噪声 R
         R = np.diag([self.r_az, self.r_el])
-        
-        # 计算残差 Y = Z - HX(测量位置-预测位置)
         Y = Z - np.dot(H, self.state)
-        
-        # 核心：处理 Azimuth 的残差，防止角度回环跳变
         Y[0, 0] = angular_diff(Z[0, 0], self.state[0, 0])
-        
-        # S = H * P * H^T + R,S = 预测位置的不确定性 + 测量位置的不确定性
         S = np.dot(np.dot(H, self.P), H.T) + R
-        
-        # 卡尔曼增益 K = P * H^T * S^-1,根据 P 和 R 决定这次信检测多少(对预测值的修正力度)
         try:
             K = np.dot(np.dot(self.P, H.T), np.linalg.inv(S))
         except np.linalg.LinAlgError:
-            print(f"[Tracker] Kalman matrix inversion failed for track {self.id}")
             K = np.zeros((4, 2), dtype=float)
-
-        # X = X + K * Y
         self.state = self.state + np.dot(K, Y)
-        # 更新后再次对 Az 取模
         self.state[0, 0] = self.state[0, 0] % 360.0
-        
-        # 速度限幅保护,目的就是防止检测框跳变、错匹配、噪声导致速度估计瞬间爆掉
         self.state[2, 0] = np.clip(self.state[2, 0], -self.max_vel_az, self.max_vel_az)
         self.state[3, 0] = np.clip(self.state[3, 0], -self.max_vel_el, self.max_vel_el)
-        
-        # P = (I - K * H) * P
         I = np.eye(4)
         self.P = np.dot((I - np.dot(K, H)), self.P)
-        
-        # 更新历史
+
+        # B. Shadow 6D CA Update
+        H_shadow = np.array([
+            [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0, 0.0, 0.0]
+        ], dtype=float)
+        Y_shadow = Z - np.dot(H_shadow, self.shadow_state)
+        Y_shadow[0, 0] = angular_diff(Z[0, 0], self.shadow_state[0, 0])
+        S_shadow = np.dot(np.dot(H_shadow, self.shadow_P), H_shadow.T) + R
+        try:
+            K_shadow = np.dot(np.dot(self.shadow_P, H_shadow.T), np.linalg.inv(S_shadow))
+        except np.linalg.LinAlgError:
+            K_shadow = np.zeros((6, 2), dtype=float)
+        self.shadow_state = self.shadow_state + np.dot(K_shadow, Y_shadow)
+        self.shadow_state[0, 0] = self.shadow_state[0, 0] % 360.0
+        self.shadow_state[2, 0] = np.clip(self.shadow_state[2, 0], -self.max_vel_az, self.max_vel_az)
+        self.shadow_state[3, 0] = np.clip(self.shadow_state[3, 0], -self.max_vel_el, self.max_vel_el)
+        self.shadow_state[4, 0] = np.clip(self.shadow_state[4, 0], -self.max_acc_az, self.max_acc_az)
+        self.shadow_state[5, 0] = np.clip(self.shadow_state[5, 0], -self.max_acc_el, self.max_acc_el)
+        I_shadow = np.eye(6)
+        self.shadow_P = np.dot((I_shadow - np.dot(K_shadow, H_shadow)), self.shadow_P)
+
         if len(self.history) > 0:
             self.history[-1] = (self.state.copy(), self.P.copy())
         else:
             self.history.append((self.state.copy(), self.P.copy()))
 
     def get_future_position(self, dt_delay):
-        """打提前量：获取未来预测角度"""
+        """Active 4D CV 角度预测"""
         fut_az = (self.state[0, 0] + self.state[2, 0] * dt_delay) % 360.0
         fut_el = self.state[1, 0] + self.state[3, 0] * dt_delay
         return fut_az, fut_el
-        
+
+    def get_shadow_future_position_ca(self, dt_delay):
+        """Shadow 6D CA 角度预测 (仅供日志对比，不驱动云台)"""
+        fut_az = (self.shadow_state[0, 0] + self.shadow_state[2, 0] * dt_delay + 0.5 * self.shadow_state[4, 0] * (dt_delay**2)) % 360.0
+        fut_el = self.shadow_state[1, 0] + self.shadow_state[3, 0] * dt_delay + 0.5 * self.shadow_state[5, 0] * (dt_delay**2)
+        return fut_az, fut_el
+
     def predict_future_n_steps(self, n=10, dt=0.066):
-        """多帧预测接口"""
+        """多帧预测接口 (兼容原版)"""
         if dt < self.min_dt:
             dt = self.min_dt
             
@@ -2289,15 +2189,12 @@ def main():
     sender = UISender(UI_IP, UI_PORT)
     strike_sender = StrikeSender(STRIKE_IP, STRIKE_PORT) if ENABLE_STRIKE_SEND else None
     print(f"[Config] DEVICE_HEADING_DEG={DEVICE_HEADING_DEG:.2f} (map north=0, east=90, south=180)")
-    print(f"[Config] UI_REAL_LASER_ONLY={UI_REAL_LASER_ONLY}")
     if ENABLE_STRIKE_SEND:
         print(
             f"[Strike] Enabled target UDP sender: {STRIKE_IP}:{STRIKE_PORT}, "
             f"hz={STRIKE_SEND_HZ:.1f}, window={STRIKE_WINDOW_SECONDS:.2f}s, "
             f"lead={STRIKE_LEAD_TIME:.2f}s, settled_ttl={STRIKE_SETTLED_EVENT_TTL:.2f}s"
         )
-    if UI_REAL_LASER_ONLY and USE_MOCK_LASER:
-        print("[Config][Warn] UI_REAL_LASER_ONLY=True but USE_MOCK_LASER=True; UI距离将发送NaN，不适合真实激光测试。")
     if not USE_MOCK_GIMBAL:
         _validate_serial_port("GIMBAL_PORT", GIMBAL_PORT)
     if not USE_MOCK_LASER:
@@ -2329,10 +2226,10 @@ def main():
     laser = None
     laser_stop_event = None
     if USE_MOCK_LASER:
-        print("[Init] Laser source: mock mono distance")
+        print("[Init] Real laser logging disabled by USE_MOCK_LASER=True; distance source remains mono")
     else:
         if SDDMLaser is None:
-            print("[Laser][Warn] sddm_laser.py import failed, fallback to mono distance only.")
+            print("[Laser][Warn] sddm_laser.py import failed; distance source remains mono.")
         else:
             try:
                 laser = SDDMLaser(LASER_PORT)
@@ -2342,19 +2239,12 @@ def main():
                     args=(laser, laser_stop_event),
                     daemon=True,
                 ).start()
-                print(f"[Init] Real laser enabled on {LASER_PORT}")
+                print(f"[Init] Real laser read-only logging enabled on {LASER_PORT}")
             except Exception as e:
                 print(f"[Laser][Warn] Init failed on {LASER_PORT}: {e}")
                 laser = None
 
-    if ENABLE_UDP_DISTANCE:
-        print(
-            f"[Init] UI/Strike distance source: UDP JSON distance_2 on port {UDP_DISTANCE_PORT} "
-            f"(ttl={UDP_DISTANCE_TTL:.1f}s, valid_range={UDP_DISTANCE_MIN_M:.0f}-{UDP_DISTANCE_MAX_M:.0f}m); "
-            f"laser/mono distance fallback disabled"
-        )
-    else:
-        print("[Init][Warn] UDP distance disabled; UI sends NaN and strike skips distance; laser/mono distance fallback disabled")
+    print(f"[Init] UI/Strike distance source: per-track mono distance KF (ttl={TRACK_DISTANCE_TTL:.1f}s)")
 
     # start background threads for network and gimbal control
     push_latest_gimbal_cmd({
@@ -2370,8 +2260,6 @@ def main():
     )
     threading.Thread(target=gimbal_control_thread, args=(gimbal,), daemon=True).start()
     threading.Thread(target=rk3588_thread, daemon=True).start()
-    if ENABLE_UDP_DISTANCE:
-        threading.Thread(target=udp_distance_thread, daemon=True).start()
 
     imu = None
     last_imu_print = 0.0
@@ -2546,9 +2434,6 @@ def main():
             with shared_state.lock:
                 shared_gimbal_az = shared_state.gimbal_az
                 shared_gimbal_el = shared_state.gimbal_el
-                valid_laser_dist = shared_state.valid_laser_dist
-                laser_ts = shared_state.laser_ts
-                laser_track_id = shared_state.laser_track_id
                 settled_cmd_id = shared_state.settled_cmd_id
                 settled_track_id = shared_state.settled_track_id
                 settled_ts = shared_state.settled_ts
@@ -2711,16 +2596,10 @@ def main():
                 debug_context=debug_context,
             )
 
-            # 将最新激光结果绑定到对应轨迹，避免目标切换时距离串目标
-            if (curr_time - laser_ts) <= LASER_DIST_TTL and laser_track_id >= 0:
-                laser_track = next((t for t in active_tracks if t.id == laser_track_id), None)
-                if laser_track is not None:
-                    laser_track.set_laser_distance(valid_laser_dist, laser_ts)
-            
-            # 过滤出合法的、可以被锁定的目标 (连续追踪超过 CONFIRM_HITS 次的)且没有丢失的目标 (time_since_update == 0)
+            # 过滤出合法的、可以被锁定的目标 (连续追踪超过 CONFIRM_HITS 次的)且没有丢失的目标 (time_since_update <= MAX_LOCK_LOST_FRAMES)
             valid_tracks = [
                 t for t in active_tracks
-                if t.hit_streak >= CONFIRM_HITS and t.time_since_update == 0 
+                if t.hit_streak >= CONFIRM_HITS and t.time_since_update <= MAX_LOCK_LOST_FRAMES
             ]
 
             # --- 4. 状态机：调度决策 ---
@@ -2851,14 +2730,6 @@ def main():
             if master_track is not None:
                 lock_timer -= dt
 
-                if USE_MOCK_LASER:
-                    mock_laser_dist = (
-                        master_track.last_mono_dist
-                        if (master_track.last_mono_dist is not None and (curr_time - master_track.mono_ts) <= MONO_DIST_TTL)
-                        else None
-                    )
-                    update_mock_laser_distance(mock_laser_dist, curr_time)
-                
                 # A. 提取提前量预测角度
                 fut_az, fut_el = master_track.get_future_position(dt_delay=PREDICT_DELAY)
                 
@@ -2950,7 +2821,7 @@ def main():
 
                 strike_window_valid = (
                     strike_window["track_id"] == master_id
-                    and master_track.time_since_update == 0
+                    and master_track.time_since_update <= MAX_LOCK_LOST_FRAMES
                     and curr_time < strike_window["valid_until"]
                 )
                 if strike_window_valid and strike_sender is not None:
@@ -2958,15 +2829,33 @@ def main():
                     if (curr_time - strike_window["last_send_ts"]) >= strike_interval:
                         try:
                             strike_ui_id = get_or_assign_ui_id(master_track)
-                            strike_rel_az, strike_el = master_track.get_future_position(STRIKE_LEAD_TIME)
-                            strike_map_az = relative_to_map_azimuth(strike_rel_az)
+                            
+                            # 1. 角度预测：主打击模型采用 6D CA (常加速度外推)，同时生成 CV (常速度) 预测用于影子比对与日志记录
+                            strike_rel_az_ca, strike_el_ca = master_track.get_shadow_future_position_ca(STRIKE_LEAD_TIME)
+                            strike_rel_az_cv, strike_el_cv = master_track.get_future_position(STRIKE_LEAD_TIME)
+                            strike_map_az_ca = relative_to_map_azimuth(strike_rel_az_ca)
+                            strike_map_az_cv = relative_to_map_azimuth(strike_rel_az_cv)
+                            
+                            strike_rel_az = strike_rel_az_ca
+                            strike_el = strike_el_ca
+                            strike_map_az = strike_map_az_ca
+                            
+                            # 2. 距离处理：使用 Distance-KF 滤波器平滑去噪，但不作远期速度预测外推，若超过 3s 未更新则安全退回静态基准
+                            # Distance uses only the current track's fresh smoothed KF value.
+                            strike_smooth_dist, dist_source = get_smoothed_track_distance(master_track, curr_time)
+                            if strike_smooth_dist is None:
+                                raise ValueError(f"no fresh smoothed track distance, source={dist_source}")
+                            
+                            # 3. 网络包构建与下发
                             strike_packet = strike_sender.send_target(
                                 target_id=strike_ui_id,
-                                distance_m=strike_window["distance"],
+                                distance_m=strike_smooth_dist,
                                 azimuth_deg=strike_map_az,
                                 elevation_deg=strike_el,
                             )
                             strike_window["last_send_ts"] = curr_time
+                            
+                            # 4. 详细结构化日志记录，包含 CV 与 CA 双预测指标、距离不确定度及径向估计速度
                             field_log_event({
                                 "timestamp": f"{curr_time:.6f}",
                                 "seq": sender_seq,
@@ -2976,12 +2865,20 @@ def main():
                                 "pred_az": f"{strike_rel_az:.6f}",
                                 "map_az": f"{strike_map_az:.6f}",
                                 "pred_el": f"{strike_el:.6f}",
+                                "pred_az_cv": f"{strike_rel_az_cv:.6f}",
+                                "pred_el_cv": f"{strike_el_cv:.6f}",
+                                "map_az_cv": f"{strike_map_az_cv:.6f}",
+                                "pred_az_ca": f"{strike_rel_az_ca:.6f}",
+                                "pred_el_ca": f"{strike_el_ca:.6f}",
+                                "map_az_ca": f"{strike_map_az_ca:.6f}",
                                 "master_id": int(master_id),
                                 "is_master": 1,
                                 "internal_track_id": int(master_track.id),
                                 "ui_id": int(strike_ui_id),
-                                "distance": f"{float(strike_window['distance']):.6f}",
-                                "distance_source": strike_window["source"],
+                                "distance": f"{strike_smooth_dist:.6f}",
+                                "distance_source": dist_source,
+                                "dist_uncertainty": f"{master_track.dist_uncertainty:.6f}",
+                                "radial_velocity": f"{float(master_track.dist_state[1, 0]):.6f}" if master_track.dist_state is not None else "0.000000",
                                 "reason": f"settled_cmd_id={settled_cmd_id},packet={strike_packet.hex(' ')}",
                             })
                         except Exception as e:
@@ -3012,7 +2909,7 @@ def main():
                         board_str, cam_idx, ui_id,
                         azimuth=map_az,
                         elevation=t.state[1, 0], 
-                        distance=send_dist + round(random.uniform(0.0, 1.0), 1) if math.isfinite(send_dist) and dist_source.startswith("mono") else send_dist
+                        distance=send_dist
                     )
                     field_log_event({
                         "timestamp": f"{curr_time:.6f}",
@@ -3030,19 +2927,13 @@ def main():
                         "ui_id": int(ui_id),
                         "master_id": "" if master_id is None else int(master_id),
                         "is_master": 1 if t.id == master_id else 0,
-                        "laser_track_id": int(laser_track_id),
                         "distance": "" if not math.isfinite(send_dist) else f"{send_dist:.6f}",
                         "distance_source": dist_source,
-                        "track_laser_dist": "" if t.last_laser_dist is None else f"{t.last_laser_dist:.6f}",
-                        "track_laser_ts": "" if t.last_laser_dist is None else f"{t.laser_ts:.6f}",
-                        "track_laser_age": "" if t.last_laser_dist is None else f"{curr_time - t.laser_ts:.6f}",
                     })
                     ui_send_total += 1
                     ui_send_counter[int(ui_id)] += 1
             else:
                 clear_strike_window(strike_window)
-                if USE_MOCK_LASER:
-                    update_mock_laser_distance(None, curr_time)
 
             maybe_print_live_status(
                 curr_time,
