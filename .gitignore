@@ -7,3 +7,10 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+# Local videos and runtime artifacts
+*.mkv
+*.log
+*.pid
+*.bak_*
+distance_model_style_snapshots/
+rknn_bestall_frame*.jpg
