@@ -20,8 +20,8 @@ import time
 from typing import Iterable, List, Sequence, Tuple
 
 
-IMG_W = 3840.0
-IMG_H = 2160.0
+IMG_W = 2560.0
+IMG_H = 1440.0
 
 
 def clamp(v: float, lo: float, hi: float) -> float:
@@ -109,9 +109,9 @@ def scenario_targets(seq: int, elapsed: float, args: argparse.Namespace) -> Sequ
     if args.mode == "multi_stable":
         # Three stable, separated targets with mild deterministic motion.
         return [
-            (1200.0 + 80.0 * math.sin(elapsed * 0.7), 900.0, args.distance_m),
-            (1920.0 + 60.0 * math.sin(elapsed * 0.5 + 1.4), 1080.0, args.distance_m + 60.0),
-            (2650.0 + 70.0 * math.sin(elapsed * 0.9 + 2.0), 1280.0, args.distance_m + 100.0),
+            (800.0 + 80.0 * math.sin(elapsed * 0.7), 600.0, args.distance_m),
+            (1280.0 + 60.0 * math.sin(elapsed * 0.5 + 1.4), 720.0, args.distance_m + 60.0),
+            (1760.0 + 70.0 * math.sin(elapsed * 0.9 + 2.0), 840.0, args.distance_m + 100.0),
         ]
 
     raise ValueError(f"unsupported mode: {args.mode}")
@@ -160,8 +160,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cam", type=int, default=2, help="Camera index")
     parser.add_argument("--fps", type=float, default=15.0, help="Send rate in Hz")
     parser.add_argument("--duration", type=float, default=30.0, help="Duration in seconds")
-    parser.add_argument("--cx", type=float, default=1920.0, help="Initial target center x")
-    parser.add_argument("--cy", type=float, default=1080.0, help="Initial target center y")
+    parser.add_argument("--cx", type=float, default=1280.0, help="Initial target center x")
+    parser.add_argument("--cy", type=float, default=720.0, help="Initial target center y")
     parser.add_argument("--box-w", type=float, default=120.0, help="Bounding box width")
     parser.add_argument("--box-h", type=float, default=80.0, help="Bounding box height")
     parser.add_argument("--distance-m", type=float, default=300.0, help="Mono distance in meters")
@@ -171,7 +171,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--turn-after", type=float, default=8.0, help="Turn time for sudden_turn")
     parser.add_argument("--drop-every", type=int, default=60, help="Drop cycle length in frames")
     parser.add_argument("--drop-count", type=int, default=10, help="Dropped frames per cycle")
-    parser.add_argument("--cross-margin", type=float, default=900.0, help="two_crossing start margin")
+    parser.add_argument("--cross-margin", type=float, default=600.0, help="two_crossing start margin")
     parser.add_argument("--cross-y-offset", type=float, default=60.0, help="two_crossing vertical separation")
     parser.add_argument("--dry-run", action="store_true", help="Print packets instead of sending")
     return parser.parse_args()

@@ -1,5 +1,30 @@
 # TODO_NEXT.md
 
+## 2026-07-04 状态更新
+
+### 已完成
+- [x] 新增云台相机 CPU-only YOLO 测距服务，默认设备名为 `000000008`。
+- [x] 移植 `distance model` 的物理距离、MLP、运动门控和 25 帧 GRU。
+- [x] 云台运动和画面模糊时禁止 YOLO 推理。
+- [x] 全部有效 SORT 轨迹投影到云台画面，并通过动态 ROI 检测可见目标。
+- [x] 使用匈牙利算法完成 YOLO 框与 SORT `track_id` 的一对一绑定。
+- [x] 每个 `track_id` 使用独立测距时间序列，模型权重共享。
+- [x] 增加双向最近邻、距离门限和歧义差值门限；歧义帧不写入距离序列。
+- [x] 保持 UI 和打击端协议不变，云台控制仍只跟随 master。
+- [x] `c40d_gimbal` 已配置 CPU 版 PyTorch/torchvision、YOLO 依赖和 pytest。
+- [x] `tools/mock_udp_sender.py` 的生成坐标已从 4K 调整为当前检测端使用的 2K `2560x1440`。
+- [x] 支持将 `20~250米.mkv` 作为云台相机源按31 FPS实时播放，并从指定帧开始与检测框UDP同步。
+- [x] 视频全链路验证已覆盖 SORT、master、动态ROI、CPU YOLO、25帧GRU、UI距离和打击端数据包。
+
+### 下一步现场验证
+1. 标定固定摄像头统一角度与云台光轴之间的零偏，检查 SORT 投影点与真实云台目标中心的像素误差。
+2. 用两个及以上真实目标验证 `track_id -> bbox -> distance` 日志，特别覆盖靠近、交叉、漏检和重新出现。
+3. 根据标定误差调整 `GIMBAL_VISION_ASSOCIATION_MAX_PX`；门限应尽量小，但必须覆盖正常投影误差。
+4. 根据目标密度调整 `GIMBAL_VISION_AMBIGUITY_MARGIN_PX`；现场优先避免错绑，不要为了提高测距率取消歧义拒绝。
+5. 在 RK3588 CPU 上实测每帧 ROI 数、推理耗时和25帧预热时间，必要时限制候选轨迹范围或降低测距更新频率。
+6. 检查真实清晰画面的拉普拉斯值，再确定 `GIMBAL_VISION_MIN_SHARPNESS`，避免阈值过高导致一直处于 `SETTLING`。
+7. Linux 部署时设置 `GIMBAL_CAMERA_SOURCE=/dev/videoX`，不要沿用 Windows 设备名 `000000008`。
+
 ## 2026-05-30 状态更新
 
 ### 已完成

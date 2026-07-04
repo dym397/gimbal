@@ -34,6 +34,10 @@ except ImportError:
     DEFAULT_LATITUDE = None
     DEFAULT_LONGITUDE = None
     read_gps_fix = None
+try:
+    from gimbal_vision_ranging import GimbalVisionRangingService
+except ImportError:
+    GimbalVisionRangingService = None
 # ==========================================
 # 配置
 # ==========================================
@@ -263,6 +267,22 @@ STRIKE_WINDOW_SECONDS = _env_float("STRIKE_WINDOW_SECONDS", 1.0)
 STRIKE_LEAD_TIME = _env_float("STRIKE_LEAD_TIME", 0.3)
 STRIKE_SETTLED_EVENT_TTL = _env_float("STRIKE_SETTLED_EVENT_TTL", 0.5)
 TRACK_DISTANCE_TTL = _env_float("TRACK_DISTANCE_TTL", 3.0)
+ENABLE_GIMBAL_VISION = _env_flag("ENABLE_GIMBAL_VISION", True)
+GIMBAL_CAMERA_SOURCE = os.getenv("GIMBAL_CAMERA_SOURCE", "000000008").strip()
+GIMBAL_VISION_CONFIDENCE = _env_float("GIMBAL_VISION_CONFIDENCE", 0.30)
+GIMBAL_VISION_SETTLE_DELAY = _env_float("GIMBAL_VISION_SETTLE_DELAY", 0.20)
+GIMBAL_VISION_MIN_SHARPNESS = _env_float("GIMBAL_VISION_MIN_SHARPNESS", 20.0)
+GIMBAL_VISION_RESULT_TTL = _env_float("GIMBAL_VISION_RESULT_TTL", 1.00)
+GIMBAL_VISION_ASSOCIATION_MAX_PX = _env_float(
+    "GIMBAL_VISION_ASSOCIATION_MAX_PX", 260.0
+)
+GIMBAL_VISION_AMBIGUITY_MARGIN_PX = _env_float(
+    "GIMBAL_VISION_AMBIGUITY_MARGIN_PX", 30.0
+)
+GIMBAL_VISION_TRACK_STATE_TTL = _env_float(
+    "GIMBAL_VISION_TRACK_STATE_TTL", 2.0
+)
+USE_UPSTREAM_MONO_DISTANCE = _env_flag("USE_UPSTREAM_MONO_DISTANCE", False)
 GIMBAL_PORT = _serial_port("GIMBAL_PORT", "gimbal")
 LASER_PORT = _serial_port("LASER_PORT", "laser")
 GPS_PORT = _serial_port("GPS_PORT", "gps")
@@ -287,6 +307,7 @@ AZ_PREEMPT_DEG = 0.3     # 方位轴抢占阈值，单位：度
 EL_PREEMPT_DEG = 0.8      # 俯仰轴抢占阈值，单位：度
 GIMBAL_SETTLE_THRESHOLD = 0.3
 GIMBAL_SETTLE_TIMEOUT = 2.5
+GIMBAL_SETTLE_DWELL_SECONDS = _env_float("GIMBAL_SETTLE_DWELL_SECONDS", 0.20)
 GIMBAL_THREAD_SLEEP = 0.02
 GIMBAL_PROGRESS_LOG_INTERVAL = 0.10
 LASER_LOG_INTERVAL = _env_float("LASER_LOG_INTERVAL", 1.0)
@@ -315,9 +336,14 @@ FIELD_LOG_DIR = os.getenv("FIELD_LOG_DIR", LOG_DIR)
 MEAS_FUSION_THRESHOLD_DEG = _env_float("MEAS_FUSION_THRESHOLD_DEG", 0.5)
 MEAS_FUSION_WINDOW_SECONDS = _env_float("MEAS_FUSION_WINDOW_SECONDS", 0.20)
 MAX_LOCK_LOST_FRAMES = _env_int("MAX_LOCK_LOST_FRAMES", 8)  # 判定目标丢失/锁定丢失的宽限帧数（针对多相机交替发送）
+MASTER_SWITCH_SCORE_MARGIN = _env_float("MASTER_SWITCH_SCORE_MARGIN", 2.0)
+MASTER_SWITCH_CONFIRM_SECONDS = _env_float("MASTER_SWITCH_CONFIRM_SECONDS", 0.8)
+GIMBAL_SAFE_FOV_RATIO_X = _env_float("GIMBAL_SAFE_FOV_RATIO_X", 0.60)
+GIMBAL_SAFE_FOV_RATIO_Y = _env_float("GIMBAL_SAFE_FOV_RATIO_Y", 0.60)
 
-IMG_W = 3840.0
-IMG_H = 2160.0
+# Detection-end bboxes are restored to their original 2K frame coordinates.
+IMG_W = _env_float("DETECTION_IMG_W", 2560.0)
+IMG_H = _env_float("DETECTION_IMG_H", 1440.0)
 FOV_X = 17.5
 FOV_Y = 9.9
 DEG_PER_PIXEL_X = FOV_X / IMG_W
@@ -1262,6 +1288,7 @@ def gimbal_control_thread(gimbal):
     target_el = 0.0
     cmd_start_t = 0.0
     last_progress_log_t = 0.0
+    settle_candidate_since = None
 
     while True:
         try:
@@ -1287,6 +1314,7 @@ def gimbal_control_thread(gimbal):
                 target_el = float(active_cmd["el"])#俯仰角
                 cmd_start_t = time.time()
                 last_progress_log_t = 0.0
+                settle_candidate_since = None
                 gimbal.set_attitude(elevation=target_el, azimuth=target_az)
                 with shared_state.lock:
                     shared_state.active_cmd_id = int(active_cmd["cmd_id"])#设置当前执行指令的ID
@@ -1333,6 +1361,7 @@ def gimbal_control_thread(gimbal):
                     active_cmd = newer_cmd
                     cmd_start_t = now_t
                     last_progress_log_t = 0.0
+                    settle_candidate_since = None
                     gimbal.set_attitude(elevation=target_el, azimuth=target_az)
                     with shared_state.lock:
                         shared_state.active_cmd_id = int(active_cmd["cmd_id"])
@@ -1404,6 +1433,13 @@ def gimbal_control_thread(gimbal):
                     last_progress_log_t = now_t
 
                 if err_az < GIMBAL_SETTLE_THRESHOLD and err_el < GIMBAL_SETTLE_THRESHOLD:
+                    if settle_candidate_since is None:
+                        settle_candidate_since = now_t
+                        time.sleep(GIMBAL_THREAD_SLEEP)
+                        continue
+                    if (now_t - settle_candidate_since) < GIMBAL_SETTLE_DWELL_SECONDS:
+                        time.sleep(GIMBAL_THREAD_SLEEP)
+                        continue
                     settle_dt = now_t - cmd_start_t
                     with shared_state.lock:
                         shared_state.is_settled = True
@@ -1440,7 +1476,10 @@ def gimbal_control_thread(gimbal):
 
                     # Laser readings are logged by laser_reader_thread only; distance fusion uses mono only.
                     active_cmd = None
+                    settle_candidate_since = None
                     continue
+                else:
+                    settle_candidate_since = None
 
             if (now_t - cmd_start_t) >= GIMBAL_SETTLE_TIMEOUT:
                 elapsed = now_t - cmd_start_t
@@ -1476,6 +1515,7 @@ def gimbal_control_thread(gimbal):
                 with shared_state.lock:
                     shared_state.is_settled = False
                 active_cmd = None
+                settle_candidate_since = None
                 continue
 
             time.sleep(GIMBAL_THREAD_SLEEP)
@@ -1575,6 +1615,7 @@ class StandardKalmanTrack:
         
         self.hit_streak = 1        # 连续命中次数 (用于建轨确认)
         self.time_since_update = 0 # 连丢次数
+        self.confirmed = False     # 是否已确认为合法轨迹
         
         # 历史队列 (基于 Active 状态记录)
         self.history = deque(maxlen=30)
@@ -1713,6 +1754,8 @@ class StandardKalmanTrack:
         """Active CV 与 Shadow CA 平行角度更新"""
         self.time_since_update = 0
         self.hit_streak += 1
+        if self.hit_streak >= 3:
+            self.confirmed = True
 
         # A. Active 4D CV Update
         Z = np.array([[meas_az], [meas_el]], dtype=float)
@@ -2244,8 +2287,6 @@ def main():
                 print(f"[Laser][Warn] Init failed on {LASER_PORT}: {e}")
                 laser = None
 
-    print(f"[Init] UI/Strike distance source: per-track mono distance KF (ttl={TRACK_DISTANCE_TTL:.1f}s)")
-
     # start background threads for network and gimbal control
     push_latest_gimbal_cmd({
         "cmd_id": 0,
@@ -2260,6 +2301,47 @@ def main():
     )
     threading.Thread(target=gimbal_control_thread, args=(gimbal,), daemon=True).start()
     threading.Thread(target=rk3588_thread, daemon=True).start()
+
+    vision_service = None
+    if ENABLE_GIMBAL_VISION:
+        if GimbalVisionRangingService is None:
+            print("[GimbalVision][Warn] module import failed; visual distance disabled")
+        else:
+            try:
+                vision_service = GimbalVisionRangingService(
+                    camera_source=GIMBAL_CAMERA_SOURCE,
+                    confidence=GIMBAL_VISION_CONFIDENCE,
+                    settle_delay_s=GIMBAL_VISION_SETTLE_DELAY,
+                    min_sharpness=GIMBAL_VISION_MIN_SHARPNESS,
+                    association_max_px=GIMBAL_VISION_ASSOCIATION_MAX_PX,
+                    association_ambiguity_margin_px=(
+                        GIMBAL_VISION_AMBIGUITY_MARGIN_PX
+                    ),
+                    track_state_ttl_s=GIMBAL_VISION_TRACK_STATE_TTL,
+                )
+                vision_service.start()
+                print(
+                    f"[GimbalVision] enabled camera={GIMBAL_CAMERA_SOURCE!r}, "
+                    "YOLO device=cpu, frame=2560x1440, "
+                    "dynamic-roi=640x640, association=hungarian"
+                )
+            except Exception as e:
+                vision_service = None
+                print(f"[GimbalVision][Warn] initialization failed: {e}")
+    else:
+        print("[GimbalVision] disabled by ENABLE_GIMBAL_VISION=False")
+
+    distance_mode = (
+        "gimbal camera YOLO/MLP/GRU"
+        if vision_service is not None
+        else "upstream mono compatibility"
+        if USE_UPSTREAM_MONO_DISTANCE
+        else "none"
+    )
+    print(
+        f"[Init] UI/Strike distance source: {distance_mode} "
+        f"(ttl={TRACK_DISTANCE_TTL:.1f}s)"
+    )
 
     imu = None
     last_imu_print = 0.0
@@ -2281,14 +2363,16 @@ def main():
     # 状态机与调度变量
     master_id = None
     master_epoch_ts = 0.0
-    lock_timer = 0.0
-    LOCK_DURATION = 1.5      # 锁定目标的最长驻留时间
     PREDICT_DELAY = 0.3     # 系统与物理响应总延迟 (打提前量)
     CONFIRM_HITS = 3         # 连续追踪多少帧才确认为合法目标
     MAX_DT = 0.25            # Clamp dt to avoid model divergence
     global_cmd_id = 0
     last_sent_ctrl_az = None
     last_sent_ctrl_el = None
+    challenger_id = None
+    challenger_since = 0.0
+    angle_unsafe_frames = 0
+    last_applied_vision_ts = {}
     strike_window = {
         "track_id": None,
         "distance": None,
@@ -2305,7 +2389,7 @@ def main():
     ui_send_total = 0
     ui_send_counter = Counter()  # {ui_id: send_count}
     next_ui_id = 1
-    track_to_ui_id = {}  # 只记录已经进入 UI 发送路径的主目标，不给非主目标预分配 UI ID。
+    track_to_ui_id = {}  # Allocate a stable UI ID when any valid track is first sent.
     stats_last_print = last_time
     live_last_print = last_time
     live_packet_count = 0
@@ -2434,9 +2518,11 @@ def main():
             with shared_state.lock:
                 shared_gimbal_az = shared_state.gimbal_az
                 shared_gimbal_el = shared_state.gimbal_el
+                active_gimbal_track_id = shared_state.active_track_id
                 settled_cmd_id = shared_state.settled_cmd_id
                 settled_track_id = shared_state.settled_track_id
                 settled_ts = shared_state.settled_ts
+                gimbal_is_settled = shared_state.is_settled
 
             for pkt in window_pkgs:
                 pkt_board_str = pkt.get("board", "Unknown")
@@ -2451,6 +2537,8 @@ def main():
                 for obj_raw_idx, obj_item in enumerate(parsed_objs):
                     raw_rect = obj_item["box"]
                     mono_dist = obj_item["mono_dist"]
+                    if not USE_UPSTREAM_MONO_DISTANCE:
+                        mono_dist = None
                     obj_board = obj_item.get("board") or pkt_board_str
                     obj_cam_raw = obj_item.get("cam")
                     try:
@@ -2599,16 +2687,13 @@ def main():
             # 过滤出合法的、可以被锁定的目标 (连续追踪超过 CONFIRM_HITS 次的)且没有丢失的目标 (time_since_update <= MAX_LOCK_LOST_FRAMES)
             valid_tracks = [
                 t for t in active_tracks
-                if t.hit_streak >= CONFIRM_HITS and t.time_since_update <= MAX_LOCK_LOST_FRAMES
+                if t.confirmed and t.time_since_update <= MAX_LOCK_LOST_FRAMES
             ]
 
             # --- 4. 状态机：调度决策 ---
-            # 检查当前跟踪的目标是否已经丢失
             master_track = next((t for t in valid_tracks if t.id == master_id), None)
-            selection_reason = None
             prev_master_id = master_id
             master_lost = (prev_master_id is not None and master_track is None)
-            lock_expired = (master_track is not None and lock_timer <= 0)
 
             if master_lost:
                 if PRINT_EVENT_LOGS:
@@ -2625,64 +2710,73 @@ def main():
                     "reason": "not_in_valid_tracks",
                 })
                 clear_strike_window(strike_window)
-            
-            if master_track is None or lock_timer <= 0:
-                # 状态 A：寻找/切换新目标 (SEARCHING)
-                if master_lost:
-                    selection_reason = "master_lost"
-                elif lock_expired:
-                    selection_reason = "lock_timer_expired"
-                else:
-                    selection_reason = "initial_acquire"
+                master_id = None
+                prev_master_id = None
 
-                curr_gimbal_az = shared_gimbal_az
-                curr_gimbal_el = shared_gimbal_el
-                best_track, ranked_candidates = choose_master_track(
-                    valid_tracks,
-                    curr_gimbal_az,
-                    curr_gimbal_el,
-                    master_id=master_id,
+            curr_gimbal_az = shared_gimbal_az
+            curr_gimbal_el = shared_gimbal_el
+            best_track, ranked_candidates = choose_master_track(
+                valid_tracks,
+                curr_gimbal_az,
+                curr_gimbal_el,
+                master_id=master_id,
+            )
+            selection_reason = None
+
+            if master_track is None and best_track is not None:
+                selection_reason = "master_lost" if master_lost else "initial_acquire"
+                master_track = best_track
+            elif master_track is not None and best_track is not None and best_track.id != master_track.id:
+                eval_by_id = {
+                    item["track_id"]: item for item in ranked_candidates
+                }
+                current_eval = eval_by_id.get(int(master_track.id))
+                best_eval = eval_by_id.get(int(best_track.id))
+                score_margin = (
+                    best_eval["threat_score"] - current_eval["threat_score"]
+                    if current_eval is not None and best_eval is not None
+                    else -math.inf
                 )
+                if score_margin >= MASTER_SWITCH_SCORE_MARGIN:
+                    if challenger_id != best_track.id:
+                        challenger_id = best_track.id
+                        challenger_since = curr_time
+                    elif (curr_time - challenger_since) >= MASTER_SWITCH_CONFIRM_SECONDS:
+                        selection_reason = "confirmed_higher_threat"
+                        master_track = best_track
+                else:
+                    challenger_id = None
+                    challenger_since = 0.0
+            else:
+                challenger_id = None
+                challenger_since = 0.0
 
-                if best_track:
-                    master_id = best_track.id
-                    lock_timer = LOCK_DURATION
-                    master_track = best_track
-                    if prev_master_id is None or prev_master_id != master_id:
-                        master_epoch_ts = curr_time
-                    best_eval = ranked_candidates[0]
-                    candidates_text = format_selection_candidates(ranked_candidates)
-                    if prev_master_id is None:
-                        if PRINT_EVENT_LOGS:
-                            print(
-                                f"[TargetAcquire] reason={selection_reason}, master_id={master_id}, "
-                                f"score={best_eval['threat_score']:.2f}, candidates={candidates_text}"
-                            )
-                    elif prev_master_id != master_id:
-                        clear_strike_window(strike_window)
-                        if PRINT_EVENT_LOGS:
-                            print(
-                                f"[TargetSwitch] reason={selection_reason}, from={prev_master_id}, to={master_id}, "
-                                f"score={best_eval['threat_score']:.2f}, candidates={candidates_text}"
-                            )
-                    else:
-                        if PRINT_EVENT_LOGS:
-                            print(
-                                f"[TargetKeep] reason={selection_reason}, master_id={master_id}, "
-                                f"score={best_eval['threat_score']:.2f}, candidates={candidates_text}"
-                            )
-                    field_log_event({
-                        "timestamp": f"{curr_time:.6f}",
-                        "seq": sender_seq,
-                        "mode": sender_mode,
-                        "event": (
-                            "TargetAcquire" if prev_master_id is None
-                            else "TargetSwitch" if prev_master_id != master_id
-                            else "TargetKeep"
-                        ),
-                        "track_id": int(master_id),
-                        "reason": selection_reason,
-                    })
+            if master_track is not None and (
+                master_id is None or master_track.id != master_id
+            ):
+                old_master_id = master_id
+                master_id = master_track.id
+                master_epoch_ts = curr_time
+                challenger_id = None
+                challenger_since = 0.0
+                angle_unsafe_frames = 0
+                clear_strike_window(strike_window)
+                candidates_text = format_selection_candidates(ranked_candidates)
+                event_name = "TargetAcquire" if old_master_id is None else "TargetSwitch"
+                if PRINT_EVENT_LOGS:
+                    print(
+                        f"[{event_name}] reason={selection_reason}, "
+                        f"from={old_master_id}, to={master_id}, "
+                        f"candidates={candidates_text}"
+                    )
+                field_log_event({
+                    "timestamp": f"{curr_time:.6f}",
+                    "seq": sender_seq,
+                    "mode": sender_mode,
+                    "event": event_name,
+                    "track_id": int(master_id),
+                    "reason": selection_reason,
+                })
             track_ids = [int(t.id) for t in active_tracks]
             valid_ids = [int(t.id) for t in valid_tracks]
             hit_values = [int(t.hit_streak) for t in active_tracks]
@@ -2726,21 +2820,178 @@ def main():
                     f"hits={hit_values}, "
                     f"lost={lost_values}"
                 )
+
+            vision_result = {
+                "state": "DISABLED",
+                "track_id": None,
+                "distance_valid": False,
+                "distance": float("nan"),
+                "frame_ts": 0.0,
+                "reposition_requested": False,
+                "bbox": None,
+            }
+            if vision_service is not None:
+                track_predictions = []
+                for track in valid_tracks:
+                    expected_delta_az = angular_diff(
+                        track.state[0, 0],
+                        shared_gimbal_az,
+                    )
+                    expected_delta_el = (
+                        track.state[1, 0] - shared_gimbal_el
+                    )
+                    track_predictions.append({
+                        "track_id": int(track.id),
+                        "center": (
+                            IMG_W / 2.0
+                            + expected_delta_az / FOV_X * IMG_W,
+                            IMG_H / 2.0
+                            - expected_delta_el / FOV_Y * IMG_H,
+                        ),
+                    })
+                vision_service.update_context(
+                    master_track_id=master_id,
+                    gimbal_settled=gimbal_is_settled,
+                    settled_ts=settled_ts,
+                    track_predictions=track_predictions,
+                )
+                vision_result = vision_service.get_result()
+                track_results = vision_result.get("track_results", {})
+                track_by_id = {
+                    int(track.id): track for track in valid_tracks
+                }
+                for track_id, track_result in track_results.items():
+                    track_id = int(track_id)
+                    track = track_by_id.get(track_id)
+                    if track is None:
+                        continue
+                    result_ts = float(
+                        track_result.get("frame_ts", 0.0)
+                    )
+                    vision_age = curr_time - result_ts
+                    if not (
+                        track_result.get("distance_valid")
+                        and 0.0 <= vision_age <= GIMBAL_VISION_RESULT_TTL
+                        and result_ts
+                        > last_applied_vision_ts.get(track_id, 0.0)
+                    ):
+                        continue
+                    vision_distance = _parse_positive_float(
+                        track_result.get("distance")
+                    )
+                    if vision_distance is not None:
+                        track.set_mono_distance(
+                            vision_distance,
+                            result_ts,
+                        )
+                        track.dist_source = track_result.get(
+                            "distance_source", "gimbal_yolo_gru"
+                        )
+                        last_applied_vision_ts[track_id] = result_ts
+                        vision_bbox = track_result.get("bbox")
+                        field_log_event({
+                            "timestamp": f"{curr_time:.6f}",
+                            "seq": sender_seq,
+                            "mode": sender_mode,
+                            "event": "GIMBAL_VISION_DISTANCE",
+                            "track_id": track_id,
+                            "cost": (
+                                f"{float(track_result.get('association_error_px')):.6f}"
+                                if math.isfinite(float(track_result.get(
+                                    "association_error_px", math.nan
+                                )))
+                                else ""
+                            ),
+                            "master_id": (
+                                "" if master_id is None else int(master_id)
+                            ),
+                            "is_master": 1 if track_id == master_id else 0,
+                            "distance": f"{vision_distance:.6f}",
+                            "distance_source": track.dist_source,
+                            "raw_bbox_x1": (
+                                "" if vision_bbox is None
+                                else f"{float(vision_bbox[0]):.3f}"
+                            ),
+                            "raw_bbox_y1": (
+                                "" if vision_bbox is None
+                                else f"{float(vision_bbox[1]):.3f}"
+                            ),
+                            "raw_bbox_x2": (
+                                "" if vision_bbox is None
+                                else f"{float(vision_bbox[2]):.3f}"
+                            ),
+                            "raw_bbox_y2": (
+                                "" if vision_bbox is None
+                                else f"{float(vision_bbox[3]):.3f}"
+                            ),
+                            "reason": (
+                                f"state={track_result.get('state')},"
+                                f"warmup={track_result.get('warmup_count')},"
+                                f"confidence={float(track_result.get('confidence', math.nan)):.3f}"
+                            ),
+                        })
+
+                active_track_ids = set(track_by_id)
+                for stale_track_id in list(last_applied_vision_ts):
+                    if stale_track_id not in active_track_ids:
+                        del last_applied_vision_ts[stale_track_id]
+
             # --- 5. 状态机：物理执行与测距 (LOCKED) ---
             if master_track is not None:
-                lock_timer -= dt
-
-                # A. 提取提前量预测角度
                 fut_az, fut_el = master_track.get_future_position(dt_delay=PREDICT_DELAY)
-                
-                # B. 转换为云台控制角
                 ctrl_az, ctrl_el = ui_to_ctrl_angles(fut_az, fut_el)
-                if PRINT_PHASE_LOGS:
-                    print(f"[Phase 3: 预测控制] 目标当前估算Az={master_track.state[0, 0]:.2f}°, 速度={master_track.state[2, 0]:.2f}°/s")
-                    print(f"                   -> 打提前量({PREDICT_DELAY}s后)Az={fut_az:.2f}°, El={fut_el:.2f}° | 下发云台指令: Az={ctrl_az:.2f}°, El={ctrl_el:.2f}°")
-                # C. 非阻塞下发：只推送最新控制指令给云台线程
-                need_send = True
-                if (last_sent_ctrl_az is not None) and (last_sent_ctrl_el is not None):
+
+                vision_frame_age = curr_time - float(
+                    vision_result.get("frame_ts", 0.0)
+                )
+                vision_bbox_fresh = (
+                    vision_result.get("track_id") == master_id
+                    and vision_result.get("bbox") is not None
+                    and 0.0 <= vision_frame_age <= GIMBAL_VISION_RESULT_TTL
+                )
+                reposition_reason = "none"
+                if vision_bbox_fresh:
+                    need_reposition = bool(
+                        vision_result.get("reposition_requested", False)
+                    )
+                    angle_unsafe_frames = 0
+                    if need_reposition:
+                        reposition_reason = "vision_bbox_outside_safe_zone"
+                else:
+                    delta_az = abs(
+                        angular_diff(
+                            master_track.state[0, 0],
+                            shared_gimbal_az,
+                        )
+                    )
+                    delta_el = abs(
+                        master_track.state[1, 0] - shared_gimbal_el
+                    )
+                    safe_half_az = FOV_X * GIMBAL_SAFE_FOV_RATIO_X / 2.0
+                    safe_half_el = FOV_Y * GIMBAL_SAFE_FOV_RATIO_Y / 2.0
+                    angle_safe = (
+                        delta_az <= safe_half_az
+                        and delta_el <= safe_half_el
+                    )
+                    angle_unsafe_frames = (
+                        0 if angle_safe else angle_unsafe_frames + 1
+                    )
+                    need_reposition = angle_unsafe_frames >= 3
+                    if need_reposition:
+                        reposition_reason = "global_track_outside_safe_fov"
+
+                # Do not continuously preempt a moving command. A target switch
+                # may replace the old target command, otherwise wait for settle.
+                can_issue_command = (
+                    gimbal_is_settled
+                    or active_gimbal_track_id != master_id
+                )
+                need_send = need_reposition and can_issue_command
+                if (
+                    active_gimbal_track_id == master_id
+                    and last_sent_ctrl_az is not None
+                    and last_sent_ctrl_el is not None
+                ):
                     d_az = abs(angular_diff(ctrl_az, last_sent_ctrl_az))
                     d_el = abs(ctrl_el - last_sent_ctrl_el)
                     if d_az < GIMBAL_CMD_DEADBAND_AZ and d_el < GIMBAL_CMD_DEADBAND_EL:
@@ -2748,6 +2999,12 @@ def main():
 
                 if need_send:
                     global_cmd_id += 1
+                    if vision_service is not None:
+                        vision_service.update_context(
+                            master_track_id=master_id,
+                            gimbal_settled=False,
+                            settled_ts=settled_ts,
+                        )
                     push_latest_gimbal_cmd({
                         "cmd_id": global_cmd_id,
                         "track_id": int(master_id) if master_id is not None else -1,
@@ -2768,59 +3025,58 @@ def main():
                         "gimbal_ui_el": f"{shared_gimbal_el:.6f}",
                         "target_ctrl_az": f"{ctrl_az:.6f}",
                         "target_ctrl_el": f"{ctrl_el:.6f}",
+                        "reason": reposition_reason,
                     })
+                    angle_unsafe_frames = 0
 
-                settled_age = curr_time - settled_ts
-                if (
+                vision_distance_age = curr_time - float(
+                    vision_result.get("frame_ts", 0.0)
+                )
+                strike_visual_ready = (
                     ENABLE_STRIKE_SEND
-                    and settled_cmd_id >= 0
-                    and settled_cmd_id != strike_window["last_consumed_settled_cmd_id"]
-                    and settled_track_id == master_id
-                    and settled_ts >= master_epoch_ts
-                    and 0.0 <= settled_age <= STRIKE_SETTLED_EVENT_TTL
-                ):
+                    and gimbal_is_settled
+                    and vision_result.get("track_id") == master_id
+                    and vision_result.get("distance_valid")
+                    and vision_result.get("safe")
+                    and 0.0 <= vision_distance_age <= GIMBAL_VISION_RESULT_TTL
+                )
+                if strike_visual_ready:
                     strike_dist, strike_dist_source = select_strike_distance(
                         master_track,
                         curr_time,
                         strike_window,
                     )
-                    strike_window["last_consumed_settled_cmd_id"] = settled_cmd_id
                     if strike_dist is not None:
+                        window_was_open = (
+                            strike_window["track_id"] == master_id
+                            and curr_time < strike_window["valid_until"]
+                        )
                         strike_window["track_id"] = master_id
                         strike_window["distance"] = strike_dist
                         strike_window["source"] = strike_dist_source
                         strike_window["valid_until"] = curr_time + STRIKE_WINDOW_SECONDS
-                        if PRINT_EVENT_LOGS:
+                        if PRINT_EVENT_LOGS and not window_was_open:
                             print(
-                                f"[Strike] window open cmd_id={settled_cmd_id}, "
+                                f"[Strike] visual window open "
                                 f"track_id={master_id}, source={strike_dist_source}, "
                                 f"dist={strike_dist:.2f}m, valid={STRIKE_WINDOW_SECONDS:.2f}s"
                             )
-                        field_log_event({
-                            "timestamp": f"{curr_time:.6f}",
-                            "seq": sender_seq,
-                            "mode": sender_mode,
-                            "event": "STRIKE_WINDOW_OPEN",
-                            "track_id": int(master_id),
-                            "master_id": int(master_id),
-                            "distance": f"{strike_dist:.6f}",
-                            "distance_source": strike_dist_source,
-                            "reason": f"settled_cmd_id={settled_cmd_id}",
-                        })
-                    else:
-                        field_log_event({
-                            "timestamp": f"{curr_time:.6f}",
-                            "seq": sender_seq,
-                            "mode": sender_mode,
-                            "event": "STRIKE_WINDOW_SKIP",
-                            "track_id": int(master_id),
-                            "master_id": int(master_id),
-                            "distance_source": strike_dist_source,
-                            "reason": f"no_distance_for_settled_cmd_id={settled_cmd_id}",
-                        })
+                        if not window_was_open:
+                            field_log_event({
+                                "timestamp": f"{curr_time:.6f}",
+                                "seq": sender_seq,
+                                "mode": sender_mode,
+                                "event": "STRIKE_WINDOW_OPEN",
+                                "track_id": int(master_id),
+                                "master_id": int(master_id),
+                                "distance": f"{strike_dist:.6f}",
+                                "distance_source": strike_dist_source,
+                                "reason": "fresh_gimbal_yolo_distance",
+                            })
 
                 strike_window_valid = (
-                    strike_window["track_id"] == master_id
+                    strike_visual_ready
+                    and strike_window["track_id"] == master_id
                     and master_track.time_since_update <= MAX_LOCK_LOST_FRAMES
                     and curr_time < strike_window["valid_until"]
                 )
@@ -2896,11 +3152,29 @@ def main():
                                 "reason": str(e),
                             })
 
-                # E. 向 UI 发送数据包：只发送当前正在跟踪的主目标。
-                # 追踪器内部仍保留多目标轨迹，供后续目标丢失或锁定超时时切换使用。
-                for t in (master_track,):
-                    send_dist, dist_source = select_track_distance(t, master_id, curr_time)
-                    if math.isfinite(send_dist) and dist_source.startswith("mono"):
+                # E. UI receives every valid global track. Only the current
+                # master may carry a fresh gimbal-camera distance.
+                master_distance_ready = (
+                    gimbal_is_settled
+                    and vision_result.get("track_id") == master_id
+                    and vision_result.get("distance_valid")
+                    and 0.0 <= (
+                        curr_time - float(vision_result.get("frame_ts", 0.0))
+                    ) <= GIMBAL_VISION_RESULT_TTL
+                )
+                for t in valid_tracks:
+                    if t.id == master_id and master_distance_ready:
+                        send_dist, dist_source = select_track_distance(
+                            t, master_id, curr_time
+                        )
+                    else:
+                        send_dist = float("nan")
+                        dist_source = (
+                            f"vision_{vision_result.get('state', 'unavailable').lower()}"
+                            if t.id == master_id
+                            else "non_master"
+                        )
+                    if math.isfinite(send_dist):
                         t.last_sent_dist = send_dist
 
                     map_az = relative_to_map_azimuth(t.state[0, 0])
@@ -2966,6 +3240,8 @@ def main():
         time.sleep(0.05)
     if laser is not None:
         laser.close()
+    if vision_service is not None:
+        vision_service.stop()
     if 'gimbal' in locals():
         gimbal.close()
     if FIELD_LOGGER is not None:
