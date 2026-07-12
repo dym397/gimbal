@@ -1,5 +1,39 @@
 # AGENTS.md
 
+## 2026-07-12 云台按轴重发与物理静止判定
+- 新增 `GIMBAL_VISION_DETECTION` 事件：云台YOLO每个新帧、每个原始检测框记录一条，发生在SORT回填之前；包含2K bbox/中心、相对 `(1280,720)` 的像素与归一化偏差、按 `17.5°×9.9°` 换算的方位/俯仰偏差、置信度、类别、simple ID和warmup状态。
+- `logs/20260711_222934` 已证实部分命令中俯仰到位、方位完全停留在上一位置；当前恢复 `GIMBAL_COMMAND_RETRY_INTERVAL=0.90s`，但只强制重发误差仍不小于 `GIMBAL_SETTLE_THRESHOLD` 的轴，不再无差别重发双轴。
+- `GT06ZGimbal.set_angles()` 与适配层现在允许某一轴传入 `None`；返回值包含每轴 requested/sent/ack 状态，`GIMBAL_CMD_RETRY` 日志记录重发轴及驱动结果。
+- 新增独立物理静止状态：编码器相邻反馈的 Az/El 变化均不超过 `GIMBAL_STATIONARY_DELTA_DEG=0.11°`，持续 `GIMBAL_STATIONARY_DWELL_SECONDS=0.35s` 后置为 stationary。
+- `is_settled` 仍表示两轴均到达命令误差 `<0.3°`，继续作为打击端安全条件；stationary 只表示画面稳定，供云台 YOLO/测距、UI距离新鲜度和下一次安全视场重定位使用。
+- 云台不会为目标每次小幅移动而动作：目标位于中央60%安全视场内时保持不动；连续3帧越出安全区才允许重定位，物理运动期间同目标不连续抢占，目标切换仍可替换命令。
+- 已补齐 `MockGimbalAdapter` 的独立轴/`force` 兼容接口。端到端640坐标模拟中4个阶段角度误差均为0，中央安全区内没有新增命令，初始化与3条目标命令全部到位且0次超时；故障注入丢弃首次Az后在0.906秒只重发Az并最终 settled/stationary。
+- 真实GT06Z小范围回归已完成：5阶段640坐标误差为0（日志舍入上限 `5e-7°`）；初始化与3条目标命令全部 `GIMBAL_SETTLED`，0次超时，每次随后均出现 `GIMBAL_STATIONARY`；安全区内阶段没有新增命令。垂直阶段出现1次仅El重发并最终到位。多条Az/El命令虽未收到ACK但姿态仍执行，故ACK只作诊断，重发继续依据实际姿态误差。测试结束已回到初始化容差内，服务保持 `inactive`。
+
+## 2026-07-11 增量说明
+- 当前板端仓库为 `/home/linaro/gimbal`，板端地址已变更为 `linaro@192.168.40.154`；开发机的 `~/.ssh/id_ed25519.pub` 已追加到板端 `~/.ssh/authorized_keys`，可直接执行 `ssh linaro@192.168.40.154` 免密登录。仓库文档中不保存口令。
+- SORT 关联与 UI 状态安全性已补强：
+  - UI 状态包从每条轨迹自身的最后检测记录读取 `board/cam/logic_id`，不再复用融合窗口最后一个 UDP 包的来源。
+  - 关联门限增加 `TRACK_ASSOCIATION_MAX_DEG` 硬上限，协方差增长不能把匹配范围放大到 `10°~20°`。
+  - 丢失超过 `TRACK_REACQUIRE_STRICT_AFTER_SECONDS` 的轨迹使用 `TRACK_REACQUIRE_MAX_DEG` 严格重关联门限；内部仍可由 `TRACK_MAX_LOST_SECONDS` 保留，但不会无限放宽匹配。
+  - 匈牙利算法前先做门控，不可能的轨迹-检测组合使用 `ASSOCIATION_BLOCKED_COST` 标记为不可匹配。
+  - UI 使用更严格的 `UI_MAX_LOST_SECONDS` 隐藏陈旧预测；内部轨迹保留和外部 UI/控制有效期不再混为一体。
+- 云台视觉测距流程已从“先绑定 SORT、再积累 25 帧”改为“先独立测距、再回填 SORT”：
+  1. 云台运动期间不执行 YOLO；云台停稳并通过原有延迟/清晰度条件后开始检测。
+  2. simple 模式检测当前画面内的全部 YOLO 目标，不再只选画面中心最近目标。
+  3. YOLO 目标先通过轻量画面内临时 ID 维持连续性；该 ID 只服务于区分各目标的 25 帧缓冲区，不读取或依赖 SORT 轨迹。
+  4. 每个临时目标拥有独立 `_DistanceRuntime`，分别执行既有物理距离、MLP 和 25 帧 GRU 链路；距离模型内部算法没有修改。
+  5. 每帧测距 runtime 更新完成后，`main_tracking_v9.py` 才将测距结果的画面位置与当前 SORT 预测位置做带硬门限的一对一匹配。
+  6. 只有 `distance_valid=True` 的新鲜结果会通过 `set_mono_distance()` 写入对应 SORT 轨迹；UI 与打击端继续从统一轨迹结果读取距离。
+- 关键语义：测距后的 SORT 回填失败只影响“本次距离写给哪条轨迹”，不会阻止或清空该画面目标的 25 帧测距积累；后续帧仍会继续测距并再次尝试回填。
+- 当前验证结果：
+  - `python3 -m py_compile core/gimbal_vision_ranging.py core/main_tracking_v9.py` 已通过。
+  - 两目标模拟验证中，两个独立缓冲区均累计到 `25/25`，未向测距缓冲流程提供任何 SORT 输入。
+  - 两个 `_DistanceRuntime` 的 `sequence_length` 均为 `25`，共享只读模型资产，但各自保留独立时序状态。
+  - `tests/test_tracker_safety.py` 中 6 个测试已通过直接调用验证；板端当前未安装 `pytest`。
+- 尚待完成：使用真实云台、相机和悬停目标做端到端回归，重点核查多目标 YOLO 稳定性、25 帧预热耗时、测距结果到 SORT 的回填成功率、UI/打击端距离与目标 ID 一致性。当前没有启动真实硬件主程序进行本轮验证。
+- 本轮修改没有改变外部 UDP/UI 协议、`distance_model` 内部算法、云台控制线程所有权、抢占/到位逻辑或打击安全条件。
+
 ## 2026-05-30 增量说明
 - UI 目标状态包中的 `azimuth` 已从“设备自身坐标系方位角”改为“地图绝对方位角”。
 - 新增 `DEVICE_HEADING_DEG`，表示设备自身 `0°` 方向在地图上的绝对方位：正北 `0°`、正东 `90°`、正南 `180°`、正西 `270°`。

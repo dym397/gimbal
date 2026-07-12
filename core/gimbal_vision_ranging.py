@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Gimbal-camera YOLO ranging service.
 
@@ -982,10 +982,9 @@ class _LatestFrameCamera:
 class GimbalVisionRangingService:
     """CPU-only multi-target stop-and-measure service.
 
-    SORT tracks are projected into gimbal-camera pixels by the main thread.
-    This service detects every target covered by the dynamic ROIs, performs a
-    one-to-one Hungarian assignment, and keeps an independent distance-model
-    temporal state for every SORT track_id.
+    In simple mode, detections are buffered by temporary image-space IDs and
+    ranged independently of SORT. The main thread associates completed ranging
+    results back to SORT tracks afterwards.
     """
 
     def __init__(
@@ -1019,6 +1018,33 @@ class GimbalVisionRangingService:
         self.association_ambiguity_margin_px = max(
             0.0, float(association_ambiguity_margin_px)
         )
+        self.simple_mode = os.getenv(
+            "GIMBAL_VISION_SIMPLE_MODE", "1"
+        ).strip().lower() not in ("0", "false", "no", "off")
+        if self.simple_mode:
+            print(
+                "[GimbalVision] simple ranging mode enabled: "
+                "YOLO buffers are independent of SORT; ranging is associated afterwards"
+            )
+        self.simple_association_max_px = max(
+            20.0,
+            # Temporary single-target diagnostic default. Override with the
+            # environment variable before multi-target operation.
+            float(os.getenv("GIMBAL_VISION_SIMPLE_ASSOC_MAX_PX", "3000")),
+        )
+        # Reuse the frame already owned by this service. Do not open the V4L2
+        # device in a separate preview process.
+        self.preview_enabled = os.getenv(
+            "GIMBAL_VISION_PREVIEW", "0"
+        ).strip().lower() not in ("0", "false", "no", "off")
+        self.preview_window_name = os.getenv(
+            "GIMBAL_VISION_PREVIEW_WINDOW", "Gimbal YOLO preview"
+        ).strip() or "Gimbal YOLO preview"
+        self.preview_max_width = max(
+            320, int(os.getenv("GIMBAL_VISION_PREVIEW_MAX_WIDTH", "1280"))
+        )
+        self.preview_initialized = False
+        self.preview_error_reported = False
         self.track_state_ttl_s = max(0.5, float(track_state_ttl_s))
         self.lock = threading.Lock()
         self.stop_event = threading.Event()
@@ -1029,9 +1055,12 @@ class GimbalVisionRangingService:
         self.settled_ts = 0.0
         self.track_predictions: dict[int, np.ndarray] = {}
         self.track_states: dict[int, dict] = {}
+        self.simple_track_states: dict[int, dict] = {}
+        self.simple_next_track_id = 1
         self.last_processed_frame_seq = -1
         self.result = self._empty_result("IDLE")
         self.result["track_results"] = {}
+        self.result["simple_measurements"] = []
 
     @staticmethod
     def _empty_result(state: str, track_id=None) -> dict:
@@ -1061,6 +1090,12 @@ class GimbalVisionRangingService:
 
     def start(self) -> None:
         self.camera.start()
+        if self.preview_enabled:
+            print(
+                f"[GimbalVision] local preview enabled: "
+                f"window={self.preview_window_name!r}, "
+                f"max_width={self.preview_max_width}"
+            )
         self.thread = threading.Thread(
             target=self._run,
             name="gimbal-vision-ranging",
@@ -1073,6 +1108,84 @@ class GimbalVisionRangingService:
         if self.thread is not None:
             self.thread.join(timeout=2.0)
         self.camera.stop()
+        if self.preview_initialized:
+            try:
+                cv2.destroyWindow(self.preview_window_name)
+                cv2.waitKey(1)
+            except cv2.error:
+                pass
+
+    def _show_preview(self, frame, result: dict | None = None) -> None:
+        """Show the raw gimbal camera with raw YOLO and ranging state."""
+        if not self.preview_enabled or frame is None:
+            return
+        try:
+            canvas = frame.copy()
+            result = result or {}
+            for detection in result.get("simple_detections", []):
+                box = detection.get("bbox")
+                if not isinstance(box, (list, tuple)) or len(box) != 4:
+                    continue
+                x1, y1, x2, y2 = (int(round(float(v))) for v in box)
+                cv2.rectangle(canvas, (x1, y1), (x2, y2), (0, 220, 255), 2)
+                cv2.putText(
+                    canvas,
+                    f"YOLO {float(detection.get('confidence', 0.0)):.2f}",
+                    (x1, max(24, y1 - 8)), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.75, (0, 220, 255), 2, cv2.LINE_AA,
+                )
+            for measurement in result.get("simple_measurements", []):
+                box = measurement.get("bbox")
+                if not isinstance(box, (list, tuple, np.ndarray)) or len(box) != 4:
+                    continue
+                x1, y1, x2, y2 = (int(round(float(v))) for v in box)
+                valid = bool(measurement.get("distance_valid", False))
+                color = (40, 220, 40) if valid else (0, 80, 255)
+                cv2.rectangle(canvas, (x1, y1), (x2, y2), color, 3)
+                warmup = int(measurement.get("warmup_count", 0))
+                label = f"id={measurement.get('simple_id', '?')} warmup={warmup}/25"
+                if valid:
+                    label += f" {float(measurement.get('distance', math.nan)):.1f}m"
+                elif measurement.get("reason"):
+                    label += f" {measurement['reason']}"
+                cv2.putText(
+                    canvas, label, (x1, min(FRAME_H - 12, y2 + 26)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.72, color, 2, cv2.LINE_AA,
+                )
+            state = str(result.get("state", "LIVE"))
+            count = int(result.get("detection_count", 0))
+            cv2.rectangle(canvas, (0, 0), (1450, 48), (0, 0, 0), -1)
+            cv2.putText(
+                canvas, f"Gimbal camera | state={state} | YOLO={count} | q: close preview",
+                (16, 34), cv2.FONT_HERSHEY_SIMPLEX, 0.85,
+                (255, 255, 255), 2, cv2.LINE_AA,
+            )
+            if not self.preview_initialized:
+                cv2.namedWindow(self.preview_window_name, cv2.WINDOW_NORMAL)
+                cv2.resizeWindow(
+                    self.preview_window_name, self.preview_max_width,
+                    int(self.preview_max_width * FRAME_H / FRAME_W),
+                )
+                self.preview_initialized = True
+            scale = min(1.0, self.preview_max_width / float(canvas.shape[1]))
+            if scale < 1.0:
+                canvas = cv2.resize(canvas, None, fx=scale, fy=scale,
+                                    interpolation=cv2.INTER_AREA)
+            cv2.imshow(self.preview_window_name, canvas)
+            if (cv2.waitKey(1) & 0xFF) in (ord("q"), 27):
+                self.preview_enabled = False
+                cv2.destroyWindow(self.preview_window_name)
+                self.preview_initialized = False
+                print("[GimbalVision] local preview closed by user")
+        except cv2.error as exc:
+            if not self.preview_error_reported:
+                print(f"[GimbalVision][Warn] local preview disabled: {exc}")
+                self.preview_error_reported = True
+            self.preview_enabled = False
+
+    def _show_latest_preview(self, state: str) -> None:
+        frame, _, _ = self.camera.latest()
+        self._show_preview(frame, {"state": state})
 
     def update_context(
         self,
@@ -1130,6 +1243,9 @@ class GimbalVisionRangingService:
                     else "GIMBAL_NOT_SETTLED"
                 )
                 self.result["track_results"] = {}
+                self.result["simple_measurements"] = []
+                self.simple_track_states.clear()
+                self.simple_next_track_id = 1
 
     def get_result(self) -> dict:
         with self.lock:
@@ -1140,6 +1256,10 @@ class GimbalVisionRangingService:
                     "track_results", {}
                 ).items()
             }
+            result["simple_measurements"] = [
+                self._copy_track_result(item)
+                for item in self.result.get("simple_measurements", [])
+            ]
             return result
 
     def _state_for(self, track_id: int, now_t: float) -> dict:
@@ -1169,6 +1289,150 @@ class GimbalVisionRangingService:
                 continue
             if now_t - state["last_context_ts"] > self.track_state_ttl_s:
                 del self.track_states[track_id]
+
+    def _simple_state_for(self, simple_id: int, now_t: float) -> dict:
+        state = self.simple_track_states.get(simple_id)
+        if state is None:
+            if self._spare_distance_runtime is not None:
+                distance = self._spare_distance_runtime
+                self._spare_distance_runtime = None
+            else:
+                distance = _DistanceRuntime()
+            state = {
+                "distance": distance,
+                "last_box": None,
+                "last_center": None,
+                "last_center_ts": 0.0,
+                "center_velocity": np.zeros(2, dtype=np.float32),
+                "class_id": None,
+                "missing_frames": 0,
+                "last_context_ts": now_t,
+            }
+            self.simple_track_states[simple_id] = state
+        state["last_context_ts"] = now_t
+        return state
+
+    def _prune_simple_states(self, now_t: float) -> None:
+        for simple_id, state in list(self.simple_track_states.items()):
+            if now_t - state["last_context_ts"] > self.track_state_ttl_s:
+                del self.simple_track_states[simple_id]
+
+    def _associate_simple_detections(
+        self,
+        detections: list[dict],
+        frame_ts: float,
+    ) -> tuple[dict[int, tuple[int, float]], set[int]]:
+        """Associate YOLO detections only to image-space ranging buffers."""
+        candidate_ids = [
+            simple_id
+            for simple_id, state in self.simple_track_states.items()
+            if state.get("last_center") is not None
+        ]
+        if not candidate_ids or not detections:
+            return {}, set(range(len(detections)))
+
+        invalid_cost = self.simple_association_max_px * 10.0
+        cost_matrix = np.full(
+            (len(candidate_ids), len(detections)),
+            invalid_cost,
+            dtype=np.float32,
+        )
+        center_distances = np.full_like(cost_matrix, np.inf)
+        for state_index, simple_id in enumerate(candidate_ids):
+            state = self.simple_track_states[simple_id]
+            predicted_center = state["last_center"]
+            dt = float(
+                np.clip(frame_ts - state["last_center_ts"], 0.0, 0.5)
+            )
+            predicted_center = (
+                predicted_center + state["center_velocity"] * dt
+            )
+            for detection_index, detection in enumerate(detections):
+                if (
+                    state.get("class_id") is not None
+                    and int(detection["class_id"]) != int(state["class_id"])
+                ):
+                    continue
+                center_distance = float(
+                    np.linalg.norm(detection["center"] - predicted_center)
+                )
+                center_distances[state_index, detection_index] = center_distance
+                if center_distance > self.simple_association_max_px:
+                    continue
+                previous_box = state.get("last_box")
+                iou = (
+                    0.0
+                    if previous_box is None
+                    else self._bbox_iou(previous_box, detection["box"])
+                )
+                cost_matrix[state_index, detection_index] = (
+                    center_distance + (1.0 - iou) * 30.0
+                )
+
+        state_indices, detection_indices = linear_sum_assignment(cost_matrix)
+        matches = {}
+        unmatched_detection_indices = set(range(len(detections)))
+        for state_index, detection_index in zip(
+            state_indices, detection_indices
+        ):
+            center_distance = float(
+                center_distances[state_index, detection_index]
+            )
+            if center_distance > self.simple_association_max_px:
+                continue
+            simple_id = candidate_ids[state_index]
+            matches[simple_id] = (detection_index, center_distance)
+            unmatched_detection_indices.discard(detection_index)
+        return matches, unmatched_detection_indices
+
+    def _simple_measurement_result(
+        self,
+        simple_id: int,
+        detection: dict,
+        association_error_px: float,
+        frame_ts: float,
+    ) -> dict:
+        state = self._simple_state_for(simple_id, frame_ts)
+        previous_center = state["last_center"]
+        previous_center_ts = state["last_center_ts"]
+        if previous_center is not None and previous_center_ts > 0.0:
+            dt = frame_ts - previous_center_ts
+            if 1e-3 <= dt <= 1.0:
+                measured_velocity = (
+                    detection["center"] - previous_center
+                ) / dt
+                state["center_velocity"] = (
+                    0.6 * state["center_velocity"]
+                    + 0.4 * measured_velocity
+                ).astype(np.float32)
+        state["last_box"] = detection["box"].copy()
+        state["last_center"] = detection["center"].copy()
+        state["last_center_ts"] = frame_ts
+        state["class_id"] = int(detection["class_id"])
+        state["missing_frames"] = 0
+
+        measurement = state["distance"].update(detection, frame_ts)
+        distance_valid = bool(measurement.get("valid", False))
+        box = detection["box"]
+        return {
+            "state": "MEASURING" if distance_valid else "WARMING",
+            "track_id": simple_id,
+            "simple_id": simple_id,
+            "bbox": [float(value) for value in box],
+            "center": [float(value) for value in detection["center"]],
+            "confidence": float(detection["confidence"]),
+            "class_id": int(detection["class_id"]),
+            "distance": float(measurement.get("distance", math.nan)),
+            "distance_source": measurement.get("source", "none"),
+            "distance_valid": distance_valid,
+            "warmup_count": int(measurement.get("warmup_count", 0)),
+            "frame_ts": frame_ts,
+            "sharpness": float(detection.get("sharpness", math.nan)),
+            "safe": self._is_safe(box),
+            "reposition_requested": False,
+            "association_error_px": float(association_error_px),
+            "reason": measurement.get("reason", ""),
+        }
 
     @staticmethod
     def _roi_origin(center) -> tuple[int, int]:
@@ -1267,6 +1531,20 @@ class GimbalVisionRangingService:
                 if origin not in origins:
                     origins.append(origin)
         return origins
+
+    def _build_simple_roi_origins(self) -> list[tuple[int, int]]:
+        """Use a fixed coverage grid when simple ranging is decoupled from SORT."""
+        if self.detector.backend == "rknn":
+            return [(0, 0)]
+
+        step = max(160, ROI_SIZE - 160)
+        xs = list(range(0, FRAME_W - ROI_SIZE + 1, step))
+        ys = list(range(0, FRAME_H - ROI_SIZE + 1, step))
+        if xs[-1] != FRAME_W - ROI_SIZE:
+            xs.append(FRAME_W - ROI_SIZE)
+        if ys[-1] != FRAME_H - ROI_SIZE:
+            ys.append(FRAME_H - ROI_SIZE)
+        return [(x, y) for y in ys for x in xs]
 
     def _deduplicate_detections(self, detections: list[dict]) -> list[dict]:
         kept: list[dict] = []
@@ -1592,9 +1870,10 @@ class GimbalVisionRangingService:
         predictions: dict[int, np.ndarray],
     ) -> dict:
         active_ids = set(predictions)
-        self._prune_track_states(active_ids, frame_ts)
-        for track_id in active_ids:
-            self._state_for(track_id, frame_ts)
+        if not self.simple_mode:
+            self._prune_track_states(active_ids, frame_ts)
+            for track_id in active_ids:
+                self._state_for(track_id, frame_ts)
 
         if frame.shape[:2] != (FRAME_H, FRAME_W):
             reason = (
@@ -1619,9 +1898,113 @@ class GimbalVisionRangingService:
                 "track_results": track_results,
                 "detection_count": 0,
                 "matched_count": 0,
+                "unmatched_detection_count": 0,
+                "visible_track_count": 0,
+                "active_track_count": len(active_ids),
                 "roi_count": 0,
+                "sharp_roi_count": 0,
+                "matched_track_ids": [],
+                "ambiguous_track_ids": [],
+                "unmatched_track_ids": sorted(int(x) for x in active_ids),
+                "unmatched_detections": [],
             }
 
+        if self.simple_mode:
+            simple_roi_origins = self._build_simple_roi_origins()
+            detections, max_sharpness, sharp_roi_count = self._detect_all(
+                frame, simple_roi_origins
+            )
+            self._prune_simple_states(frame_ts)
+            matches, unmatched_detection_indices = (
+                self._associate_simple_detections(detections, frame_ts)
+            )
+
+            simple_measurements = []
+            matched_simple_ids = set()
+            for simple_id, (detection_index, assoc_err) in matches.items():
+                result = self._simple_measurement_result(
+                    simple_id,
+                    detections[detection_index],
+                    assoc_err,
+                    frame_ts,
+                )
+                simple_measurements.append(result)
+                matched_simple_ids.add(simple_id)
+
+            for simple_id, state in self.simple_track_states.items():
+                if simple_id in matched_simple_ids:
+                    continue
+                state["missing_frames"] += 1
+                state["distance"].mark_missing(frame_ts)
+
+            for detection_index in sorted(unmatched_detection_indices):
+                simple_id = self.simple_next_track_id
+                self.simple_next_track_id += 1
+                result = self._simple_measurement_result(
+                    simple_id,
+                    detections[detection_index],
+                    0.0,
+                    frame_ts,
+                )
+                simple_measurements.append(result)
+                matched_simple_ids.add(simple_id)
+
+            if simple_measurements:
+                master_result = dict(simple_measurements[0])
+            else:
+                master_result = {
+                    **self._empty_result(
+                        "ACQUIRE" if master_track_id is not None else "IDLE",
+                        master_track_id,
+                    ),
+                    "frame_ts": frame_ts,
+                    "reason": (
+                        "SIMPLE_MODE_NO_DETECTION"
+                        if len(detections) == 0
+                        else "SIMPLE_MODE_NO_MASTER"
+                    ),
+                }
+
+            unmatched_detection_preview = []
+            all_detections = []
+            for detection in detections:
+                box = detection["box"]
+                center = detection["center"]
+                all_detections.append({
+                    "bbox": [
+                        float(box[0]),
+                        float(box[1]),
+                        float(box[2]),
+                        float(box[3]),
+                    ],
+                    "center": [float(center[0]), float(center[1])],
+                    "confidence": float(detection.get("confidence", math.nan)),
+                    "class_id": int(detection.get("class_id", -1)),
+                    "sharpness": float(detection.get("sharpness", math.nan)),
+                })
+
+            return {
+                **master_result,
+                "track_results": {},
+                "simple_measurements": simple_measurements,
+                "detection_count": len(detections),
+                "matched_count": len(simple_measurements),
+                "unmatched_detection_count": 0,
+                "visible_track_count": len(matched_simple_ids),
+                "active_track_count": len(self.simple_track_states),
+                "roi_count": len(simple_roi_origins),
+                "sharp_roi_count": sharp_roi_count,
+                "matched_track_ids": sorted(matched_simple_ids),
+                "ambiguous_track_ids": [],
+                "unmatched_track_ids": [
+                    int(simple_id)
+                    for simple_id in self.simple_track_states
+                    if simple_id not in matched_simple_ids
+                ],
+                "unmatched_detections": unmatched_detection_preview,
+                "simple_detections": all_detections,
+                "simple_association_max_px": self.simple_association_max_px,
+            }
         visible_predictions = self._visible_predictions(predictions)
         roi_origins = self._build_roi_origins(
             visible_predictions, master_track_id
@@ -1629,11 +2012,31 @@ class GimbalVisionRangingService:
         detections, max_sharpness, sharp_roi_count = self._detect_all(
             frame, roi_origins
         )
-        matches, _, ambiguous_track_ids = self._associate(
+        matches, unmatched_detection_indices, ambiguous_track_ids = self._associate(
             visible_predictions,
             detections,
             frame_ts,
         )
+        unmatched_detection_preview = []
+        for detection_index in sorted(
+            unmatched_detection_indices,
+            key=lambda idx: float(detections[idx].get("confidence", 0.0)),
+            reverse=True,
+        )[:5]:
+            detection = detections[detection_index]
+            box = detection["box"]
+            center = detection["center"]
+            unmatched_detection_preview.append({
+                "bbox": [
+                    float(box[0]),
+                    float(box[1]),
+                    float(box[2]),
+                    float(box[3]),
+                ],
+                "center": [float(center[0]), float(center[1])],
+                "confidence": float(detection.get("confidence", math.nan)),
+                "class_id": int(detection.get("class_id", -1)),
+            })
 
         track_results = {}
         for track_id in active_ids:
@@ -1687,7 +2090,19 @@ class GimbalVisionRangingService:
             "track_results": track_results,
             "detection_count": len(detections),
             "matched_count": len(matches),
+            "unmatched_detection_count": len(unmatched_detection_indices),
+            "visible_track_count": len(visible_predictions),
+            "active_track_count": len(active_ids),
             "roi_count": len(roi_origins),
+            "sharp_roi_count": sharp_roi_count,
+            "matched_track_ids": sorted(int(x) for x in matches),
+            "ambiguous_track_ids": sorted(int(x) for x in ambiguous_track_ids),
+            "unmatched_track_ids": sorted(
+                int(track_id)
+                for track_id in visible_predictions
+                if track_id not in matches
+            ),
+            "unmatched_detections": unmatched_detection_preview,
         }
 
     def _run(self) -> None:
@@ -1706,6 +2121,7 @@ class GimbalVisionRangingService:
                 with self.lock:
                     self.result = self._empty_result("IDLE")
                     self.result["track_results"] = {}
+                self._show_latest_preview("IDLE")
                 time.sleep(0.02)
                 continue
 
@@ -1718,6 +2134,7 @@ class GimbalVisionRangingService:
                         "reason": "GIMBAL_NOT_SETTLED",
                         "track_results": {},
                     }
+                self._show_latest_preview("GIMBAL_MOVING")
                 time.sleep(0.02)
                 continue
 
@@ -1737,6 +2154,7 @@ class GimbalVisionRangingService:
                         "reason": "POST_SETTLE_DELAY",
                         "track_results": {},
                     }
+                self._show_preview(frame, {"state": "SETTLING"})
                 continue
 
             result = self._process_frame(
@@ -1745,24 +2163,53 @@ class GimbalVisionRangingService:
                 master_track_id,
                 predictions,
             )
+            self._show_preview(frame, result)
             with self.lock:
                 if self.gimbal_settled:
                     current_master_id = self.master_track_id
                     track_results = result["track_results"]
-                    master_result = track_results.get(
-                        current_master_id,
-                        {
-                            **self._empty_result(
-                                "ACQUIRE", current_master_id
-                            ),
-                            "frame_ts": frame_ts,
-                            "reason": "TARGET_MISSING",
-                        },
-                    )
+                    if self.simple_mode:
+                        master_result = result
+                    else:
+                        master_result = track_results.get(
+                            current_master_id,
+                            {
+                                **self._empty_result(
+                                    "ACQUIRE", current_master_id
+                                ),
+                                "frame_ts": frame_ts,
+                                "reason": "TARGET_MISSING",
+                            },
+                        )
                     self.result = {
                         **master_result,
                         "track_results": track_results,
+                        "simple_measurements": result.get(
+                            "simple_measurements", []
+                        ),
                         "detection_count": result["detection_count"],
                         "matched_count": result["matched_count"],
+                        "unmatched_detection_count": result.get(
+                            "unmatched_detection_count", 0
+                        ),
+                        "visible_track_count": result.get(
+                            "visible_track_count", 0
+                        ),
+                        "active_track_count": result.get(
+                            "active_track_count", 0
+                        ),
                         "roi_count": result["roi_count"],
+                        "sharp_roi_count": result.get("sharp_roi_count", 0),
+                        "matched_track_ids": result.get(
+                            "matched_track_ids", []
+                        ),
+                        "ambiguous_track_ids": result.get(
+                            "ambiguous_track_ids", []
+                        ),
+                        "unmatched_track_ids": result.get(
+                            "unmatched_track_ids", []
+                        ),
+                        "unmatched_detections": result.get(
+                            "unmatched_detections", []
+                        ),
                     }

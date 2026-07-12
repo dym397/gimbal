@@ -120,18 +120,48 @@ class MockGimbalAdapter(GimbalBase):
             return float(angle)
         return round(float(angle) / self.repeatability_deg) * self.repeatability_deg
 
-    def set_attitude(self, elevation: float, azimuth: float, read_status: bool = False):
-        new_el = self._snap_to_repeatability(_clamp(float(elevation), self.el_min, self.el_max))
-        new_az = self._snap_to_repeatability(_clamp(float(azimuth), self.az_min, self.az_max))
+    def set_attitude(
+        self,
+        elevation=None,
+        azimuth=None,
+        read_status: bool = False,
+        force: bool = False,
+    ):
+        """Mirror the real adapter API, including independent-axis retries."""
+        status = {
+            "el_requested": elevation is not None,
+            "az_requested": azimuth is not None,
+            "el_sent": elevation is not None,
+            "az_sent": azimuth is not None,
+            "el_ack": elevation is not None,
+            "az_ack": azimuth is not None,
+            "reason": "mock",
+        }
+        if elevation is None and azimuth is None:
+            status["reason"] = "no_axis_requested"
+            return status
+
+        new_el = self.target_el
+        if elevation is not None:
+            new_el = self._snap_to_repeatability(
+                _clamp(float(elevation), self.el_min, self.el_max)
+            )
+        new_az = self.target_az
+        if azimuth is not None:
+            new_az = self._snap_to_repeatability(
+                _clamp(float(azimuth), self.az_min, self.az_max)
+            )
 
         if (
             abs(new_el - self.target_el) < self.cmd_deadband_deg
             and abs(new_az - self.target_az) < self.cmd_deadband_deg
         ):
-            return
+            status["reason"] = "deadband"
+            return status
 
         self.target_el = new_el
         self.target_az = new_az
+        return status
 
     def get_attitude(self) -> Optional[Tuple[float, float, float]]:
         now = time.time()

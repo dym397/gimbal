@@ -51,7 +51,7 @@ def _platform_serial_defaults():
             "gps": "COM8",
         }
     return {
-        "gimbal": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.3:1.0-port0",
+        "gimbal": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4:1.0-port0",
         "laser": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-port0",
         "imu": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.2:1.0-port0",
         "gps": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2:1.0-port0",
@@ -260,7 +260,7 @@ UI_IP = os.getenv("UI_IP", "192.168.0.200")
 UI_PORT = int(os.getenv("UI_PORT", "9999"))
 LOCAL_PORT = int(os.getenv("LOCAL_PORT", "8888"))
 WINDOWS_GIMBAL_CAMERA_SOURCE = "000000008"
-LINUX_GIMBAL_CAMERA_SOURCE = "/dev/v4l/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.1:1.0-video-index0"
+LINUX_GIMBAL_CAMERA_SOURCE = "/dev/v4l/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-video-index0"
 ENABLE_STRIKE_SEND = _env_flag("ENABLE_STRIKE_SEND", False)
 STRIKE_IP = os.getenv("STRIKE_IP", "192.168.0.80")
 STRIKE_PORT = int(os.getenv("STRIKE_PORT", "10123"))
@@ -274,7 +274,7 @@ GIMBAL_CAMERA_SOURCE = os.getenv(
     "GIMBAL_CAMERA_SOURCE",
     WINDOWS_GIMBAL_CAMERA_SOURCE if os.name == "nt" else LINUX_GIMBAL_CAMERA_SOURCE,
 ).strip()
-GIMBAL_VISION_CONFIDENCE = _env_float("GIMBAL_VISION_CONFIDENCE", 0.15)
+GIMBAL_VISION_CONFIDENCE = _env_float("GIMBAL_VISION_CONFIDENCE", 0.30)
 GIMBAL_VISION_SETTLE_DELAY = _env_float("GIMBAL_VISION_SETTLE_DELAY", 0.20)
 GIMBAL_VISION_MIN_SHARPNESS = _env_float("GIMBAL_VISION_MIN_SHARPNESS", 20.0)
 GIMBAL_VISION_RESULT_TTL = _env_float("GIMBAL_VISION_RESULT_TTL", 1.00)
@@ -287,7 +287,6 @@ GIMBAL_VISION_AMBIGUITY_MARGIN_PX = _env_float(
 GIMBAL_VISION_TRACK_STATE_TTL = _env_float(
     "GIMBAL_VISION_TRACK_STATE_TTL", 2.0
 )
-USE_UPSTREAM_MONO_DISTANCE = _env_flag("USE_UPSTREAM_MONO_DISTANCE", False)
 GIMBAL_PORT = _serial_port("GIMBAL_PORT", "gimbal")
 LASER_PORT = _serial_port("LASER_PORT", "laser")
 GPS_PORT = _serial_port("GPS_PORT", "gps")
@@ -304,8 +303,11 @@ GPS_STATUS_INTERVAL = 5.0
 GPS_UI_SEND_INTERVAL = 10.0
 GPS_DEBUG_RAW = _env_flag("GPS_DEBUG_RAW", False)
 DEVICE_HEADING_DEG = _env_float("DEVICE_HEADING_DEG", 180) % 360.0  # 设备自身0度方向的地图方位：北0/东90/南180
+# GIMBAL_AZ_BASE = 57.4  # 云台水平基准角（UI绝对方位 0° 映射到控制角的基准）
+# GIMBAL_INIT_EL = -0.4  # 启动时俯仰归位角，目标通常从该方向进入
+#测试版本基准角度
 GIMBAL_AZ_BASE = 59.3  # 云台水平基准角（UI绝对方位 0° 映射到控制角的基准）
-GIMBAL_INIT_EL = 0.0  # 启动时俯仰归位角，目标通常从该方向进入
+GIMBAL_INIT_EL = -0.4# 启动时俯仰归位角，目标通常从该方向进入
 GIMBAL_CMD_DEADBAND_AZ = 0.20
 GIMBAL_CMD_DEADBAND_EL = 0.12
 AZ_PREEMPT_DEG = 0.3     # 方位轴抢占阈值，单位：度
@@ -314,6 +316,12 @@ GIMBAL_SETTLE_THRESHOLD = 0.3
 GIMBAL_SETTLE_TIMEOUT = 2.5
 GIMBAL_SETTLE_DWELL_SECONDS = _env_float("GIMBAL_SETTLE_DWELL_SECONDS", 0.20)
 GIMBAL_THREAD_SLEEP = 0.02
+GIMBAL_QUERY_AFTER_CMD_DELAY = _env_float("GIMBAL_QUERY_AFTER_CMD_DELAY", 0.80)
+GIMBAL_COMMAND_RETRY_INTERVAL = _env_float("GIMBAL_COMMAND_RETRY_INTERVAL", 0.90)
+GIMBAL_STATIONARY_DELTA_DEG = _env_float("GIMBAL_STATIONARY_DELTA_DEG", 0.11)
+GIMBAL_STATIONARY_DWELL_SECONDS = _env_float(
+    "GIMBAL_STATIONARY_DWELL_SECONDS", 0.35
+)
 GIMBAL_PROGRESS_LOG_INTERVAL = 0.10
 LASER_LOG_INTERVAL = _env_float("LASER_LOG_INTERVAL", 1.0)
 MONO_DIST_TTL = 1.2
@@ -340,7 +348,15 @@ FIELD_LOG = _env_flag("FIELD_LOG", True)
 FIELD_LOG_DIR = os.getenv("FIELD_LOG_DIR", LOG_DIR)
 MEAS_FUSION_THRESHOLD_DEG = _env_float("MEAS_FUSION_THRESHOLD_DEG", 0.5)
 MEAS_FUSION_WINDOW_SECONDS = _env_float("MEAS_FUSION_WINDOW_SECONDS", 0.20)
-MAX_LOCK_LOST_FRAMES = _env_int("MAX_LOCK_LOST_FRAMES", 8)  # 判定目标丢失/锁定丢失的宽限帧数（针对多相机交替发送）
+PACKET_QUEUE_MAXLEN = _env_int("PACKET_QUEUE_MAXLEN", 256)
+TRACK_MAX_LOST_SECONDS = _env_float("TRACK_MAX_LOST_SECONDS", 5.0)  # internal anti-occlusion retention time
+MAX_LOCK_LOST_SECONDS = _env_float("MAX_LOCK_LOST_SECONDS", 1.6)  # external UI/gimbal/strike lock grace time
+UI_MAX_LOST_SECONDS = _env_float("UI_MAX_LOST_SECONDS", 1.0)  # hide stale predictions before the control lock grace expires
+TRACK_ASSOCIATION_MAX_DEG = _env_float("TRACK_ASSOCIATION_MAX_DEG", 6.0)  # global hard cap for covariance-expanded association
+TRACK_REACQUIRE_STRICT_AFTER_SECONDS = _env_float("TRACK_REACQUIRE_STRICT_AFTER_SECONDS", 1.0)
+TRACK_REACQUIRE_MAX_DEG = _env_float("TRACK_REACQUIRE_MAX_DEG", 3.0)  # stricter cap after a longer detection gap
+ASSOCIATION_BLOCKED_COST = 1.0e6
+MAX_LOCK_LOST_FRAMES = _env_int("MAX_LOCK_LOST_FRAMES", 8)  # legacy log-only frame counter threshold
 TRACK_CONFIRM_HITS = _env_int("TRACK_CONFIRM_HITS", 3)  # internal SORT/KF confirmation threshold
 UI_TRACK_CONFIRM_HITS = _env_int("UI_TRACK_CONFIRM_HITS", 5)  # extra gate before exposing a UI ID
 STRIKE_TRACK_CONFIRM_HITS = _env_int("STRIKE_TRACK_CONFIRM_HITS", UI_TRACK_CONFIRM_HITS)  # strike target is never exposed earlier than UI
@@ -351,13 +367,24 @@ STRIKE_TARGET_SWITCH_CONFIRM_SECONDS = _env_float("STRIKE_TARGET_SWITCH_CONFIRM_
 GIMBAL_SAFE_FOV_RATIO_X = _env_float("GIMBAL_SAFE_FOV_RATIO_X", 0.60)
 GIMBAL_SAFE_FOV_RATIO_Y = _env_float("GIMBAL_SAFE_FOV_RATIO_Y", 0.60)
 
-# Detection-end bboxes are restored to their original 2K frame coordinates.
+# Gimbal-camera YOLO and SORT projection remain in native 2K coordinates.
 IMG_W = _env_float("DETECTION_IMG_W", 2560.0)
 IMG_H = _env_float("DETECTION_IMG_H", 1440.0)
 FOV_X = 17.5
 FOV_Y = 9.9
 DEG_PER_PIXEL_X = FOV_X / IMG_W
 DEG_PER_PIXEL_Y = FOV_Y / IMG_H
+
+# Detection-end UDP bboxes use an explicit operator switch. Night detections
+# are direct 2560x1440 -> 640x480 resizes; daytime detections stay in 2K.
+USE_NIGHT_DETECTION_COORDS = _env_flag(
+    "USE_NIGHT_DETECTION_COORDS", True
+)
+UDP_DETECTION_W = 640.0 if USE_NIGHT_DETECTION_COORDS else IMG_W
+UDP_DETECTION_H = 480.0 if USE_NIGHT_DETECTION_COORDS else IMG_H
+UDP_DETECTION_COORD_MODE = (
+    "night_640x480" if USE_NIGHT_DETECTION_COORDS else "day_2560x1440"
+)
 
 class FieldLogger:
     def __init__(self, log_dir):
@@ -374,7 +401,7 @@ class FieldLogger:
         self.gimbal_f = open(os.path.join(log_dir, f"gimbal_{timestamp}.csv"), "a", encoding="utf-8", newline="")
 
         self.measurements_fields = [
-            "timestamp", "seq", "mode", "board", "cam", "meas_idx",
+            "timestamp", "seq", "mode", "board", "cam", "logic_id", "meas_idx",
             "raw_bbox_x1", "raw_bbox_y1", "raw_bbox_x2", "raw_bbox_y2",
             "raw_bbox_w", "raw_bbox_h",
             "clipped_bbox_x1", "clipped_bbox_y1", "clipped_bbox_x2", "clipped_bbox_y2",
@@ -385,10 +412,13 @@ class FieldLogger:
         ]
         self.summary_fields = [
             "timestamp", "seq", "mode", "dt",
+            "window_packet_count", "used_packet_count",
+            "same_source_packet_drop_count",
             "raw_meas_count", "fused_meas_count", "fusion_groups",
             "meas_count", "track_count",
             "valid_count", "track_ids", "valid_ids", "master_id",
             "hit_streaks", "time_since_updates", "track_states",
+            "lost_seconds",
             "cmd_az", "cmd_el", "gimbal_ui_az", "gimbal_ui_el",
         ]
         self.events_fields = [
@@ -398,19 +428,30 @@ class FieldLogger:
             "pred_az_ca", "pred_el_ca", "map_az_ca",
             "dynamic_thresh", "uncertainty", "p_az", "p_el",
             "hit_streak", "time_since_update", "reason",
+            "lost_seconds",
             "internal_track_id", "ui_id",
             "master_id", "is_master",
             "distance", "distance_source",
             "dist_uncertainty", "radial_velocity",
+            "threat_score",
+            "detection_count", "matched_count", "unmatched_detection_count",
+            "visible_track_count", "active_track_count",
+            "roi_count", "sharp_roi_count",
+            "matched_track_ids", "ambiguous_track_ids", "unmatched_track_ids",
             "raw_bbox_x1", "raw_bbox_y1", "raw_bbox_x2", "raw_bbox_y2",
             "clipped_bbox_x1", "clipped_bbox_y1", "clipped_bbox_x2", "clipped_bbox_y2",
+            "vision_frame_ts", "vision_age", "simple_id", "class_id", "confidence",
+            "bbox_cx", "bbox_cy", "center_dx_px", "center_dy_px",
+            "center_dx_norm", "center_dy_norm",
+            "center_offset_az_deg", "center_offset_el_deg",
             "is_edge_bbox", "visible_ratio",
         ]
         self.gimbal_fields = [
             "timestamp", "event", "cmd_id", "track_id", "cmd_az", "cmd_el",
             "gimbal_ui_az", "gimbal_ui_el", "gimbal_ctrl_az", "gimbal_ctrl_el",
             "target_ctrl_az", "target_ctrl_el", "err_az", "err_el",
-            "is_settled", "settle_time", "laser_valid", "laser_dist",
+            "is_settled", "is_stationary", "settle_time",
+            "retry_axes", "driver_status", "laser_valid", "laser_dist",
             "laser_source", "laser_ts", "laser_age", "laser_interval",
         ]
 
@@ -534,104 +575,112 @@ def field_log_gimbal(row):
             FIELD_LOGGER.write_gimbal(row)
         except Exception:
             pass
+#临时测试版本theta
+DEVICE_THETA = {
+    1: {"theta_vertical": -0.5579, "theta_horizontal": 32.4501},  # Layer 1 cam1，方位暂用THETA2
+    2: {"theta_vertical": -0.6494, "theta_horizontal": 16.7874},  # Layer 1 cam2
+    3: {"theta_vertical": -0.4663, "theta_horizontal": 0.0000},   # Layer 1 cam3
+    4: {"theta_vertical": 0.0000, "theta_horizontal": 343.8421},  # Layer 1 cam4
+    5: {"theta_vertical": 0.0000, "theta_horizontal": 326.6701},  # Layer 1 cam5
 
+    6: {"theta_vertical": 9.6803, "theta_horizontal": 34.3086},   # Layer 2 cam1
+    7: {"theta_vertical": 9.7292, "theta_horizontal": 15.5593},   # Layer 2 cam2
+    8: {"theta_vertical": 9.3961, "theta_horizontal": 0.0759},    # Layer 2 cam3
+    9: {"theta_vertical": 9.3992, "theta_horizontal": 342.7710},  # Layer 2 cam4
+    10: {"theta_vertical": 9.4304, "theta_horizontal": 326}, # Layer 2 cam5，建议核查方位角
+
+    11: {"theta_vertical": 19.6400, "theta_horizontal": 31.9870}, # Layer 3 cam1
+    12: {"theta_vertical": 20.1031, "theta_horizontal": 19.6921}, # Layer 3 cam2
+    13: {"theta_vertical": 17.1175, "theta_horizontal": 0.9703},  # Layer 3 cam3
+    14: {"theta_vertical": 18.5912, "theta_horizontal": 339.9173},# Layer 3 cam4
+    15: {"theta_vertical": 18.3194, "theta_horizontal": 322.7531},# Layer 3 cam5
+
+    16: {"theta_vertical": 28.2994, "theta_horizontal": 36.7386}, # Layer 4 cam1
+    17: {"theta_vertical": 28.2763, "theta_horizontal": 18.9455}, # Layer 4 cam2，方位暂用THETA2
+    18: {"theta_vertical": 28.2687, "theta_horizontal": 0.7703},  # Layer 4 cam3
+    19: {"theta_vertical": 28.6994, "theta_horizontal": 341.8870},# Layer 4 cam4
+    20: {"theta_vertical": 28.6831, "theta_horizontal": 323.5302},# Layer 4 cam5
+
+    21: {"theta_vertical": 39.4600, "theta_horizontal": 37.5403}, # Layer 5 cam1
+    22: {"theta_vertical": 39.0169, "theta_horizontal": 18.5903}, # Layer 5 cam2
+    23: {"theta_vertical": 38.4706, "theta_horizontal": 0.7703},  # Layer 5 cam3
+    24: {"theta_vertical": 39.3731, "theta_horizontal": 340.7103},# Layer 5 cam4
+    25: {"theta_vertical": 38.6506, "theta_horizontal": 321.7703},# Layer 5 cam5
+
+    26: {"theta_vertical": 47.5837, "theta_horizontal": 41.7703}, # Layer 6 cam1
+    27: {"theta_vertical": 48.3719, "theta_horizontal": 21.7703}, # Layer 6 cam2
+    28: {"theta_vertical": 47.9000, "theta_horizontal": 1.7703},  # Layer 6 cam3
+    29: {"theta_vertical": 47.4831, "theta_horizontal": 341.7703},# Layer 6 cam4
+    30: {"theta_vertical": 47.4894, "theta_horizontal": 321.7703},# Layer 6 cam5
+
+    31: {"theta_vertical": 57.3831, "theta_horizontal": 45.2403}, # Layer 7 cam1
+    32: {"theta_vertical": 57.6294, "theta_horizontal": 24.0403}, # Layer 7 cam2
+    33: {"theta_vertical": 56.9069, "theta_horizontal": 2.8703},  # Layer 7 cam3
+    34: {"theta_vertical": 57.2212, "theta_horizontal": 340.6003},# Layer 7 cam4
+    35: {"theta_vertical": 57.3381, "theta_horizontal": 319.4303},# Layer 7 cam5
+
+    36: {"theta_vertical": 66.9506, "theta_horizontal": 47.8703}, # Layer 8 cam1
+    37: {"theta_vertical": 66.2794, "theta_horizontal": 25.3703}, # Layer 8 cam2
+    38: {"theta_vertical": 66.9000, "theta_horizontal": 2.8703},  # Layer 8 cam3
+    39: {"theta_vertical": 67.2738, "theta_horizontal": 340.3703},# Layer 8 cam4
+    40: {"theta_vertical": 66.9719, "theta_horizontal": 317.8703},# Layer 8 cam5
+
+    41: {"theta_vertical": 76.4000, "theta_horizontal": 61.6703}, # Layer 9 cam1
+    42: {"theta_vertical": 76.4000, "theta_horizontal": 37.6703}, # Layer 9 cam2
+    43: {"theta_vertical": 76.4000, "theta_horizontal": 13.6703}, # Layer 9 cam3
+    44: {"theta_vertical": 76.4000, "theta_horizontal": 349.6703},# Layer 9 cam4
+    45: {"theta_vertical": 76.4000, "theta_horizontal": 325.6703},# Layer 9 cam5
+}
 # ==========================================
 #  摄像头物理位置配置 (不变)
 # ==========================================
 # DEVICE_THETA = {
-#     1: {"theta_vertical": 0.0, "theta_horizontal": 32.727},
-#     2: {"theta_vertical": 0.0, "theta_horizontal": 16.364},
-#     3: {"theta_vertical": 0.0, "theta_horizontal": 0.0},
-#     4: {"theta_vertical": 0.0, "theta_horizontal": 343.636},
-#     5: {"theta_vertical": 0.0, "theta_horizontal": 327.273},
-#     6: {"theta_vertical": 9.5, "theta_horizontal": 34.286},
-#     7: {"theta_vertical": 9.5, "theta_horizontal": 17.143},
-#     8: {"theta_vertical": 9.5, "theta_horizontal": 0.0},
-#     9: {"theta_vertical": 9.5, "theta_horizontal": 342.857},
-#     10: {"theta_vertical": 9.5, "theta_horizontal": 325.714},
-#     11: {"theta_vertical": 19.0, "theta_horizontal": 35.186},
-#     12: {"theta_vertical": 19.0, "theta_horizontal": 18.043},
-#     13: {"theta_vertical": 19.0, "theta_horizontal": 0.9},
-#     14: {"theta_vertical": 19.0, "theta_horizontal": 343.757},
-#     15: {"theta_vertical": 19.0, "theta_horizontal": 326.614},
-#     16: {"theta_vertical": 28.5, "theta_horizontal": 36.7},
-#     17: {"theta_vertical": 28.5, "theta_horizontal": 18.7},
-#     18: {"theta_vertical": 28.5, "theta_horizontal": 0.7},
-#     19: {"theta_vertical": 28.5, "theta_horizontal": 342.7},
-#     20: {"theta_vertical": 28.5, "theta_horizontal": 324.7},
-#     21: {"theta_vertical": 38.0, "theta_horizontal": 38.595},
-#     22: {"theta_vertical": 38.0, "theta_horizontal": 19.647},
-#     23: {"theta_vertical": 38.0, "theta_horizontal": 0.7},
-#     24: {"theta_vertical": 38.0, "theta_horizontal": 341.753},
-#     25: {"theta_vertical": 38.0, "theta_horizontal": 322.805},
-#     26: {"theta_vertical": 47.5, "theta_horizontal": 41.7},
-#     27: {"theta_vertical": 47.5, "theta_horizontal": 21.7},
-#     28: {"theta_vertical": 47.5, "theta_horizontal": 1.7},
-#     29: {"theta_vertical": 47.5, "theta_horizontal": 341.7},
-#     30: {"theta_vertical": 47.5, "theta_horizontal": 321.7},
-#     31: {"theta_vertical": 57.0, "theta_horizontal": 44.953},
-#     32: {"theta_vertical": 57.0, "theta_horizontal": 23.776},
-#     33: {"theta_vertical": 57.0, "theta_horizontal": 2.6},
-#     34: {"theta_vertical": 57.0, "theta_horizontal": 341.424},
-#     35: {"theta_vertical": 57.0, "theta_horizontal": 320.247},
-#     36: {"theta_vertical": 66.5, "theta_horizontal": 47.6},
-#     37: {"theta_vertical": 66.5, "theta_horizontal": 25.1},
-#     38: {"theta_vertical": 66.5, "theta_horizontal": 2.6},
-#     39: {"theta_vertical": 66.5, "theta_horizontal": 340.1},
-#     40: {"theta_vertical": 66.5, "theta_horizontal": 317.6},
-#     41: {"theta_vertical": 76.0, "theta_horizontal": 61.4},
-#     42: {"theta_vertical": 76.0, "theta_horizontal": 37.4},
-#     43: {"theta_vertical": 76.0, "theta_horizontal": 13.4},
-#     44: {"theta_vertical": 76.0, "theta_horizontal": 349.4},
-#     45: {"theta_vertical": 76.0, "theta_horizontal": 325.4}
+#     1: {"theta_vertical": -0.5579, "theta_horizontal": 32.4501},  # Layer 1 cam1
+#     2: {"theta_vertical": -0.6494, "theta_horizontal": 16.0865},  # Layer 1 cam2
+#     3: {"theta_vertical": -0.4663, "theta_horizontal": 0.0633},  # Layer 1 cam3
+#     4: {"theta_vertical": 0.0000, "theta_horizontal": 343.8421},  # Layer 1 cam4
+#     5: {"theta_vertical": 0.0000, "theta_horizontal": 326.6701},  # Layer 1 cam5
+#     6: {"theta_vertical": 9.6803, "theta_horizontal": 36.7904},  # Layer 2 cam1
+#     7: {"theta_vertical": 9.7292, "theta_horizontal": 18.1429},  # Layer 2 cam2
+#     8: {"theta_vertical": 9.3961, "theta_horizontal": 2.6352},  # Layer 2 cam3
+#     9: {"theta_vertical": 9.3992, "theta_horizontal": 345.2944},  # Layer 2 cam4
+#     10: {"theta_vertical": 9.4304, "theta_horizontal": 328.5462},  # Layer 2 cam5
+#     11: {"theta_vertical": 19.6400, "theta_horizontal": 34.9611},  # Layer 3 cam1
+#     12: {"theta_vertical": 20.1031, "theta_horizontal": 18.3246},  # Layer 3 cam2
+#     13: {"theta_vertical": 17.1175, "theta_horizontal": 355.5312},  # Layer 3 cam3
+#     14: {"theta_vertical": 18.5912, "theta_horizontal": 343.6730},  # Layer 3 cam4
+#     15: {"theta_vertical": 18.3194, "theta_horizontal": 327.5031},  # Layer 3 cam5
+#     16: {"theta_vertical": 28.2994, "theta_horizontal": 37.9953},  # Layer 4 cam1
+#     17: {"theta_vertical": 28.2763, "theta_horizontal": 18.9455},  # Layer 4 cam2
+#     18: {"theta_vertical": 28.2687, "theta_horizontal": 0.4566},  # Layer 4 cam3
+#     19: {"theta_vertical": 28.6994, "theta_horizontal": 342.0422},  # Layer 4 cam4
+#     20: {"theta_vertical": 28.6831, "theta_horizontal": 323.3621},  # Layer 4 cam5
+#     21: {"theta_vertical": 39.4600, "theta_horizontal": 41.3170},  # Layer 5 cam1
+#     22: {"theta_vertical": 39.0169, "theta_horizontal": 21.8764},  # Layer 5 cam2
+#     23: {"theta_vertical": 38.4706, "theta_horizontal": 1.6039},  # Layer 5 cam3
+#     24: {"theta_vertical": 39.3731, "theta_horizontal": 342.4729},  # Layer 5 cam4
+#     25: {"theta_vertical": 38.6506, "theta_horizontal": 323.5217},  # Layer 5 cam5
+#     26: {"theta_vertical": 47.5837, "theta_horizontal": 41.5262},  # Layer 6 cam1
+#     27: {"theta_vertical": 48.3719, "theta_horizontal": 23.2072},  # Layer 6 cam2
+#     28: {"theta_vertical": 47.9000, "theta_horizontal": 3.6703},  # Layer 6 cam3
+#     29: {"theta_vertical": 47.4831, "theta_horizontal": 341.4219},  # Layer 6 cam4
+#     30: {"theta_vertical": 47.4894, "theta_horizontal": 322.8021},  # Layer 6 cam5
+#     31: {"theta_vertical": 57.3831, "theta_horizontal": 44.0619},  # Layer 7 cam1
+#     32: {"theta_vertical": 57.6294, "theta_horizontal": 20.6004},  # Layer 7 cam2
+#     33: {"theta_vertical": 56.9069, "theta_horizontal": 4.2049},  # Layer 7 cam3
+#     34: {"theta_vertical": 57.2212, "theta_horizontal": 342.2857},  # Layer 7 cam4
+#     35: {"theta_vertical": 57.3381, "theta_horizontal": 319.9652},  # Layer 7 cam5
+#     36: {"theta_vertical": 66.9506, "theta_horizontal": 45.4904},  # Layer 8 cam1
+#     37: {"theta_vertical": 66.2794, "theta_horizontal": 28.2662},  # Layer 8 cam2
+#     38: {"theta_vertical": 66.9000, "theta_horizontal": 4.7703},  # Layer 8 cam3
+#     39: {"theta_vertical": 67.2738, "theta_horizontal": 337.8605},  # Layer 8 cam4
+#     40: {"theta_vertical": 66.9719, "theta_horizontal": 318.2523},  # Layer 8 cam5
+#     41: {"theta_vertical": 76.4000, "theta_horizontal": 63.5703},  # Layer 9 cam1
+#     42: {"theta_vertical": 76.4000, "theta_horizontal": 39.5703},  # Layer 9 cam2
+#     43: {"theta_vertical": 76.4000, "theta_horizontal": 15.5703},  # Layer 9 cam3
+#     44: {"theta_vertical": 76.4000, "theta_horizontal": 351.5703},  # Layer 9 cam4
+#     45: {"theta_vertical": 76.4000, "theta_horizontal": 327.5703},  # Layer 9 cam5
 # }
-
-#这是用棋盘格标定出来的
-DEVICE_THETA = {
-    2: {"theta_vertical": 0.0000, "theta_horizontal": 16.7874},  # Layer 1 cam2
-    3: {"theta_vertical": 0.0000, "theta_horizontal": 0.0000},  # Layer 1 cam3
-    4: {"theta_vertical": 0.0000, "theta_horizontal": 343.8421},  # Layer 1 cam4
-    5: {"theta_vertical": 0.0000, "theta_horizontal": 326.6701},  # Layer 1 cam5
-    6: {"theta_vertical": 9.5000, "theta_horizontal": 34.3086},  # Layer 2 cam1
-    7: {"theta_vertical": 9.5000, "theta_horizontal": 15.5593},  # Layer 2 cam2
-    8: {"theta_vertical": 9.5000, "theta_horizontal": 0.0759},  # Layer 2 cam3
-    9: {"theta_vertical": 9.5000, "theta_horizontal": 342.7710},  # Layer 2 cam4
-    10: {"theta_vertical": 9.5000, "theta_horizontal": 342.3703},  # Layer 2 cam5
-    11: {"theta_vertical": 19.0000, "theta_horizontal": 31.9870},  # Layer 3 cam1
-    12: {"theta_vertical": 19.0000, "theta_horizontal": 19.6921},  # Layer 3 cam2
-    13: {"theta_vertical": 19.0000, "theta_horizontal": 0.9703},  # Layer 3 cam3
-    14: {"theta_vertical": 19.0000, "theta_horizontal": 339.9173},  # Layer 3 cam4
-    15: {"theta_vertical": 19.0000, "theta_horizontal": 322.7531},  # Layer 3 cam5
-    16: {"theta_vertical": 28.5000, "theta_horizontal": 36.7386},  # Layer 4 cam1
-    18: {"theta_vertical": 28.5000, "theta_horizontal": 0.7703},  # Layer 4 cam3
-    19: {"theta_vertical": 28.5000, "theta_horizontal": 341.8870},  # Layer 4 cam4
-    20: {"theta_vertical": 28.5000, "theta_horizontal": 323.5302},  # Layer 4 cam5
-    21: {"theta_vertical": 38.0000, "theta_horizontal": 37.5403},  # Layer 5 cam1
-    22: {"theta_vertical": 38.0000, "theta_horizontal": 18.5903},  # Layer 5 cam2
-    23: {"theta_vertical": 38.0000, "theta_horizontal": 0.7703},  # Layer 5 cam3
-    24: {"theta_vertical": 38.0000, "theta_horizontal": 340.7103},  # Layer 5 cam4
-    25: {"theta_vertical": 38.0000, "theta_horizontal": 321.7703},  # Layer 5 cam5
-    26: {"theta_vertical": 47.5000, "theta_horizontal": 41.7703},  # Layer 6 cam1
-    27: {"theta_vertical": 47.5000, "theta_horizontal": 21.7703},  # Layer 6 cam2
-    28: {"theta_vertical": 47.5000, "theta_horizontal": 1.7703},  # Layer 6 cam3
-    29: {"theta_vertical": 47.5000, "theta_horizontal": 341.7703},  # Layer 6 cam4
-    30: {"theta_vertical": 47.5000, "theta_horizontal": 321.7703},  # Layer 6 cam5
-    31: {"theta_vertical": 57.0000, "theta_horizontal": 45.2403},  # Layer 7 cam1
-    32: {"theta_vertical": 57.0000, "theta_horizontal": 24.0403},  # Layer 7 cam2
-    33: {"theta_vertical": 57.0000, "theta_horizontal": 2.8703},  # Layer 7 cam3
-    34: {"theta_vertical": 57.0000, "theta_horizontal": 340.6003},  # Layer 7 cam4
-    35: {"theta_vertical": 57.0000, "theta_horizontal": 319.4303},  # Layer 7 cam5
-    36: {"theta_vertical": 66.5000, "theta_horizontal": 47.8703},  # Layer 8 cam1
-    37: {"theta_vertical": 66.5000, "theta_horizontal": 25.3703},  # Layer 8 cam2
-    38: {"theta_vertical": 66.5000, "theta_horizontal": 2.8703},  # Layer 8 cam3
-    39: {"theta_vertical": 66.5000, "theta_horizontal": 340.3703},  # Layer 8 cam4
-    40: {"theta_vertical": 66.5000, "theta_horizontal": 317.8703},  # Layer 8 cam5
-    41: {"theta_vertical": 76.0000, "theta_horizontal": 61.6703},  # Layer 9 cam1
-    42: {"theta_vertical": 76.0000, "theta_horizontal": 37.6703},  # Layer 9 cam2
-    43: {"theta_vertical": 76.0000, "theta_horizontal": 13.6703},  # Layer 9 cam3
-    44: {"theta_vertical": 76.0000, "theta_horizontal": 349.6703},  # Layer 9 cam4
-    45: {"theta_vertical": 76.0000, "theta_horizontal": 325.6703},  # Layer 9 cam5
-}
 
 # ==========================================
 # 硬件映射表 (不变)
@@ -651,10 +700,25 @@ HARDWARE_MAP = {
 # ==========================================
 # 解析与计算函数
 # ==========================================
+def normalize_board_id(board_id):
+    """Normalize detector board names: board1/BOARD1/board_1 -> BOARD_1."""
+    s = str(board_id).strip()
+    if not s:
+        return s
+    compact = s.replace("_", "").upper()
+    if compact.startswith("BOARD") and compact[5:].isdigit():
+        return f"BOARD_{int(compact[5:])}"
+    return s.upper()
+
+
 def get_camera_params(board_id, cam_idx):
-    key = (str(board_id), int(cam_idx))
+    norm_board_id = normalize_board_id(board_id)
+    key = (norm_board_id, int(cam_idx))
     if key not in HARDWARE_MAP:
-        print(f"[Warning] 未知的硬件组合: Board={board_id}, Cam={cam_idx}")
+        print(
+            f"[Warning] Unknown hardware mapping: Board={board_id} "
+            f"(normalized={norm_board_id}), Cam={cam_idx}"
+        )
         return None, None
     logic_id = HARDWARE_MAP[key]
     if logic_id not in DEVICE_THETA:
@@ -784,10 +848,14 @@ class SharedHardwareState:
         self.settled_track_id = -1
         self.settled_ts = 0.0
         self.is_settled = False
+        # Physical camera stability is independent of reaching the commanded
+        # angle.  Ranging uses this flag; strike safety still uses is_settled.
+        self.is_stationary = False
+        self.stationary_ts = 0.0
 
 shared_state = SharedHardwareState()
 gimbal_cmd_queue = queue.Queue(maxsize=1)
-packet_queue = deque(maxlen=20)
+packet_queue = deque(maxlen=PACKET_QUEUE_MAXLEN)
 
 
 def sample_default_distance():
@@ -971,21 +1039,23 @@ def gps_sender_thread(sender):
 def parse_udp_objects(raw_objs):
     """
     归一化 UDP 目标列表，输出:
-        [{"box": [x1, y1, x2, y2], "mono_dist": float|None,
+        [{"box": [x1, y1, x2, y2], "mono_dist": None,
           "cam": int|None, "board": str|None}, ...]
 
     支持格式:
     1) [x1, y1, x2, y2]
-    2) [x1, y1, x2, y2, dist]
-    3) {"box":[x1,y1,x2,y2], "distance":d}
-    4) {"boxes":[[...],[...]], "distances":[...]} (多坐标批量)
+    2) [x1, y1, x2, y2, ...]  # extra values are ignored
+    3) {"box":[x1,y1,x2,y2]}
+    4) {"boxes":[[...],[...]]} (多坐标批量)
+
+    检测端距离字段已停用；本端只使用云台 YOLO+测距模型更新距离。
     """
     parsed = []
 
     def append_obj(box, mono_dist=None, cam=None, board=None):
         parsed.append({
             "box": [box[0], box[1], box[2], box[3]],
-            "mono_dist": mono_dist,
+            "mono_dist": None,
             "cam": cam,
             "board": board,
         })
@@ -999,8 +1069,7 @@ def parse_udp_objects(raw_objs):
     # 兼容单目标扁平格式:
     # objs = [x1, y1, x2, y2] / [x1, y1, x2, y2, dist]
     if isinstance(raw_objs, (list, tuple)) and len(raw_objs) >= 4 and not isinstance(raw_objs[0], (list, tuple, dict)):
-        mono_dist = _parse_positive_float(raw_objs[4]) if len(raw_objs) >= 5 else None
-        return [{"box": [raw_objs[0], raw_objs[1], raw_objs[2], raw_objs[3]], "mono_dist": mono_dist, "cam": None, "board": None}]
+        return [{"box": [raw_objs[0], raw_objs[1], raw_objs[2], raw_objs[3]], "mono_dist": None, "cam": None, "board": None}]
 
     # 兼容单目标字典:
     # objs = {"box":[...], "distance":...}
@@ -1014,24 +1083,14 @@ def parse_udp_objects(raw_objs):
         if isinstance(obj_item, dict):
             obj_cam = first_present(obj_item, ("cam", "cam_id", "camera", "camera_id", "cameraId"))
             obj_board = first_present(obj_item, ("board", "board_id", "boardId"))
-            default_dist = _parse_positive_float(
-                obj_item.get(
-                    "distance_m",
-                    obj_item.get("distance", obj_item.get("dist", obj_item.get("range_m", obj_item.get("range"))))
-                )
-            )
 
-            # 批量 boxes: {"boxes":[...], "distances":[...]}
+            # 批量 boxes: {"boxes":[...]}；若带 distances 也忽略。
             boxes = obj_item.get("boxes", None)
             if isinstance(boxes, list):
-                dist_list = obj_item.get("distances", None)
-                for i, b in enumerate(boxes):
+                for b in boxes:
                     if not isinstance(b, (list, tuple)) or len(b) < 4:
                         continue
-                    mono_dist = default_dist
-                    if isinstance(dist_list, list) and i < len(dist_list):
-                        mono_dist = _parse_positive_float(dist_list[i]) or mono_dist
-                    append_obj([b[0], b[1], b[2], b[3]], mono_dist, obj_cam, obj_board)
+                    append_obj([b[0], b[1], b[2], b[3]], None, obj_cam, obj_board)
                 continue
 
             # 单目标 box
@@ -1041,16 +1100,16 @@ def parse_udp_objects(raw_objs):
                 if len(box) > 0 and isinstance(box[0], (list, tuple)):
                     for b in box:
                         if isinstance(b, (list, tuple)) and len(b) >= 4:
-                            append_obj([b[0], b[1], b[2], b[3]], default_dist, obj_cam, obj_board)
+                            append_obj([b[0], b[1], b[2], b[3]], None, obj_cam, obj_board)
                 elif len(box) >= 4:
-                    append_obj([box[0], box[1], box[2], box[3]], default_dist, obj_cam, obj_board)
+                    append_obj([box[0], box[1], box[2], box[3]], None, obj_cam, obj_board)
                 continue
 
             # 兼容坐标键值形式
             if all(k in obj_item for k in ("x1", "y1", "x2", "y2")):
                 append_obj(
                     [obj_item["x1"], obj_item["y1"], obj_item["x2"], obj_item["y2"]],
-                    default_dist,
+                    None,
                     obj_cam,
                     obj_board,
                 )
@@ -1060,28 +1119,26 @@ def parse_udp_objects(raw_objs):
                 y = float(obj_item["y"])
                 w = float(obj_item["w"])
                 h = float(obj_item["h"])
-                append_obj([x, y, x + w, y + h], default_dist, obj_cam, obj_board)
+                append_obj([x, y, x + w, y + h], None, obj_cam, obj_board)
                 continue
 
         elif isinstance(obj_item, (list, tuple)):
             # 单目标: [x1, y1, x2, y2, (optional)dist]
             if len(obj_item) >= 4 and not isinstance(obj_item[0], (list, tuple, dict)):
-                mono_dist = _parse_positive_float(obj_item[4]) if len(obj_item) >= 5 else None
-                append_obj([obj_item[0], obj_item[1], obj_item[2], obj_item[3]], mono_dist)
+                append_obj([obj_item[0], obj_item[1], obj_item[2], obj_item[3]], None)
                 continue
 
             # 批量: [[x1,y1,x2,y2], [..], ...]
             if len(obj_item) > 0 and isinstance(obj_item[0], (list, tuple)):
                 for b in obj_item:
                     if isinstance(b, (list, tuple)) and len(b) >= 4:
-                        mono_dist = _parse_positive_float(b[4]) if len(b) >= 5 else None
-                        append_obj([b[0], b[1], b[2], b[3]], mono_dist)
+                        append_obj([b[0], b[1], b[2], b[3]], None)
                 continue
 
     return parsed
 
 
-def sanitize_bbox(rect):
+def sanitize_bbox(rect, image_w=IMG_W, image_h=IMG_H):
     try:
         x1, y1, x2, y2 = (float(rect[0]), float(rect[1]), float(rect[2]), float(rect[3]))
     except (TypeError, ValueError, IndexError):
@@ -1092,10 +1149,12 @@ def sanitize_bbox(rect):
     if raw_w <= 0 or raw_h <= 0:
         return None, "invalid_raw_bbox"
 
-    clipped_x1 = min(max(x1, 0.0), IMG_W)
-    clipped_y1 = min(max(y1, 0.0), IMG_H)
-    clipped_x2 = min(max(x2, 0.0), IMG_W)
-    clipped_y2 = min(max(y2, 0.0), IMG_H)
+    image_w = float(image_w)
+    image_h = float(image_h)
+    clipped_x1 = min(max(x1, 0.0), image_w)
+    clipped_y1 = min(max(y1, 0.0), image_h)
+    clipped_x2 = min(max(x2, 0.0), image_w)
+    clipped_y2 = min(max(y2, 0.0), image_h)
     clipped_w = clipped_x2 - clipped_x1
     clipped_h = clipped_y2 - clipped_y1
     if clipped_w <= 0 or clipped_h <= 0:
@@ -1103,7 +1162,9 @@ def sanitize_bbox(rect):
 
     raw_area = raw_w * raw_h
     clipped_area = clipped_w * clipped_h
-    is_edge_bbox = (x1 < 0.0 or y1 < 0.0 or x2 > IMG_W or y2 > IMG_H)
+    is_edge_bbox = (
+        x1 < 0.0 or y1 < 0.0 or x2 > image_w or y2 > image_h
+    )
     return {
         "raw": [x1, y1, x2, y2],
         "clipped": [clipped_x1, clipped_y1, clipped_x2, clipped_y2],
@@ -1172,6 +1233,21 @@ def angle_measurement_distance(a, b):
     )
 
 
+def measurement_source_key(item):
+    logic_id = item.get("logic_id")
+    if logic_id not in (None, ""):
+        try:
+            return ("logic", int(logic_id))
+        except (TypeError, ValueError):
+            return ("logic", str(logic_id))
+    return ("board_cam", str(item.get("board", "")), str(item.get("cam", "")))
+
+
+def fusion_group_has_source(group_items, meas):
+    source_key = measurement_source_key(meas)
+    return any(measurement_source_key(item) == source_key for item in group_items)
+
+
 def build_fused_measurement(items):
     az_values = [float(item["az"]) for item in items]
     el_values = [float(item["el"]) for item in items]
@@ -1180,12 +1256,19 @@ def build_fused_measurement(items):
         mono_dist = _parse_positive_float(item.get("mono_dist"))
         if mono_dist is not None:
             mono_values.append(mono_dist)
+    primary_item = max(
+        items,
+        key=lambda item: float(item.get("source_ts", 0.0) or 0.0),
+    )
     fused = {
         "az": circular_mean_deg(az_values),
         "el": sum(el_values) / len(el_values),
         "mono_dist": (sum(mono_values) / len(mono_values)) if mono_values else None,
+        "source_ts": float(primary_item.get("source_ts", 0.0) or 0.0),
         "source_meas_indices": [int(item.get("raw_meas_idx", idx)) for idx, item in enumerate(items)],
+        "source_boards": [str(item.get("board", "")) for item in items],
         "source_cams": [str(item.get("cam", "")) for item in items],
+        "source_logic_ids": [str(item.get("logic_id", "")) for item in items],
         "is_edge_bbox": any(bool(item.get("is_edge_bbox", False)) for item in items),
     }
     visible_values = []
@@ -1198,8 +1281,9 @@ def build_fused_measurement(items):
         fused["visible_ratio"] = min(visible_values)
         fused["source_visible_ratios"] = visible_values
     if items:
-        fused["board"] = items[0].get("board")
-        fused["cam"] = items[0].get("cam")
+        fused["board"] = primary_item.get("board")
+        fused["cam"] = primary_item.get("cam")
+        fused["logic_id"] = primary_item.get("logic_id")
     return fused
 
 
@@ -1226,6 +1310,10 @@ def fuse_measurements_by_angle(measurements, threshold_deg=MEAS_FUSION_THRESHOLD
         best_idx = None
         best_dist = None
         for idx, group in enumerate(groups):
+            # 只允许不同摄像头 ID 的观测互相融合。同一画面中的
+            # 多个目标即使角度很近，也必须保留为独立观测交给 SORT。
+            if fusion_group_has_source(group["items"], meas):
+                continue
             dist = angle_measurement_distance(meas, group["center"])
             if dist <= threshold_deg and (best_dist is None or dist < best_dist):
                 best_idx = idx
@@ -1248,7 +1336,7 @@ def format_fusion_groups(groups):
     for idx, group in enumerate(groups):
         raw_indices = ",".join(str(item.get("raw_meas_idx", "")) for item in group)
         sources = ",".join(
-            f"{item.get('board', '')}/{item.get('cam', '')}"
+            f"{item.get('board', '')}/{item.get('cam', '')}/logic={item.get('logic_id', '')}"
             for item in group
         )
         parts.append(f"{idx}:n={len(group)},raw={raw_indices},src={sources}")
@@ -1258,6 +1346,21 @@ def format_fusion_groups(groups):
 def relative_to_map_azimuth(relative_az, device_heading_deg=DEVICE_HEADING_DEG):
     """将设备自身坐标系方位角转换为正北为0度的地图绝对方位角。"""
     return (float(relative_az) + float(device_heading_deg)) % 360.0
+
+
+def track_ui_source(track, fallback_board, fallback_cam):
+    """Return this track's latest detection source, with a legacy fallback."""
+    board = getattr(track, "last_source_board", None)
+    cam = getattr(track, "last_source_cam", None)
+    return (
+        fallback_board if board in (None, "") else board,
+        fallback_cam if cam in (None, "") else cam,
+    )
+
+
+def track_is_ui_fresh(track, now_t):
+    """Hide stale prediction-only tracks while retaining them internally."""
+    return track.lost_seconds(now_t) <= UI_MAX_LOST_SECONDS
 
 
 def get_turn_direction_label(delta_az, delta_el, deadband_az=0.35, deadband_el=0.25):
@@ -1300,6 +1403,70 @@ def gimbal_control_thread(gimbal):
     cmd_start_t = 0.0
     last_progress_log_t = 0.0
     settle_candidate_since = None
+    next_feedback_query_t = 0.0
+    last_az_send_t = 0.0
+    last_el_send_t = 0.0
+    last_motion_az = None
+    last_motion_el = None
+    stationary_candidate_since = None
+
+    def mark_motion_expected():
+        nonlocal stationary_candidate_since
+        stationary_candidate_since = None
+        with shared_state.lock:
+            shared_state.is_stationary = False
+
+    def record_feedback_motion(curr_el, curr_az, feedback_t):
+        """Update UI attitude and physical stationary state from encoder deltas."""
+        nonlocal last_motion_az, last_motion_el, stationary_candidate_since
+        curr_ui_az = (curr_az - GIMBAL_AZ_BASE) % 360.0
+        curr_ui_el = curr_el - GIMBAL_INIT_EL
+        was_stationary = False
+        with shared_state.lock:
+            was_stationary = shared_state.is_stationary
+
+        if last_motion_az is None or last_motion_el is None:
+            stationary_candidate_since = feedback_t
+            is_stationary = False
+        else:
+            delta_az = abs(angular_diff(curr_az, last_motion_az))
+            delta_el = abs(curr_el - last_motion_el)
+            physically_moving = (
+                delta_az > GIMBAL_STATIONARY_DELTA_DEG
+                or delta_el > GIMBAL_STATIONARY_DELTA_DEG
+            )
+            if physically_moving:
+                stationary_candidate_since = None
+                is_stationary = False
+            else:
+                if stationary_candidate_since is None:
+                    stationary_candidate_since = feedback_t
+                is_stationary = (
+                    feedback_t - stationary_candidate_since
+                    >= GIMBAL_STATIONARY_DWELL_SECONDS
+                )
+
+        last_motion_az = curr_az
+        last_motion_el = curr_el
+        with shared_state.lock:
+            shared_state.gimbal_el = curr_ui_el
+            shared_state.gimbal_az = curr_ui_az
+            shared_state.gimbal_att_ts = feedback_t
+            shared_state.is_stationary = is_stationary
+            if is_stationary and not was_stationary:
+                shared_state.stationary_ts = feedback_t
+        if is_stationary and not was_stationary:
+            field_log_gimbal({
+                "timestamp": f"{feedback_t:.6f}",
+                "event": "GIMBAL_STATIONARY",
+                "gimbal_ui_az": f"{curr_ui_az:.6f}",
+                "gimbal_ui_el": f"{curr_ui_el:.6f}",
+                "gimbal_ctrl_az": f"{curr_az:.6f}",
+                "gimbal_ctrl_el": f"{curr_el:.6f}",
+                "is_settled": 1 if shared_state.is_settled else 0,
+                "is_stationary": 1,
+            })
+        return curr_ui_az, curr_ui_el, is_stationary
 
     while True:
         try:
@@ -1314,11 +1481,9 @@ def gimbal_control_thread(gimbal):
                     real_att = gimbal.get_attitude()#读当前云台姿态并写入共享状态
                     if real_att:
                         curr_el, curr_az, _ = real_att
-                        curr_ui_az = (curr_az - GIMBAL_AZ_BASE) % 360.0
-                        with shared_state.lock:
-                            shared_state.gimbal_el = curr_el
-                            shared_state.gimbal_az = curr_ui_az
-                            shared_state.gimbal_att_ts = time.time()
+                        record_feedback_motion(
+                            curr_el, curr_az, time.time()
+                        )
                     continue
                 #若成功取到指令，下发指令到云台
                 target_az = float(active_cmd["az"])#方位角
@@ -1326,7 +1491,14 @@ def gimbal_control_thread(gimbal):
                 cmd_start_t = time.time()
                 last_progress_log_t = 0.0
                 settle_candidate_since = None
-                gimbal.set_attitude(elevation=target_el, azimuth=target_az)
+                send_status = gimbal.set_attitude(
+                    elevation=target_el, azimuth=target_az
+                )
+                send_t = time.time()
+                last_az_send_t = send_t
+                last_el_send_t = send_t
+                next_feedback_query_t = send_t + GIMBAL_QUERY_AFTER_CMD_DELAY
+                mark_motion_expected()
                 with shared_state.lock:
                     shared_state.active_cmd_id = int(active_cmd["cmd_id"])#设置当前执行指令的ID
                     shared_state.active_track_id = int(active_cmd.get("track_id", -1))
@@ -1373,7 +1545,16 @@ def gimbal_control_thread(gimbal):
                     cmd_start_t = now_t
                     last_progress_log_t = 0.0
                     settle_candidate_since = None
-                    gimbal.set_attitude(elevation=target_el, azimuth=target_az)
+                    send_status = gimbal.set_attitude(
+                        elevation=target_el, azimuth=target_az
+                    )
+                    send_t = time.time()
+                    if update_az:
+                        last_az_send_t = send_t
+                    if update_el:
+                        last_el_send_t = send_t
+                    next_feedback_query_t = send_t + GIMBAL_QUERY_AFTER_CMD_DELAY
+                    mark_motion_expected()
                     with shared_state.lock:
                         shared_state.active_cmd_id = int(active_cmd["cmd_id"])
                         shared_state.active_track_id = new_track_id
@@ -1404,17 +1585,18 @@ def gimbal_control_thread(gimbal):
                         "err_el": f"{d_el:.6f}",
                     })
 
+            if time.time() < next_feedback_query_t:
+                time.sleep(GIMBAL_THREAD_SLEEP)
+                continue
+
             real_att = gimbal.get_attitude()
             if real_att:
                 curr_el, curr_az, _ = real_att
-                curr_ui_az = (curr_az - GIMBAL_AZ_BASE) % 360.0
+                curr_ui_az, curr_ui_el, gimbal_is_stationary = (
+                    record_feedback_motion(curr_el, curr_az, now_t)
+                )
                 err_az = abs(angular_diff(target_az, curr_az))
                 err_el = abs(curr_el - target_el)
-
-                with shared_state.lock:
-                    shared_state.gimbal_el = curr_el
-                    shared_state.gimbal_az = curr_ui_az
-                    shared_state.gimbal_att_ts = now_t
 
                 if (last_progress_log_t == 0.0) or ((now_t - last_progress_log_t) >= GIMBAL_PROGRESS_LOG_INTERVAL):
                     elapsed = now_t - cmd_start_t
@@ -1433,15 +1615,59 @@ def gimbal_control_thread(gimbal):
                         "cmd_id": int(active_cmd["cmd_id"]),
                         "track_id": int(active_cmd.get("track_id", -1)),
                         "gimbal_ui_az": f"{curr_ui_az:.6f}",
-                        "gimbal_ui_el": f"{curr_el:.6f}",
+                        "gimbal_ui_el": f"{curr_ui_el:.6f}",
                         "gimbal_ctrl_az": f"{curr_az:.6f}",
                         "gimbal_ctrl_el": f"{curr_el:.6f}",
                         "target_ctrl_az": f"{target_az:.6f}",
                         "target_ctrl_el": f"{target_el:.6f}",
                         "err_az": f"{err_az:.6f}",
                         "err_el": f"{err_el:.6f}",
+                        "is_stationary": 1 if gimbal_is_stationary else 0,
                     })
                     last_progress_log_t = now_t
+
+                retry_az = (
+                    err_az >= GIMBAL_SETTLE_THRESHOLD
+                    and (now_t - last_az_send_t) >= GIMBAL_COMMAND_RETRY_INTERVAL
+                )
+                retry_el = (
+                    err_el >= GIMBAL_SETTLE_THRESHOLD
+                    and (now_t - last_el_send_t) >= GIMBAL_COMMAND_RETRY_INTERVAL
+                )
+                if retry_az or retry_el:
+                    retry_status = gimbal.set_attitude(
+                        elevation=target_el if retry_el else None,
+                        azimuth=target_az if retry_az else None,
+                        force=True,
+                    )
+                    retry_t = time.time()
+                    if retry_az:
+                        last_az_send_t = retry_t
+                    if retry_el:
+                        last_el_send_t = retry_t
+                    next_feedback_query_t = (
+                        retry_t + GIMBAL_QUERY_AFTER_CMD_DELAY
+                    )
+                    mark_motion_expected()
+                    retry_axes = "+".join(
+                        axis for axis, enabled in (
+                            ("Az", retry_az), ("El", retry_el)
+                        ) if enabled
+                    )
+                    field_log_gimbal({
+                        "timestamp": f"{retry_t:.6f}",
+                        "event": "GIMBAL_CMD_RETRY",
+                        "cmd_id": int(active_cmd["cmd_id"]),
+                        "track_id": int(active_cmd.get("track_id", -1)),
+                        "target_ctrl_az": f"{target_az:.6f}",
+                        "target_ctrl_el": f"{target_el:.6f}",
+                        "err_az": f"{err_az:.6f}",
+                        "err_el": f"{err_el:.6f}",
+                        "retry_axes": retry_axes,
+                        "driver_status": str(retry_status),
+                    })
+                    time.sleep(GIMBAL_THREAD_SLEEP)
+                    continue
 
                 if err_az < GIMBAL_SETTLE_THRESHOLD and err_el < GIMBAL_SETTLE_THRESHOLD:
                     if settle_candidate_since is None:
@@ -1474,7 +1700,7 @@ def gimbal_control_thread(gimbal):
                         "cmd_id": int(active_cmd_id),
                         "track_id": int(active_track_id),
                         "gimbal_ui_az": f"{curr_ui_az:.6f}",
-                        "gimbal_ui_el": f"{curr_el:.6f}",
+                        "gimbal_ui_el": f"{curr_ui_el:.6f}",
                         "gimbal_ctrl_az": f"{curr_az:.6f}",
                         "gimbal_ctrl_el": f"{curr_el:.6f}",
                         "target_ctrl_az": f"{target_az:.6f}",
@@ -1482,6 +1708,7 @@ def gimbal_control_thread(gimbal):
                         "err_az": f"{err_az:.6f}",
                         "err_el": f"{err_el:.6f}",
                         "is_settled": 1,
+                        "is_stationary": 1 if gimbal_is_stationary else 0,
                         "settle_time": f"{settle_dt:.6f}",
                     })
 
@@ -1521,6 +1748,10 @@ def gimbal_control_thread(gimbal):
                     "err_az": "" if not real_att else f"{err_az:.6f}",
                     "err_el": "" if not real_att else f"{err_el:.6f}",
                     "is_settled": 0,
+                    "is_stationary": (
+                        "" if not real_att
+                        else (1 if gimbal_is_stationary else 0)
+                    ),
                     "settle_time": f"{elapsed:.6f}",
                 })
                 with shared_state.lock:
@@ -1585,7 +1816,7 @@ def ui_to_ctrl_angles(ui_az, ui_el):
     if rel_az > 180.0:
         rel_az -= 360.0
     ctrl_az = GIMBAL_AZ_BASE + rel_az
-    ctrl_el = ui_el
+    ctrl_el = GIMBAL_INIT_EL + ui_el
     if ctrl_az < 0.0: ctrl_az = 0.0
     if ctrl_az > 350.0: ctrl_az = 350.0
     return ctrl_az, ctrl_el
@@ -1595,9 +1826,10 @@ def ui_to_ctrl_angles(ui_az, ui_el):
 # ==========================================
 class StandardKalmanTrack:
     _id_count = 0
-    def __init__(self, ui_az, ui_el):
+    def __init__(self, ui_az, ui_el, init_ts=None):
         StandardKalmanTrack._id_count += 1
         self.id = StandardKalmanTrack._id_count
+        init_ts = time.time() if init_ts is None else float(init_ts)
         
         # 1. 原始 4D CV 状态矩阵 (Active 主控制源)
         self.state = np.array([[ui_az], [ui_el], [0.0], [0.0]], dtype=float)
@@ -1626,6 +1858,8 @@ class StandardKalmanTrack:
         
         self.hit_streak = 1        # 连续命中次数 (用于建轨确认)
         self.time_since_update = 0 # 连丢次数
+        self.created_ts = init_ts
+        self.last_update_ts = init_ts  # last successful detection association time
         self.confirmed = False     # internal tracker confirmation
         self.ui_confirmed = False  # allow assigning/sending external UI ID
         self.strike_confirmed = False  # allow entering strike threat ranking
@@ -1643,6 +1877,45 @@ class StandardKalmanTrack:
         self.last_mono_dist = None
         self.mono_ts = 0.0
         self.last_sent_dist = None
+        # Detection provenance belongs to the track, not to the most recently
+        # received frame. UI status uses these fields after multi-camera fusion.
+        self.last_source_board = None
+        self.last_source_cam = None
+        self.last_source_logic_id = None
+        self.last_source_boards = ()
+        self.last_source_cams = ()
+        self.last_source_logic_ids = ()
+        self.last_source_ts = 0.0
+
+    def lost_seconds(self, now_t=None):
+        now_t = time.time() if now_t is None else float(now_t)
+        return max(0.0, now_t - float(self.last_update_ts))
+
+    def set_detection_source(self, measurement, ts):
+        """Remember the latest measurement provenance for per-track UI output."""
+        if not isinstance(measurement, dict):
+            return
+        board = measurement.get("board")
+        cam = measurement.get("cam")
+        logic_id = measurement.get("logic_id")
+        if board not in (None, ""):
+            self.last_source_board = str(board)
+        if cam not in (None, ""):
+            try:
+                self.last_source_cam = int(cam)
+            except (TypeError, ValueError):
+                self.last_source_cam = cam
+        if logic_id not in (None, ""):
+            self.last_source_logic_id = logic_id
+        self.last_source_boards = tuple(measurement.get("source_boards") or ())
+        self.last_source_cams = tuple(measurement.get("source_cams") or ())
+        self.last_source_logic_ids = tuple(measurement.get("source_logic_ids") or ())
+        source_ts = measurement.get("source_ts")
+        try:
+            parsed_source_ts = float(source_ts)
+            self.last_source_ts = parsed_source_ts if parsed_source_ts > 0.0 else float(ts)
+        except (TypeError, ValueError):
+            self.last_source_ts = float(ts)
 
     def set_mono_distance(self, dist, ts):
         d = _parse_positive_float(dist)
@@ -1763,9 +2036,11 @@ class StandardKalmanTrack:
         self.time_since_update += 1
         self.history.append((self.state.copy(), self.P.copy()))
 
-    def update(self, meas_az, meas_el, dt):
+    def update(self, meas_az, meas_el, dt, now_t=None):
         """Active CV 与 Shadow CA 平行角度更新"""
+        now_t = time.time() if now_t is None else float(now_t)
         self.time_since_update = 0
+        self.last_update_ts = now_t
         self.hit_streak += 1
         if self.hit_streak >= TRACK_CONFIRM_HITS:
             self.confirmed = True
@@ -1864,11 +2139,17 @@ class MultiTargetTracker:
     def __init__(
         self,
         max_lost_frames=30,
+        max_lost_seconds=None,
         base_distance_threshold=4.0,
         distance_threshold=None,
     ):
         self.tracks = []
         self.max_lost_frames = max_lost_frames
+        self.max_lost_seconds = (
+            float(max_lost_seconds)
+            if max_lost_seconds is not None
+            else float(max_lost_frames) * NO_PACKET_TRACKER_UPDATE_INTERVAL
+        )
         # Backward compatibility: keep supporting old constructor arg `distance_threshold`.
         if distance_threshold is not None:
             self.base_distance_threshold = float(distance_threshold)
@@ -1884,6 +2165,20 @@ class MultiTargetTracker:
             "event": event,
             "meas_count": debug_context.get("meas_count", ""),
         }
+
+    @staticmethod
+    def _association_gate(track, now_t):
+        """Return a bounded association gate before Hungarian assignment."""
+        uncertainty = float(np.sqrt(max(0.0, track.P[0, 0] + track.P[1, 1])))
+        covariance_gate = float(track.dist_thresh) + (uncertainty * 1.5)
+        lost_seconds = track.lost_seconds(now_t)
+        hard_cap = TRACK_ASSOCIATION_MAX_DEG
+        gate_mode = "recent"
+        if lost_seconds > TRACK_REACQUIRE_STRICT_AFTER_SECONDS:
+            hard_cap = min(hard_cap, TRACK_REACQUIRE_MAX_DEG)
+            gate_mode = "strict_reacquire"
+        dynamic_thresh = max(0.0, min(covariance_gate, hard_cap))
+        return dynamic_thresh, uncertainty, lost_seconds, gate_mode
 
     def _log_new_track(self, track, meas_idx, meas, debug_context):
         if DEBUG_KALMAN_MATCH:
@@ -1908,18 +2203,22 @@ class MultiTargetTracker:
             "p_el": f"{track.P[1, 1]:.6f}",
             "hit_streak": int(track.hit_streak),
             "time_since_update": int(track.time_since_update),
+            "lost_seconds": "0.000000",
         })
 
-    def _prune_lost_tracks(self, debug_context=None):
+    def _prune_lost_tracks(self, now_t=None, debug_context=None):
+        now_t = time.time() if now_t is None else float(now_t)
         kept_tracks = []
         for track in self.tracks:
-            if track.time_since_update < self.max_lost_frames:
+            lost_s = track.lost_seconds(now_t)
+            if lost_s < self.max_lost_seconds:
                 kept_tracks.append(track)
                 continue
             if DEBUG_KALMAN_MATCH:
                 print(
                     f"[TRACK_DELETE] track={track.id}, "
-                    f"lost={track.time_since_update}, max_lost={self.max_lost_frames}, "
+                    f"lost={lost_s:.2f}s/{track.time_since_update} updates, "
+                    f"max_lost={self.max_lost_seconds:.2f}s, "
                     f"state=(Az={track.state[0,0]:.2f}, El={track.state[1,0]:.2f}), "
                     f"hits={track.hit_streak}"
                 )
@@ -1936,6 +2235,8 @@ class MultiTargetTracker:
                 "p_el": f"{track.P[1, 1]:.6f}",
                 "hit_streak": int(track.hit_streak),
                 "time_since_update": int(track.time_since_update),
+                "lost_seconds": f"{lost_s:.6f}",
+                "reason": f"lost_seconds>={self.max_lost_seconds:.3f}",
             })
         self.tracks = kept_tracks
 
@@ -1958,10 +2259,18 @@ class MultiTargetTracker:
                 az = meas.get("az", None)
                 el = meas.get("el", None)
                 mono_dist = meas.get("mono_dist", None)
+                source_metadata = {
+                    key: meas.get(key)
+                    for key in (
+                        "board", "cam", "logic_id", "source_ts", "source_boards",
+                        "source_cams", "source_logic_ids",
+                    )
+                }
             elif isinstance(meas, (list, tuple)) and len(meas) >= 2:
                 az = meas[0]
                 el = meas[1]
                 mono_dist = meas[2] if len(meas) >= 3 else None
+                source_metadata = {}
             else:
                 continue
 
@@ -1971,11 +2280,13 @@ class MultiTargetTracker:
             except (TypeError, ValueError):
                 continue
             mono_dist = _parse_positive_float(mono_dist)
-            normalized_measurements.append({
+            normalized_measurement = {
                 "az": az,
                 "el": el,
                 "mono_dist": mono_dist,
-            })
+            }
+            normalized_measurement.update(source_metadata)
+            normalized_measurements.append(normalized_measurement)
 
         # 1. 预测所有已有 Track 的新位置
         for track in self.tracks:
@@ -1991,14 +2302,19 @@ class MultiTargetTracker:
             
         # 如果当前帧没检测到东西，直接清理丢失目标并返回
         if len(normalized_measurements) == 0:
-            self._prune_lost_tracks(debug_context=debug_context)
+            self._prune_lost_tracks(now_t=now_t, debug_context=debug_context)
             return self.tracks
 
         if len(self.tracks) == 0:
             # 全是新目标,新建轨迹
             for m_idx, meas in enumerate(normalized_measurements):
-                t = StandardKalmanTrack(meas["az"], meas["el"])
+                t = StandardKalmanTrack(
+                    meas["az"],
+                    meas["el"],
+                    init_ts=now_t,
+                )
                 t.set_mono_distance(meas["mono_dist"], now_t)
+                t.set_detection_source(meas, now_t)
                 if params:
                     t.set_dynamic_params(params)
                 else:
@@ -2021,8 +2337,18 @@ class MultiTargetTracker:
                 distance = np.sqrt(diff_az**2 + diff_el**2)
                 cost_matrix[t, m] = distance
 
-        # 3. 匈牙利匹配
-        track_indices, meas_indices = linear_sum_assignment(cost_matrix)
+        # 3. Gate impossible pairs before Hungarian assignment. A large finite
+        # cost keeps scipy robust when a row has no feasible measurement; the
+        # post-assignment check below still leaves blocked pairs unmatched.
+        association_gates = [
+            self._association_gate(track, now_t) for track in self.tracks
+        ]
+        gated_cost_matrix = cost_matrix.copy()
+        for t_idx, gate_info in enumerate(association_gates):
+            dynamic_thresh = gate_info[0]
+            blocked = gated_cost_matrix[t_idx, :] >= dynamic_thresh
+            gated_cost_matrix[t_idx, blocked] = ASSOCIATION_BLOCKED_COST
+        track_indices, meas_indices = linear_sum_assignment(gated_cost_matrix)
 
         # 4. 更新匹配成功的 Track (加入协方差动态门限)
         unmatched_measurements = set(range(len(normalized_measurements)))
@@ -2030,22 +2356,22 @@ class MultiTargetTracker:
         for t_idx, m_idx in zip(track_indices, meas_indices):
             track = self.tracks[t_idx]
             
-            # 使用协方差评估不确定性
-            uncertainty = np.sqrt(track.P[0, 0] + track.P[1, 1])
-            # 动态欧氏门限：基础残差 + 协方差不确定性 * 膨胀系数(1.5)
-            dynamic_thresh = track.dist_thresh + (uncertainty * 1.5)
+            dynamic_thresh, uncertainty, lost_s_before_match, gate_mode = (
+                association_gates[t_idx]
+            )
             cost = cost_matrix[t_idx, m_idx]
             meas = normalized_measurements[m_idx]
             pred_az = float(track.state[0, 0])
             pred_el = float(track.state[1, 0])
+            pair_is_feasible = gated_cost_matrix[t_idx, m_idx] < ASSOCIATION_BLOCKED_COST
             
-            if cost < dynamic_thresh:
+            if pair_is_feasible:
                 if DEBUG_KALMAN_MATCH:
                     print(
                         f"[MATCH_ACCEPT] track={track.id}, meas={m_idx}, "
                         f"meas=(Az={meas['az']:.2f}, El={meas['el']:.2f}), "
                         f"pred=(Az={pred_az:.2f}, El={pred_el:.2f}), "
-                        f"cost={cost:.2f}, thresh={dynamic_thresh:.2f}, "
+                        f"cost={cost:.2f}, thresh={dynamic_thresh:.2f}, gate={gate_mode}, "
                         f"unc={uncertainty:.2f}, "
                         f"Ppos=({track.P[0,0]:.2f},{track.P[1,1]:.2f}), "
                         f"hits={track.hit_streak}, lost={track.time_since_update}, "
@@ -2071,9 +2397,11 @@ class MultiTargetTracker:
                     "p_el": f"{track.P[1, 1]:.6f}",
                     "hit_streak": int(track.hit_streak),
                     "time_since_update": int(track.time_since_update),
+                    "lost_seconds": f"{lost_s_before_match:.6f}",
                 })
-                track.update(meas["az"], meas["el"], dt)
+                track.update(meas["az"], meas["el"], dt, now_t=now_t)
                 track.set_mono_distance(meas["mono_dist"], now_t)
+                track.set_detection_source(meas, now_t)
                 unmatched_measurements.discard(m_idx)
                 matched_tracks.add(t_idx)
             else:
@@ -2082,7 +2410,7 @@ class MultiTargetTracker:
                         f"[MATCH_REJECT] track={track.id}, meas={m_idx}, "
                         f"meas=(Az={meas['az']:.2f}, El={meas['el']:.2f}), "
                         f"pred=(Az={pred_az:.2f}, El={pred_el:.2f}), "
-                        f"cost={cost:.2f}, thresh={dynamic_thresh:.2f}, "
+                        f"cost={cost:.2f}, thresh={dynamic_thresh:.2f}, gate={gate_mode}, "
                         f"unc={uncertainty:.2f}, "
                         f"Ppos=({track.P[0,0]:.2f},{track.P[1,1]:.2f}), "
                         f"dist_thresh={track.dist_thresh:.2f}, "
@@ -2109,6 +2437,8 @@ class MultiTargetTracker:
                     "p_el": f"{track.P[1, 1]:.6f}",
                     "hit_streak": int(track.hit_streak),
                     "time_since_update": int(track.time_since_update),
+                    "lost_seconds": f"{lost_s_before_match:.6f}",
+                    "reason": f"pre_hungarian_gate:{gate_mode}",
                 })
 
         # 未匹配轨迹衰减稳定帧，避免历史累计导致“永久霸榜”
@@ -2119,8 +2449,9 @@ class MultiTargetTracker:
         # 5. 为没匹配上的坐标创建新 Track
         for m_idx in unmatched_measurements:
             meas = normalized_measurements[m_idx]
-            t = StandardKalmanTrack(meas["az"], meas["el"])
+            t = StandardKalmanTrack(meas["az"], meas["el"], init_ts=now_t)
             t.set_mono_distance(meas["mono_dist"], now_t)
+            t.set_detection_source(meas, now_t)
             if params:
                 t.set_dynamic_params(params)
             else:
@@ -2133,24 +2464,33 @@ class MultiTargetTracker:
             self._log_new_track(t, m_idx, meas, debug_context)
 
         # 6. 删除丢失太久的 Track
-        self._prune_lost_tracks(debug_context=debug_context)
+        self._prune_lost_tracks(now_t=now_t, debug_context=debug_context)
 
         return self.tracks
 
 # ==========================================
 # 4. 核心解算 V8 (修改版：基准水平90度)
 # ==========================================
-def calculate_angles(cam_key, cx, cy, cfg=None):
+def calculate_angles(
+    cam_key,
+    cx,
+    cy,
+    cfg=None,
+    image_w=IMG_W,
+    image_h=IMG_H,
+):
     base_az = cfg["theta_horizontal"] 
     base_el = cfg["theta_vertical"]   
+    image_w = float(image_w)
+    image_h = float(image_h)
     
     # 1. 计算目标在图像中的像素偏移
-    diff_x = cx - (IMG_W / 2.0)
-    diff_y = cy - (IMG_H / 2.0)
+    diff_x = cx - (image_w / 2.0)
+    diff_y = cy - (image_h / 2.0)
     
     # 2. 像素转换成角度偏移
-    offset_az = diff_x * DEG_PER_PIXEL_X
-    offset_el = -diff_y * DEG_PER_PIXEL_Y 
+    offset_az = diff_x * FOV_X / image_w
+    offset_el = -diff_y * FOV_Y / image_h
 
     # 3. 计算系统绝对角度 (UI显示用, 保持0~360的罗盘习惯)
     ui_az = (base_az + offset_az) % 360.0
@@ -2223,7 +2563,11 @@ def evaluate_strike_threat(track, curr_time, vision_track_result=None, strike_ta
     distance and a safe bbox. The score then favors nearer, closing, stable
     tracks while adding inertia to avoid target ping-pong.
     """
-    if track is None or not track.confirmed or track.time_since_update > MAX_LOCK_LOST_FRAMES:
+    if (
+        track is None
+        or not track.confirmed
+        or track.lost_seconds(curr_time) > MAX_LOCK_LOST_SECONDS
+    ):
         return None
 
     vision_track_result = vision_track_result or {}
@@ -2342,6 +2686,20 @@ def main():
     sender = UISender(UI_IP, UI_PORT)
     strike_sender = StrikeSender(STRIKE_IP, STRIKE_PORT) if ENABLE_STRIKE_SEND else None
     print(f"[Config] DEVICE_HEADING_DEG={DEVICE_HEADING_DEG:.2f} (map north=0, east=90, south=180)")
+    print(
+        "[Config] Detection UDP coordinates: "
+        f"mode={UDP_DETECTION_COORD_MODE}, "
+        f"size={UDP_DETECTION_W:.0f}x{UDP_DETECTION_H:.0f}, "
+        f"switch=USE_NIGHT_DETECTION_COORDS={USE_NIGHT_DETECTION_COORDS}"
+    )
+    print(
+        "[Config] Track association safety: "
+        f"hard_cap={TRACK_ASSOCIATION_MAX_DEG:.2f}°, "
+        f"strict_after={TRACK_REACQUIRE_STRICT_AFTER_SECONDS:.2f}s, "
+        f"strict_cap={TRACK_REACQUIRE_MAX_DEG:.2f}°, "
+        f"internal_keep={TRACK_MAX_LOST_SECONDS:.2f}s, "
+        f"ui_fresh={UI_MAX_LOST_SECONDS:.2f}s"
+    )
     if ENABLE_STRIKE_SEND:
         print(
             f"[Strike] Enabled target UDP sender: {STRIKE_IP}:{STRIKE_PORT}, "
@@ -2433,7 +2791,7 @@ def main():
                 print(
                     f"[GimbalVision] enabled camera={GIMBAL_CAMERA_SOURCE!r}, "
                     "YOLO=bestall_2k.rknn native 2560x1440 on RKNN/NPU, "
-                    "association=hungarian"
+                    "association=simple_center_yolo"
                 )
             except Exception as e:
                 vision_service = None
@@ -2444,8 +2802,6 @@ def main():
     distance_mode = (
         "gimbal camera YOLO/MLP/GRU"
         if vision_service is not None
-        else "upstream mono compatibility"
-        if USE_UPSTREAM_MONO_DISTANCE
         else "none"
     )
     print(
@@ -2468,7 +2824,11 @@ def main():
     print("=== System V9.0 (Predictive Tracking & Scheduling) Running ===")
 
     # 初始化追踪大脑
-    tracker = MultiTargetTracker(max_lost_frames=50, distance_threshold=1.2)
+    tracker = MultiTargetTracker(
+        max_lost_frames=50,
+        max_lost_seconds=TRACK_MAX_LOST_SECONDS,
+        distance_threshold=1.2,
+    )
     
     # 状态机与调度变量
     master_id = None
@@ -2486,6 +2846,7 @@ def main():
     challenger_since = 0.0
     angle_unsafe_frames = 0
     last_applied_vision_ts = {}
+    last_logged_vision_frame_ts = 0.0
     strike_window = {
         "track_id": None,
         "distance": None,
@@ -2557,6 +2918,30 @@ def main():
                 values.append(value)
         return ";".join(values)
 
+    def packet_source_key(pkg):
+        board = str(pkg.get("board", "Unknown"))
+        try:
+            cam = int(pkg.get("cam", 0))
+        except (TypeError, ValueError):
+            cam = str(pkg.get("cam", ""))
+        return board, cam
+
+    def keep_latest_packet_per_source(pkgs):
+        """同一融合窗口内，每个物理摄像头只保留最新 UDP 包。
+
+        这样融合窗口可以覆盖跨摄像头异步上报，同时避免同一摄像头
+        连续两帧进入同一个 tracker.update()，造成重复观测/重复建轨。
+        同一个最新包里的多个 objs 会全部保留，不影响同画面多目标。
+        """
+        latest_by_source = {}
+        for pkg in pkgs:
+            latest_by_source[packet_source_key(pkg)] = pkg
+        latest_pkgs = sorted(
+            latest_by_source.values(),
+            key=lambda item: float(item.get("_recv_ts", 0.0) or 0.0),
+        )
+        return latest_pkgs, max(0, len(pkgs) - len(latest_pkgs))
+
     while True:
         try:
             curr_time = time.time()
@@ -2606,6 +2991,11 @@ def main():
             window_pkgs = fusion_packet_buffer
             fusion_packet_buffer = []
             fusion_window_start_t = 0.0
+            raw_window_packet_count = len(window_pkgs)
+            window_pkgs, same_source_packet_drop_count = (
+                keep_latest_packet_per_source(window_pkgs)
+            )
+            used_window_packet_count = len(window_pkgs)
 
             #计算两次逻辑观测帧的间隔时间
             dt = curr_time - last_time
@@ -2636,6 +3026,8 @@ def main():
                 settled_track_id = shared_state.settled_track_id
                 settled_ts = shared_state.settled_ts
                 gimbal_is_settled = shared_state.is_settled
+                gimbal_is_stationary = shared_state.is_stationary
+                gimbal_stationary_ts = shared_state.stationary_ts
 
             for pkt in window_pkgs:
                 pkt_board_str = pkt.get("board", "Unknown")
@@ -2650,8 +3042,6 @@ def main():
                 for obj_raw_idx, obj_item in enumerate(parsed_objs):
                     raw_rect = obj_item["box"]
                     mono_dist = obj_item["mono_dist"]
-                    if not USE_UPSTREAM_MONO_DISTANCE:
-                        mono_dist = None
                     obj_board = obj_item.get("board") or pkt_board_str
                     obj_cam_raw = obj_item.get("cam")
                     try:
@@ -2663,7 +3053,11 @@ def main():
                     if logic_id is None:
                         continue
                     recv_obj_total += 1
-                    bbox_info, bbox_reject_reason = sanitize_bbox(raw_rect)
+                    bbox_info, bbox_reject_reason = sanitize_bbox(
+                        raw_rect,
+                        image_w=UDP_DETECTION_W,
+                        image_h=UDP_DETECTION_H,
+                    )
                     if bbox_info is None:
                         try:
                             raw_log_values = [float(raw_rect[i]) for i in range(4)]
@@ -2713,7 +3107,14 @@ def main():
                     cx = (rect[0] + rect[2]) / 2.0
                     cy = (rect[1] + rect[3]) / 2.0
 
-                    res = calculate_angles(logic_id, cx, cy, cfg)
+                    res = calculate_angles(
+                        logic_id,
+                        cx,
+                        cy,
+                        cfg,
+                        image_w=UDP_DETECTION_W,
+                        image_h=UDP_DETECTION_H,
+                    )
                     if res:
                         ui_az, ui_el = res
                         d_az_to_target = angular_diff(ui_az, shared_gimbal_az)
@@ -2726,6 +3127,8 @@ def main():
                             "mono_dist": mono_dist,
                             "board": obj_board,
                             "cam": obj_cam_idx,
+                            "logic_id": logic_id,
+                            "source_ts": float(pkt.get("_recv_ts", curr_time) or curr_time),
                             "raw_meas_idx": meas_idx,
                             "is_edge_bbox": bbox_info["is_edge_bbox"],
                             "visible_ratio": bbox_info["visible_ratio"],
@@ -2737,6 +3140,7 @@ def main():
                                 "mode": pkt_mode,
                                 "board": obj_board,
                                 "cam": obj_cam_idx,
+                                "logic_id": logic_id,
                                 "meas_idx": meas_idx,
                                 "raw_bbox_x1": f"{raw_rect[0]:.3f}",
                                 "raw_bbox_y1": f"{raw_rect[1]:.3f}",
@@ -2801,7 +3205,8 @@ def main():
             # External UI/strike IDs are exposed only after stricter gates, so short false alarms do not consume public IDs.
             valid_tracks = [
                 t for t in active_tracks
-                if t.confirmed and t.time_since_update <= MAX_LOCK_LOST_FRAMES
+                if t.confirmed
+                and t.lost_seconds(curr_time) <= MAX_LOCK_LOST_SECONDS
             ]
             for t in valid_tracks:
                 if t.hit_streak >= UI_TRACK_CONFIRM_HITS:
@@ -2811,6 +3216,7 @@ def main():
             ui_tracks = [
                 t for t in valid_tracks
                 if getattr(t, "ui_confirmed", False)
+                and track_is_ui_fresh(t, curr_time)
             ]
             strike_valid_tracks = [
                 t for t in valid_tracks
@@ -2909,6 +3315,9 @@ def main():
             valid_ids = [int(t.id) for t in valid_tracks]
             hit_values = [int(t.hit_streak) for t in active_tracks]
             lost_values = [int(t.time_since_update) for t in active_tracks]
+            lost_seconds_values = [
+                f"{t.lost_seconds(curr_time):.3f}" for t in active_tracks
+            ]
             track_states = ";".join(
                 f"{int(t.id)}:{t.state[0,0]:.4f},{t.state[1,0]:.4f},{t.state[2,0]:.4f},{t.state[3,0]:.4f}"
                 for t in active_tracks
@@ -2919,6 +3328,9 @@ def main():
                     "seq": sender_seq,
                     "mode": sender_mode,
                     "dt": f"{dt:.6f}",
+                    "window_packet_count": raw_window_packet_count,
+                    "used_packet_count": used_window_packet_count,
+                    "same_source_packet_drop_count": same_source_packet_drop_count,
                     "raw_meas_count": len(raw_measurements),
                     "fused_meas_count": len(current_measurements),
                     "fusion_groups": fusion_groups_text,
@@ -2930,6 +3342,7 @@ def main():
                     "master_id": "" if master_id is None else int(master_id),
                     "hit_streaks": ";".join(str(x) for x in hit_values),
                     "time_since_updates": ";".join(str(x) for x in lost_values),
+                    "lost_seconds": ";".join(lost_seconds_values),
                     "track_states": track_states,
                     "cmd_az": "" if last_sent_ctrl_az is None else f"{last_sent_ctrl_az:.6f}",
                     "cmd_el": "" if last_sent_ctrl_el is None else f"{last_sent_ctrl_el:.6f}",
@@ -2940,13 +3353,16 @@ def main():
                 print(
                     f"[TRACK_SUMMARY] raw_meas={len(raw_measurements)}, "
                     f"fused_meas={len(current_measurements)}, "
+                    f"pkts={used_window_packet_count}/{raw_window_packet_count}, "
+                    f"same_src_drop={same_source_packet_drop_count}, "
                     f"tracks={len(active_tracks)}, "
                     f"valid={len(valid_tracks)}, "
                     f"ids={track_ids}, "
                     f"valid_ids={valid_ids}, "
                     f"master={master_id}, "
                     f"hits={hit_values}, "
-                    f"lost={lost_values}"
+                    f"lost={lost_values}, "
+                    f"lost_s={lost_seconds_values}"
                 )
 
             vision_result = {
@@ -2979,30 +3395,405 @@ def main():
                     })
                 vision_service.update_context(
                     master_track_id=master_id,
-                    gimbal_settled=gimbal_is_settled,
-                    settled_ts=settled_ts,
+                    # Distance inference needs a stable image, not necessarily
+                    # exact convergence to the requested mechanical angle.
+                    gimbal_settled=gimbal_is_stationary,
+                    settled_ts=gimbal_stationary_ts,
                     track_predictions=track_predictions,
                 )
                 vision_result = vision_service.get_result()
+                simple_measurements = (
+                    vision_result.get("simple_measurements", []) or []
+                )
+                if simple_measurements:
+                    association_max_px = float(
+                        vision_result.get(
+                            "simple_association_max_px", 180.0
+                        )
+                        or 180.0
+                    )
+                    prediction_map = {
+                        int(item["track_id"]): np.asarray(
+                            item["center"], dtype=np.float32
+                        )
+                        for item in track_predictions
+                        if "track_id" in item and "center" in item
+                    }
+                    post_assoc_results = {}
+                    matched_measurement_indices = set()
+                    if prediction_map:
+                        predicted_track_ids = list(prediction_map)
+                        invalid_cost = association_max_px * 10.0
+                        cost_matrix = np.full(
+                            (
+                                len(predicted_track_ids),
+                                len(simple_measurements),
+                            ),
+                            invalid_cost,
+                            dtype=np.float32,
+                        )
+                        geometric_distances = np.full_like(
+                            cost_matrix, np.inf
+                        )
+                        for track_index, track_id in enumerate(
+                            predicted_track_ids
+                        ):
+                            expected_center = prediction_map[track_id]
+                            for measurement_index, measurement in enumerate(
+                                simple_measurements
+                            ):
+                                measured_center = np.asarray(
+                                    measurement.get(
+                                        "center", [math.nan, math.nan]
+                                    ),
+                                    dtype=np.float32,
+                                )
+                                if not np.all(np.isfinite(measured_center)):
+                                    continue
+                                distance_px = float(
+                                    np.linalg.norm(
+                                        measured_center - expected_center
+                                    )
+                                )
+                                geometric_distances[
+                                    track_index, measurement_index
+                                ] = distance_px
+                                if distance_px <= association_max_px:
+                                    cost_matrix[
+                                        track_index, measurement_index
+                                    ] = distance_px
+
+                        track_indices, measurement_indices = (
+                            linear_sum_assignment(cost_matrix)
+                        )
+                        for track_index, measurement_index in zip(
+                            track_indices, measurement_indices
+                        ):
+                            distance_px = float(
+                                geometric_distances[
+                                    track_index, measurement_index
+                                ]
+                            )
+                            if distance_px > association_max_px:
+                                continue
+                            track_id = predicted_track_ids[track_index]
+                            result_item = dict(
+                                simple_measurements[measurement_index]
+                            )
+                            result_item["track_id"] = track_id
+                            result_item[
+                                "association_error_px"
+                            ] = distance_px
+                            post_assoc_results[track_id] = result_item
+                            matched_measurement_indices.add(
+                                measurement_index
+                            )
+
+                    unmatched_measurements = [
+                        measurement
+                        for measurement_index, measurement in enumerate(
+                            simple_measurements
+                        )
+                        if measurement_index
+                        not in matched_measurement_indices
+                    ]
+                    vision_result["track_results"] = post_assoc_results
+                    vision_result["matched_track_ids"] = sorted(
+                        post_assoc_results
+                    )
+                    vision_result["matched_count"] = len(
+                        post_assoc_results
+                    )
+                    vision_result["unmatched_track_ids"] = sorted(
+                        track_id
+                        for track_id in prediction_map
+                        if track_id not in post_assoc_results
+                    )
+                    vision_result[
+                        "unmatched_detection_count"
+                    ] = len(unmatched_measurements)
+                    vision_result[
+                        "unmatched_detections"
+                    ] = unmatched_measurements[:5]
                 track_results = vision_result.get("track_results", {})
+                vision_frame_ts = float(vision_result.get("frame_ts", 0.0) or 0.0)
+                if vision_frame_ts > last_logged_vision_frame_ts:
+                    last_logged_vision_frame_ts = vision_frame_ts
+                    # Record every raw gimbal-camera YOLO target before SORT
+                    # association. This remains available even when ranging is
+                    # warming, invalid, or cannot be written back to a track.
+                    for detection_index, detection_item in enumerate(
+                        simple_measurements
+                    ):
+                        detection_bbox = detection_item.get("bbox")
+                        detection_center = detection_item.get("center")
+                        if (
+                            detection_center is None
+                            and detection_bbox is not None
+                            and len(detection_bbox) == 4
+                        ):
+                            detection_center = (
+                                (float(detection_bbox[0]) + float(detection_bbox[2])) / 2.0,
+                                (float(detection_bbox[1]) + float(detection_bbox[3])) / 2.0,
+                            )
+                        center_valid = (
+                            detection_center is not None
+                            and len(detection_center) == 2
+                            and all(math.isfinite(float(v)) for v in detection_center)
+                        )
+                        if center_valid:
+                            bbox_cx = float(detection_center[0])
+                            bbox_cy = float(detection_center[1])
+                            center_dx_px = bbox_cx - IMG_W / 2.0
+                            center_dy_px = bbox_cy - IMG_H / 2.0
+                            center_dx_norm = center_dx_px / (IMG_W / 2.0)
+                            center_dy_norm = center_dy_px / (IMG_H / 2.0)
+                            center_offset_az = center_dx_px * FOV_X / IMG_W
+                            center_offset_el = -center_dy_px * FOV_Y / IMG_H
+                        else:
+                            bbox_cx = bbox_cy = math.nan
+                            center_dx_px = center_dy_px = math.nan
+                            center_dx_norm = center_dy_norm = math.nan
+                            center_offset_az = center_offset_el = math.nan
+                        field_log_event({
+                            "timestamp": f"{curr_time:.6f}",
+                            "seq": sender_seq,
+                            "mode": sender_mode,
+                            "event": "GIMBAL_VISION_DETECTION",
+                            "track_id": "" if master_id is None else int(master_id),
+                            "master_id": "" if master_id is None else int(master_id),
+                            "meas_idx": int(detection_index),
+                            "vision_frame_ts": f"{vision_frame_ts:.6f}",
+                            "vision_age": f"{curr_time - vision_frame_ts:.6f}",
+                            "simple_id": detection_item.get("simple_id", ""),
+                            "class_id": detection_item.get("class_id", ""),
+                            "confidence": f"{float(detection_item.get('confidence', math.nan)):.6f}",
+                            "raw_bbox_x1": (
+                                "" if detection_bbox is None
+                                else f"{float(detection_bbox[0]):.3f}"
+                            ),
+                            "raw_bbox_y1": (
+                                "" if detection_bbox is None
+                                else f"{float(detection_bbox[1]):.3f}"
+                            ),
+                            "raw_bbox_x2": (
+                                "" if detection_bbox is None
+                                else f"{float(detection_bbox[2]):.3f}"
+                            ),
+                            "raw_bbox_y2": (
+                                "" if detection_bbox is None
+                                else f"{float(detection_bbox[3]):.3f}"
+                            ),
+                            "bbox_cx": "" if not center_valid else f"{bbox_cx:.3f}",
+                            "bbox_cy": "" if not center_valid else f"{bbox_cy:.3f}",
+                            "center_dx_px": "" if not center_valid else f"{center_dx_px:.3f}",
+                            "center_dy_px": "" if not center_valid else f"{center_dy_px:.3f}",
+                            "center_dx_norm": "" if not center_valid else f"{center_dx_norm:.6f}",
+                            "center_dy_norm": "" if not center_valid else f"{center_dy_norm:.6f}",
+                            "center_offset_az_deg": "" if not center_valid else f"{center_offset_az:.6f}",
+                            "center_offset_el_deg": "" if not center_valid else f"{center_offset_el:.6f}",
+                            "reason": (
+                                f"state={detection_item.get('state', '')},"
+                                f"warmup={detection_item.get('warmup_count', '')},"
+                                f"distance_valid={1 if detection_item.get('distance_valid') else 0},"
+                                f"safe={1 if detection_item.get('safe') else 0}"
+                            ),
+                        })
+                    unmatched_detections = vision_result.get(
+                        "unmatched_detections", []
+                    ) or []
+                    top_unmatched = (
+                        unmatched_detections[0]
+                        if unmatched_detections
+                        else {}
+                    )
+                    top_unmatched_bbox = top_unmatched.get("bbox")
+                    per_track_reasons = []
+                    for result_track_id, result_item in sorted(
+                        track_results.items(),
+                        key=lambda item: int(item[0]),
+                    ):
+                        per_track_reasons.append(
+                            f"{int(result_track_id)}:"
+                            f"{result_item.get('state')}/"
+                            f"{result_item.get('reason', '')}"
+                        )
+                    field_log_event({
+                        "timestamp": f"{curr_time:.6f}",
+                        "seq": sender_seq,
+                        "mode": sender_mode,
+                        "event": "GIMBAL_VISION_ASSOC",
+                        "track_id": "" if master_id is None else int(master_id),
+                        "master_id": "" if master_id is None else int(master_id),
+                        "detection_count": int(
+                            vision_result.get("detection_count", 0) or 0
+                        ),
+                        "matched_count": int(
+                            vision_result.get("matched_count", 0) or 0
+                        ),
+                        "unmatched_detection_count": int(
+                            vision_result.get(
+                                "unmatched_detection_count", 0
+                            ) or 0
+                        ),
+                        "visible_track_count": int(
+                            vision_result.get("visible_track_count", 0) or 0
+                        ),
+                        "active_track_count": int(
+                            vision_result.get("active_track_count", 0) or 0
+                        ),
+                        "roi_count": int(vision_result.get("roi_count", 0) or 0),
+                        "sharp_roi_count": int(
+                            vision_result.get("sharp_roi_count", 0) or 0
+                        ),
+                        "matched_track_ids": ";".join(
+                            str(x)
+                            for x in vision_result.get(
+                                "matched_track_ids", []
+                            )
+                        ),
+                        "ambiguous_track_ids": ";".join(
+                            str(x)
+                            for x in vision_result.get(
+                                "ambiguous_track_ids", []
+                            )
+                        ),
+                        "unmatched_track_ids": ";".join(
+                            str(x)
+                            for x in vision_result.get(
+                                "unmatched_track_ids", []
+                            )
+                        ),
+                        "raw_bbox_x1": (
+                            "" if top_unmatched_bbox is None
+                            else f"{float(top_unmatched_bbox[0]):.3f}"
+                        ),
+                        "raw_bbox_y1": (
+                            "" if top_unmatched_bbox is None
+                            else f"{float(top_unmatched_bbox[1]):.3f}"
+                        ),
+                        "raw_bbox_x2": (
+                            "" if top_unmatched_bbox is None
+                            else f"{float(top_unmatched_bbox[2]):.3f}"
+                        ),
+                        "raw_bbox_y2": (
+                            "" if top_unmatched_bbox is None
+                            else f"{float(top_unmatched_bbox[3]):.3f}"
+                        ),
+                        "reason": (
+                            f"state={vision_result.get('state')},"
+                            f"top_unmatched_conf="
+                            f"{float(top_unmatched.get('confidence', math.nan)):.3f},"
+                            f"track_reasons={'|'.join(per_track_reasons)}"
+                        ),
+                    })
+                    for detection_index, detection_item in enumerate(unmatched_detections[:5]):
+                        detection_bbox = detection_item.get("bbox")
+                        field_log_event({
+                            "timestamp": f"{curr_time:.6f}",
+                            "seq": sender_seq,
+                            "mode": sender_mode,
+                            "event": "GIMBAL_VISION_UNMATCHED_DETECTION",
+                            "track_id": "" if master_id is None else int(master_id),
+                            "master_id": "" if master_id is None else int(master_id),
+                            "meas_idx": int(detection_index),
+                            "raw_bbox_x1": (
+                                "" if detection_bbox is None
+                                else f"{float(detection_bbox[0]):.3f}"
+                            ),
+                            "raw_bbox_y1": (
+                                "" if detection_bbox is None
+                                else f"{float(detection_bbox[1]):.3f}"
+                            ),
+                            "raw_bbox_x2": (
+                                "" if detection_bbox is None
+                                else f"{float(detection_bbox[2]):.3f}"
+                            ),
+                            "raw_bbox_y2": (
+                                "" if detection_bbox is None
+                                else f"{float(detection_bbox[3]):.3f}"
+                            ),
+                            "reason": (
+                                "ranging_buffer_not_associated_to_sort,"
+                                "distance_accumulation_not_blocked,"
+                                f"confidence={float(detection_item.get('confidence', math.nan)):.3f},"
+                                f"class_id={int(detection_item.get('class_id', -1))}"
+                            ),
+                        })
                 track_by_id = {
                     int(track.id): track for track in valid_tracks
                 }
                 for track_id, track_result in track_results.items():
                     track_id = int(track_id)
                     track = track_by_id.get(track_id)
-                    if track is None:
-                        continue
                     result_ts = float(
                         track_result.get("frame_ts", 0.0)
                     )
                     vision_age = curr_time - result_ts
-                    if not (
-                        track_result.get("distance_valid")
-                        and 0.0 <= vision_age <= GIMBAL_VISION_RESULT_TTL
-                        and result_ts
-                        > last_applied_vision_ts.get(track_id, 0.0)
-                    ):
+                    distance_valid = bool(track_result.get("distance_valid"))
+                    result_is_fresh = 0.0 <= vision_age <= GIMBAL_VISION_RESULT_TTL
+                    result_is_new = result_ts > last_applied_vision_ts.get(track_id, 0.0)
+                    skip_reasons = []
+                    if track is None:
+                        skip_reasons.append("track_not_in_valid_tracks")
+                    if not distance_valid:
+                        skip_reasons.append("distance_invalid")
+                    if not result_is_fresh:
+                        skip_reasons.append("vision_result_stale")
+                    if not result_is_new:
+                        skip_reasons.append("already_applied_or_old")
+                    if skip_reasons:
+                        diag_bbox = track_result.get("bbox")
+                        field_log_event({
+                            "timestamp": f"{curr_time:.6f}",
+                            "seq": sender_seq,
+                            "mode": sender_mode,
+                            "event": "GIMBAL_VISION_DISTANCE_DIAG",
+                            "track_id": track_id,
+                            "master_id": (
+                                "" if master_id is None else int(master_id)
+                            ),
+                            "is_master": 1 if track_id == master_id else 0,
+                            "distance": (
+                                ""
+                                if not math.isfinite(float(track_result.get("distance", math.nan)))
+                                else f"{float(track_result.get('distance')):.6f}"
+                            ),
+                            "distance_source": track_result.get("distance_source", "none"),
+                            "cost": (
+                                f"{float(track_result.get('association_error_px')):.6f}"
+                                if math.isfinite(float(track_result.get(
+                                    "association_error_px", math.nan
+                                )))
+                                else ""
+                            ),
+                            "raw_bbox_x1": (
+                                "" if diag_bbox is None
+                                else f"{float(diag_bbox[0]):.3f}"
+                            ),
+                            "raw_bbox_y1": (
+                                "" if diag_bbox is None
+                                else f"{float(diag_bbox[1]):.3f}"
+                            ),
+                            "raw_bbox_x2": (
+                                "" if diag_bbox is None
+                                else f"{float(diag_bbox[2]):.3f}"
+                            ),
+                            "raw_bbox_y2": (
+                                "" if diag_bbox is None
+                                else f"{float(diag_bbox[3]):.3f}"
+                            ),
+                            "reason": (
+                                f"not_written_to_track:{'|'.join(skip_reasons)},"
+                                f"state={track_result.get('state')},"
+                                f"model_distance_valid={1 if distance_valid else 0},"
+                                f"safe={1 if track_result.get('safe') else 0},"
+                                f"warmup={track_result.get('warmup_count')},"
+                                f"age={vision_age:.3f},"
+                                f"confidence={float(track_result.get('confidence', math.nan)):.3f},"
+                                f"model_reason={track_result.get('reason', '')}"
+                            ),
+                        })
                         continue
                     vision_distance = _parse_positive_float(
                         track_result.get("distance")
@@ -3055,6 +3846,51 @@ def main():
                             "reason": (
                                 f"state={track_result.get('state')},"
                                 f"warmup={track_result.get('warmup_count')},"
+                                f"confidence={float(track_result.get('confidence', math.nan)):.3f}"
+                            ),
+                        })
+                        field_log_event({
+                            "timestamp": f"{curr_time:.6f}",
+                            "seq": sender_seq,
+                            "mode": sender_mode,
+                            "event": "GIMBAL_VISION_DISTANCE_DIAG",
+                            "track_id": track_id,
+                            "master_id": (
+                                "" if master_id is None else int(master_id)
+                            ),
+                            "is_master": 1 if track_id == master_id else 0,
+                            "distance": f"{vision_distance:.6f}",
+                            "distance_source": track.dist_source,
+                            "cost": (
+                                f"{float(track_result.get('association_error_px')):.6f}"
+                                if math.isfinite(float(track_result.get(
+                                    "association_error_px", math.nan
+                                )))
+                                else ""
+                            ),
+                            "raw_bbox_x1": (
+                                "" if vision_bbox is None
+                                else f"{float(vision_bbox[0]):.3f}"
+                            ),
+                            "raw_bbox_y1": (
+                                "" if vision_bbox is None
+                                else f"{float(vision_bbox[1]):.3f}"
+                            ),
+                            "raw_bbox_x2": (
+                                "" if vision_bbox is None
+                                else f"{float(vision_bbox[2]):.3f}"
+                            ),
+                            "raw_bbox_y2": (
+                                "" if vision_bbox is None
+                                else f"{float(vision_bbox[3]):.3f}"
+                            ),
+                            "reason": (
+                                "written_to_track,"
+                                f"state={track_result.get('state')},"
+                                "model_distance_valid=1,"
+                                f"safe={1 if track_result.get('safe') else 0},"
+                                f"warmup={track_result.get('warmup_count')},"
+                                f"age={vision_age:.3f},"
                                 f"confidence={float(track_result.get('confidence', math.nan)):.3f}"
                             ),
                         })
@@ -3206,10 +4042,12 @@ def main():
                     if need_reposition:
                         reposition_reason = "global_track_outside_safe_fov"
 
-                # Do not continuously preempt a moving command. A target switch
-                # may replace the old target command, otherwise wait for settle.
+                # The target may move freely inside the central safe FOV. Only
+                # reposition after three unsafe frames, and never continuously
+                # preempt while the camera is physically moving. A target
+                # switch may still replace the previous target command.
                 can_issue_command = (
-                    gimbal_is_settled
+                    gimbal_is_stationary
                     or active_gimbal_track_id != master_id
                 )
                 need_send = need_reposition and can_issue_command
@@ -3317,7 +4155,8 @@ def main():
                     strike_visual_ready
                     and strike_window["track_id"] == strike_target_id
                     and strike_track is not None
-                    and strike_track.time_since_update <= MAX_LOCK_LOST_FRAMES
+                    and strike_track.lost_seconds(curr_time)
+                    <= MAX_LOCK_LOST_SECONDS
                     and curr_time < strike_window["valid_until"]
                 )
                 if strike_window_valid and strike_sender is not None:
@@ -3392,35 +4231,53 @@ def main():
                                 "reason": str(e),
                             })
 
+
                 ui_threat_by_track_id = {
                     int(item["track_id"]): item for item in ranked_strike_candidates
                 }
-                # E. UI receives every valid global track. Only the current
-                # master may carry a fresh gimbal-camera distance.
-                master_distance_ready = (
-                    gimbal_is_settled
-                    and vision_result.get("track_id") == master_id
-                    and vision_result.get("distance_valid")
-                    and 0.0 <= (
-                        curr_time - float(vision_result.get("frame_ts", 0.0))
-                    ) <= GIMBAL_VISION_RESULT_TTL
+                vision_frame_ts = float(vision_result.get("frame_ts", 0.0) or 0.0)
+                vision_result_age = curr_time - vision_frame_ts
+                vision_result_fresh = (
+                    gimbal_is_stationary
+                    and 0.0 <= vision_result_age <= GIMBAL_VISION_RESULT_TTL
                 )
+                # E. UI receives every valid global track. A fresh matched
+                # result refreshes the track filter; brief vision misses keep
+                # the last filtered distance until TRACK_DISTANCE_TTL expires.
                 for t in ui_tracks:
-                    if t.id == master_id and master_distance_ready:
+                    ui_track_result = track_results_for_strike.get(
+                        int(t.id), {}
+                    )
+                    ui_result_age = curr_time - float(
+                        ui_track_result.get("frame_ts", 0.0) or 0.0
+                    )
+                    ui_distance_ready = (
+                        vision_result_fresh
+                        and ui_track_result.get("distance_valid")
+                        and 0.0 <= ui_result_age <= GIMBAL_VISION_RESULT_TTL
+                    )
+                    if ui_distance_ready:
                         send_dist, dist_source = select_track_distance(
                             t, master_id, curr_time
                         )
                     else:
-                        send_dist = float("nan")
-                        dist_source = (
-                            f"vision_{vision_result.get('state', 'unavailable').lower()}"
-                            if t.id == master_id
-                            else "non_master"
+                        held_dist, held_source = select_track_distance(
+                            t, master_id, curr_time
                         )
+                        if math.isfinite(held_dist):
+                            send_dist = held_dist
+                            dist_source = f"{held_source}_held"
+                        else:
+                            send_dist = float("nan")
+                            dist_source = (
+                                "vision_no_track_result"
+                                if not ui_track_result
+                                else (
+                                    f"vision_{ui_track_result.get('state', 'unavailable').lower()}"
+                                )
+                            )
                     if math.isfinite(send_dist):
                         t.last_sent_dist = send_dist
-
-
                     threat_item = ui_threat_by_track_id.get(int(t.id))
                     threat_score = (
                         float(threat_item.get("raw_threat_score", threat_item["threat_score"]))
@@ -3429,8 +4286,11 @@ def main():
                     )
                     map_az = relative_to_map_azimuth(t.state[0, 0])
                     ui_id = get_or_assign_ui_id(t)
+                    source_board, source_cam = track_ui_source(
+                        t, board_str, cam_idx
+                    )
                     sender.send_status(
-                        board_str, cam_idx, ui_id,
+                        source_board, source_cam, ui_id,
                         azimuth=map_az,
                         elevation=t.state[1, 0], 
                         distance=send_dist,
@@ -3447,7 +4307,11 @@ def main():
                         "pred_el": f"{t.state[1, 0]:.6f}",
                         "hit_streak": int(t.hit_streak),
                         "time_since_update": int(t.time_since_update),
-                        "reason": f"internal_id={int(t.id)},ui_id={int(ui_id)}",
+                        "lost_seconds": f"{t.lost_seconds(curr_time):.6f}",
+                        "reason": (
+                            f"internal_id={int(t.id)},ui_id={int(ui_id)},"
+                            f"source={source_board}/{source_cam}"
+                        ),
                         "internal_track_id": int(t.id),
                         "ui_id": int(ui_id),
                         "master_id": "" if master_id is None else int(master_id),

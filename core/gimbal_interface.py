@@ -17,7 +17,7 @@ class GimbalBase(ABC):
         pass
 
     @abstractmethod
-    def set_attitude(self, elevation: float, azimuth: float, read_status: bool = False):
+    def set_attitude(self, elevation=None, azimuth=None, read_status: bool = False, force: bool = False):
         """
         核心控制函数：设置目标姿态
         :param elevation: 俯仰角 (度) +上 -下
@@ -79,18 +79,24 @@ class GT06ZAdapter(GimbalBase):
             return True
         return False
 
-    def set_attitude(self, elevation: float, azimuth: float, read_status: bool = False):
-        if not self.driver: return
+    def set_attitude(self, elevation=None, azimuth=None, read_status: bool = False, force: bool = False):
+        if not self.driver:
+            return None
         
         # 调用驱动的 set_angles
         # 注意：您的驱动内部已经处理了死区(epsilon)和频率限制(min_interval)
         # 直接透传即可
-        self.driver.set_angles(elevation_deg=elevation, azimuth_deg=azimuth)
+        status = self.driver.set_angles(
+            elevation_deg=elevation,
+            azimuth_deg=azimuth,
+            force=force,
+        )
         
         # 如果需要立即读取状态 (通常为了确认命令是否执行)
         # 注意：频繁读取会增加通信延迟
         if read_status:
             self.get_attitude()
+        return status
 
     def get_attitude(self) -> Optional[Tuple[float, float, float]]:
         if not self.driver: return None

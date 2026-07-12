@@ -1,6 +1,14 @@
 import serial
 import time
 import struct
+import os
+
+
+def _env_flag(name, default=False):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 class GT06ZGimbal:
@@ -18,6 +26,7 @@ class GT06ZGimbal:
         self.epsilon = 0.2
         self.min_interval = 0.1
         self.last_cmd_time = 0.0
+        self.debug_serial = _env_flag("GT06Z_DEBUG_SERIAL", False)
 
     def open(self) -> bool:
         try:
@@ -65,7 +74,10 @@ class GT06ZGimbal:
         payload = bytes([self.address, cmd1, cmd2, data_h, data_l])
         checksum = self._calc_checksum(payload)
         frame = bytes([0xFF]) + payload + bytes([checksum])
+        if self.debug_serial:
+            print(f"[GT06Z][TX] cmd2=0x{cmd2:02X}, data=0x{data_val:04X}, frame={frame.hex(' ').upper()}", flush=True)
         self.ser.write(frame)
+        self.ser.flush()
 
     def stop(self):
         self._send_frame(0x00, 0x00, 0x0000)
@@ -129,33 +141,58 @@ class GT06ZGimbal:
         """
         self.set_speed_single_axis(speed)
 
-    def set_angles(self, elevation_deg: float, azimuth_deg: float):
+    def set_angles(self, elevation_deg=None, azimuth_deg=None, force: bool = False):
         """
         Absolute angle control using Item 8/9 from the protocol sheet.
+
+        Either axis may be ``None`` so the control thread can retry only the
+        axis that has not reached its target.  The return value is diagnostic;
+        callers that do not need it may continue to ignore it.
         """
+        status = {
+            "el_requested": elevation_deg is not None,
+            "az_requested": azimuth_deg is not None,
+            "el_sent": False,
+            "az_sent": False,
+            "el_ack": False,
+            "az_ack": False,
+            "reason": "",
+        }
         if not self.is_connected():
-            return
+            status["reason"] = "not_connected"
+            return status
+
+        if elevation_deg is None and azimuth_deg is None:
+            status["reason"] = "no_axis_requested"
+            return status
 
         now = time.time()
         if (now - self.last_cmd_time) < self.min_interval:
-            return
+            status["reason"] = "rate_limited"
+            return status
 
         need_send_el = False
-        if (self.last_sent_el is None) or (abs(elevation_deg - self.last_sent_el) > self.epsilon):
+        if elevation_deg is not None and (
+            force
+            or self.last_sent_el is None
+            or abs(elevation_deg - self.last_sent_el) > self.epsilon
+        ):
             need_send_el = True
 
         need_send_az = False
-        if self.last_sent_az is None:
-            need_send_az = True
-        else:
-            diff = abs(azimuth_deg - self.last_sent_az)
-            if diff > 180:
-                diff = 360 - diff
-            if diff > self.epsilon:
+        if azimuth_deg is not None:
+            if force or self.last_sent_az is None:
                 need_send_az = True
+            else:
+                diff = abs(azimuth_deg - self.last_sent_az)
+                if diff > 180:
+                    diff = 360 - diff
+                if diff > self.epsilon:
+                    need_send_az = True
 
         if not need_send_el and not need_send_az:
-            return
+            status["reason"] = "deadband"
+            return status
 
         self.ser.reset_input_buffer()
 
@@ -167,7 +204,11 @@ class GT06ZGimbal:
 
             el_cmd_val = max(0, min(3600, el_cmd_val))
             self._send_frame(0x00, 0x4D, el_cmd_val)
-            self.last_sent_el = elevation_deg
+            status["el_sent"] = True
+            el_ack = self._read_specific_response(expected_cmd_byte=0x5E, retry=3)
+            if el_ack is not None:
+                self.last_sent_el = elevation_deg
+                status["el_ack"] = True
 
             if need_send_az:
                 time.sleep(0.04)
@@ -177,9 +218,14 @@ class GT06ZGimbal:
             az_cmd_val = int(norm_az * 10)
             az_cmd_val = max(0, min(3600, az_cmd_val))
             self._send_frame(0x00, 0x4B, az_cmd_val)
-            self.last_sent_az = azimuth_deg
+            status["az_sent"] = True
+            az_ack = self._read_specific_response(expected_cmd_byte=0x5D, retry=3)
+            if az_ack is not None:
+                self.last_sent_az = azimuth_deg
+                status["az_ack"] = True
 
         self.last_cmd_time = time.time()
+        return status
 
     def _read_specific_response(self, expected_cmd_byte, retry=2):
         if not self.is_connected():
@@ -190,6 +236,8 @@ class GT06ZGimbal:
                 time.sleep(0.02)
 
             data = self.ser.read(self.ser.in_waiting or 14)
+            if self.debug_serial:
+                print(f"[GT06Z][RX] expected=0x{expected_cmd_byte:02X}, len={len(data)}, data={data.hex(' ').upper() if data else '<empty>'}", flush=True)
             if len(data) < 7:
                 continue
 
