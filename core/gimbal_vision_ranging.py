@@ -507,7 +507,10 @@ class _DistanceRuntime:
             )
 
         return {
-            "valid": len(self.features) == self.sequence_length,
+            # Physics + MLP already provide a usable first-frame estimate.
+            # Keep accumulating the fixed 25-frame sequence so GRU can take
+            # over once its native input window is complete.
+            "valid": True,
             "reason": "",
             "distance": stable_distance,
             "source": source,
