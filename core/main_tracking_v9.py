@@ -442,6 +442,12 @@ class FieldLogger:
             "clipped_bbox_x1", "clipped_bbox_y1", "clipped_bbox_x2", "clipped_bbox_y2",
             "vision_frame_ts", "vision_age", "simple_id", "class_id", "confidence",
             "bbox_cx", "bbox_cy", "center_dx_px", "center_dy_px",
+            "bbox_width_px", "bbox_height_px",
+            "bbox_jitter_valid", "bbox_jitter_dt_s",
+            "bbox_jitter_dx_px", "bbox_jitter_dy_px",
+            "bbox_jitter_center_px", "bbox_jitter_center_norm",
+            "bbox_jitter_width_delta_px", "bbox_jitter_height_delta_px",
+            "bbox_jitter_iou", "bbox_jitter_previous_missing_frames",
             "center_dx_norm", "center_dy_norm",
             "center_offset_az_deg", "center_offset_el_deg",
             "is_edge_bbox", "visible_ratio",
@@ -575,61 +581,61 @@ def field_log_gimbal(row):
             FIELD_LOGGER.write_gimbal(row)
         except Exception:
             pass
-#临时测试版本theta
+#最终版本theta
 DEVICE_THETA = {
-    1: {"theta_vertical": -0.5579, "theta_horizontal": 32.4501},  # Layer 1 cam1，方位暂用THETA2
-    2: {"theta_vertical": -0.6494, "theta_horizontal": 16.7874},  # Layer 1 cam2
-    3: {"theta_vertical": -0.4663, "theta_horizontal": 0.0000},   # Layer 1 cam3
-    4: {"theta_vertical": 0.0000, "theta_horizontal": 343.8421},  # Layer 1 cam4
-    5: {"theta_vertical": 0.0000, "theta_horizontal": 326.6701},  # Layer 1 cam5
+    1: {"theta_vertical": 0.0000, "theta_horizontal": 33.4501},  # Layer 1 cam1
+    2: {"theta_vertical": 0.0000, "theta_horizontal": 17.7874},  # Layer 1 cam2
+    3: {"theta_vertical": 0.0000, "theta_horizontal": 1.0000},   # Layer 1 cam3
+    4: {"theta_vertical": 0.0000, "theta_horizontal": 344.8421}, # Layer 1 cam4
+    5: {"theta_vertical": 0.0000, "theta_horizontal": 327.6701}, # Layer 1 cam5
 
-    6: {"theta_vertical": 9.6803, "theta_horizontal": 34.3086},   # Layer 2 cam1
-    7: {"theta_vertical": 9.7292, "theta_horizontal": 15.5593},   # Layer 2 cam2
-    8: {"theta_vertical": 9.3961, "theta_horizontal": 0.0759},    # Layer 2 cam3
-    9: {"theta_vertical": 9.3992, "theta_horizontal": 342.7710},  # Layer 2 cam4
-    10: {"theta_vertical": 9.4304, "theta_horizontal": 326}, # Layer 2 cam5，建议核查方位角
+    6: {"theta_vertical": 5.5, "theta_horizontal": 35.3086},     # Layer 2 cam1
+    7: {"theta_vertical": 5.5, "theta_horizontal": 16.5593},     # Layer 2 cam2
+    8: {"theta_vertical": 5.5, "theta_horizontal": 1.0759},      # Layer 2 cam3
+    9: {"theta_vertical": 5.5, "theta_horizontal": 343.7710},    # Layer 2 cam4
+    10: {"theta_vertical": 5.5, "theta_horizontal": 322.0000},   # Layer 2 cam5
 
-    11: {"theta_vertical": 19.6400, "theta_horizontal": 31.9870}, # Layer 3 cam1
-    12: {"theta_vertical": 20.1031, "theta_horizontal": 19.6921}, # Layer 3 cam2
-    13: {"theta_vertical": 17.1175, "theta_horizontal": 0.9703},  # Layer 3 cam3
-    14: {"theta_vertical": 18.5912, "theta_horizontal": 339.9173},# Layer 3 cam4
-    15: {"theta_vertical": 18.3194, "theta_horizontal": 322.7531},# Layer 3 cam5
+    11: {"theta_vertical": 15.5000, "theta_horizontal": 32.9870},  # Layer 3 cam1
+    12: {"theta_vertical": 15.5000, "theta_horizontal": 20.6921},  # Layer 3 cam2
+    13: {"theta_vertical": 15.5000, "theta_horizontal": 1.9703},   # Layer 3 cam3
+    14: {"theta_vertical": 15.5000, "theta_horizontal": 340.9173}, # Layer 3 cam4
+    15: {"theta_vertical": 15.5000, "theta_horizontal": 323.7531}, # Layer 3 cam5
 
-    16: {"theta_vertical": 28.2994, "theta_horizontal": 36.7386}, # Layer 4 cam1
-    17: {"theta_vertical": 28.2763, "theta_horizontal": 18.9455}, # Layer 4 cam2，方位暂用THETA2
-    18: {"theta_vertical": 28.2687, "theta_horizontal": 0.7703},  # Layer 4 cam3
-    19: {"theta_vertical": 28.6994, "theta_horizontal": 341.8870},# Layer 4 cam4
-    20: {"theta_vertical": 28.6831, "theta_horizontal": 323.5302},# Layer 4 cam5
+    16: {"theta_vertical": 25.5000, "theta_horizontal": 37.7386},  # Layer 4 cam1
+    17: {"theta_vertical": 25.5000, "theta_horizontal": 19.9455},  # Layer 4 cam2
+    18: {"theta_vertical": 25.5000, "theta_horizontal": 1.7703},   # Layer 4 cam3
+    19: {"theta_vertical": 25.5000, "theta_horizontal": 342.8870}, # Layer 4 cam4
+    20: {"theta_vertical": 25.5000, "theta_horizontal": 324.5302}, # Layer 4 cam5
 
-    21: {"theta_vertical": 39.4600, "theta_horizontal": 37.5403}, # Layer 5 cam1
-    22: {"theta_vertical": 39.0169, "theta_horizontal": 18.5903}, # Layer 5 cam2
-    23: {"theta_vertical": 38.4706, "theta_horizontal": 0.7703},  # Layer 5 cam3
-    24: {"theta_vertical": 39.3731, "theta_horizontal": 340.7103},# Layer 5 cam4
-    25: {"theta_vertical": 38.6506, "theta_horizontal": 321.7703},# Layer 5 cam5
+    21: {"theta_vertical": 35.0000, "theta_horizontal": 38.5403},  # Layer 5 cam1
+    22: {"theta_vertical": 35.0000, "theta_horizontal": 19.5903},  # Layer 5 cam2
+    23: {"theta_vertical": 35.0000, "theta_horizontal": 1.7703},   # Layer 5 cam3
+    24: {"theta_vertical": 35.0000, "theta_horizontal": 341.7103}, # Layer 5 cam4
+    25: {"theta_vertical": 35.0000, "theta_horizontal": 322.7703}, # Layer 5 cam5
 
-    26: {"theta_vertical": 47.5837, "theta_horizontal": 41.7703}, # Layer 6 cam1
-    27: {"theta_vertical": 48.3719, "theta_horizontal": 21.7703}, # Layer 6 cam2
-    28: {"theta_vertical": 47.9000, "theta_horizontal": 1.7703},  # Layer 6 cam3
-    29: {"theta_vertical": 47.4831, "theta_horizontal": 341.7703},# Layer 6 cam4
-    30: {"theta_vertical": 47.4894, "theta_horizontal": 321.7703},# Layer 6 cam5
+    26: {"theta_vertical": 44.5000, "theta_horizontal": 42.7703},  # Layer 6 cam1
+    27: {"theta_vertical": 44.5000, "theta_horizontal": 22.7703},  # Layer 6 cam2
+    28: {"theta_vertical": 44.5000, "theta_horizontal": 2.7703},   # Layer 6 cam3
+    29: {"theta_vertical": 44.5000, "theta_horizontal": 342.7703}, # Layer 6 cam4
+    30: {"theta_vertical": 44.5000, "theta_horizontal": 322.7703}, # Layer 6 cam5
 
-    31: {"theta_vertical": 57.3831, "theta_horizontal": 45.2403}, # Layer 7 cam1
-    32: {"theta_vertical": 57.6294, "theta_horizontal": 24.0403}, # Layer 7 cam2
-    33: {"theta_vertical": 56.9069, "theta_horizontal": 2.8703},  # Layer 7 cam3
-    34: {"theta_vertical": 57.2212, "theta_horizontal": 340.6003},# Layer 7 cam4
-    35: {"theta_vertical": 57.3381, "theta_horizontal": 319.4303},# Layer 7 cam5
+    31: {"theta_vertical": 54.0000, "theta_horizontal": 46.2403},  # Layer 7 cam1
+    32: {"theta_vertical": 54.0000, "theta_horizontal": 25.0403},  # Layer 7 cam2
+    33: {"theta_vertical": 54.0000, "theta_horizontal": 3.8703},   # Layer 7 cam3
+    34: {"theta_vertical": 54.0000, "theta_horizontal": 341.6003}, # Layer 7 cam4
+    35: {"theta_vertical": 54.0000, "theta_horizontal": 320.4303}, # Layer 7 cam5
 
-    36: {"theta_vertical": 66.9506, "theta_horizontal": 47.8703}, # Layer 8 cam1
-    37: {"theta_vertical": 66.2794, "theta_horizontal": 25.3703}, # Layer 8 cam2
-    38: {"theta_vertical": 66.9000, "theta_horizontal": 2.8703},  # Layer 8 cam3
-    39: {"theta_vertical": 67.2738, "theta_horizontal": 340.3703},# Layer 8 cam4
-    40: {"theta_vertical": 66.9719, "theta_horizontal": 317.8703},# Layer 8 cam5
+    36: {"theta_vertical": 63.5000, "theta_horizontal": 48.8703},  # Layer 8 cam1
+    37: {"theta_vertical": 63.5000, "theta_horizontal": 26.3703},  # Layer 8 cam2
+    38: {"theta_vertical": 63.5000, "theta_horizontal": 3.8703},   # Layer 8 cam3
+    39: {"theta_vertical": 63.5000, "theta_horizontal": 341.3703}, # Layer 8 cam4
+    40: {"theta_vertical": 63.5000, "theta_horizontal": 318.8703}, # Layer 8 cam5
 
-    41: {"theta_vertical": 76.4000, "theta_horizontal": 61.6703}, # Layer 9 cam1
-    42: {"theta_vertical": 76.4000, "theta_horizontal": 37.6703}, # Layer 9 cam2
-    43: {"theta_vertical": 76.4000, "theta_horizontal": 13.6703}, # Layer 9 cam3
-    44: {"theta_vertical": 76.4000, "theta_horizontal": 349.6703},# Layer 9 cam4
-    45: {"theta_vertical": 76.4000, "theta_horizontal": 325.6703},# Layer 9 cam5
+    41: {"theta_vertical": 73.0000, "theta_horizontal": 62.6703},  # Layer 9 cam1
+    42: {"theta_vertical": 73.0000, "theta_horizontal": 38.6703},  # Layer 9 cam2
+    43: {"theta_vertical": 73.0000, "theta_horizontal": 14.6703},  # Layer 9 cam3
+    44: {"theta_vertical": 73.0000, "theta_horizontal": 350.6703}, # Layer 9 cam4
+    45: {"theta_vertical": 73.0000, "theta_horizontal": 326.6703}, # Layer 9 cam5
 }
 # ==========================================
 #  摄像头物理位置配置 (不变)
@@ -3555,6 +3561,23 @@ def main():
                             center_dx_px = center_dy_px = math.nan
                             center_dx_norm = center_dy_norm = math.nan
                             center_offset_az = center_offset_el = math.nan
+                        bbox_valid = (
+                            detection_bbox is not None
+                            and len(detection_bbox) == 4
+                            and all(
+                                math.isfinite(float(v))
+                                for v in detection_bbox
+                            )
+                        )
+                        if bbox_valid:
+                            bbox_width_px = float(
+                                detection_bbox[2] - detection_bbox[0]
+                            )
+                            bbox_height_px = float(
+                                detection_bbox[3] - detection_bbox[1]
+                            )
+                        else:
+                            bbox_width_px = bbox_height_px = math.nan
                         field_log_event({
                             "timestamp": f"{curr_time:.6f}",
                             "seq": sender_seq,
@@ -3597,6 +3620,100 @@ def main():
                                 f"warmup={detection_item.get('warmup_count', '')},"
                                 f"distance_valid={1 if detection_item.get('distance_valid') else 0},"
                                 f"safe={1 if detection_item.get('safe') else 0}"
+                            ),
+                        })
+                        jitter_valid = bool(
+                            detection_item.get("bbox_jitter_valid", False)
+                        )
+                        field_log_event({
+                            "timestamp": f"{curr_time:.6f}",
+                            "seq": sender_seq,
+                            "mode": sender_mode,
+                            "event": "GIMBAL_VISION_BBOX_JITTER",
+                            "track_id": (
+                                "" if master_id is None else int(master_id)
+                            ),
+                            "master_id": (
+                                "" if master_id is None else int(master_id)
+                            ),
+                            "meas_idx": int(detection_index),
+                            "vision_frame_ts": f"{vision_frame_ts:.6f}",
+                            "vision_age": f"{curr_time - vision_frame_ts:.6f}",
+                            "simple_id": detection_item.get("simple_id", ""),
+                            "class_id": detection_item.get("class_id", ""),
+                            "confidence": f"{float(detection_item.get('confidence', math.nan)):.6f}",
+                            "raw_bbox_x1": (
+                                "" if not bbox_valid
+                                else f"{float(detection_bbox[0]):.3f}"
+                            ),
+                            "raw_bbox_y1": (
+                                "" if not bbox_valid
+                                else f"{float(detection_bbox[1]):.3f}"
+                            ),
+                            "raw_bbox_x2": (
+                                "" if not bbox_valid
+                                else f"{float(detection_bbox[2]):.3f}"
+                            ),
+                            "raw_bbox_y2": (
+                                "" if not bbox_valid
+                                else f"{float(detection_bbox[3]):.3f}"
+                            ),
+                            "bbox_cx": (
+                                "" if not center_valid else f"{bbox_cx:.3f}"
+                            ),
+                            "bbox_cy": (
+                                "" if not center_valid else f"{bbox_cy:.3f}"
+                            ),
+                            "bbox_width_px": (
+                                "" if not bbox_valid
+                                else f"{bbox_width_px:.3f}"
+                            ),
+                            "bbox_height_px": (
+                                "" if not bbox_valid
+                                else f"{bbox_height_px:.3f}"
+                            ),
+                            "bbox_jitter_valid": 1 if jitter_valid else 0,
+                            "bbox_jitter_dt_s": (
+                                f"{float(detection_item.get('bbox_jitter_dt_s')):.6f}"
+                                if jitter_valid else ""
+                            ),
+                            "bbox_jitter_dx_px": (
+                                f"{float(detection_item.get('bbox_jitter_dx_px')):.3f}"
+                                if jitter_valid else ""
+                            ),
+                            "bbox_jitter_dy_px": (
+                                f"{float(detection_item.get('bbox_jitter_dy_px')):.3f}"
+                                if jitter_valid else ""
+                            ),
+                            "bbox_jitter_center_px": (
+                                f"{float(detection_item.get('bbox_jitter_center_px')):.3f}"
+                                if jitter_valid else ""
+                            ),
+                            "bbox_jitter_center_norm": (
+                                f"{float(detection_item.get('bbox_jitter_center_norm')):.6f}"
+                                if jitter_valid else ""
+                            ),
+                            "bbox_jitter_width_delta_px": (
+                                f"{float(detection_item.get('bbox_jitter_width_delta_px')):.3f}"
+                                if jitter_valid else ""
+                            ),
+                            "bbox_jitter_height_delta_px": (
+                                f"{float(detection_item.get('bbox_jitter_height_delta_px')):.3f}"
+                                if jitter_valid else ""
+                            ),
+                            "bbox_jitter_iou": (
+                                f"{float(detection_item.get('bbox_jitter_iou')):.6f}"
+                                if jitter_valid else ""
+                            ),
+                            "bbox_jitter_previous_missing_frames": int(
+                                detection_item.get(
+                                    "bbox_jitter_previous_missing_frames", 0
+                                ) or 0
+                            ),
+                            "reason": (
+                                "consecutive_same_simple_id"
+                                if jitter_valid
+                                else "no_consecutive_bbox_history"
                             ),
                         })
                     unmatched_detections = vision_result.get(

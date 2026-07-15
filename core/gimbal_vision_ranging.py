@@ -1396,8 +1396,19 @@ class GimbalVisionRangingService:
         frame_ts: float,
     ) -> dict:
         state = self._simple_state_for(simple_id, frame_ts)
+        previous_box = state["last_box"]
         previous_center = state["last_center"]
         previous_center_ts = state["last_center_ts"]
+        previous_missing_frames = int(state.get("missing_frames", 0))
+        jitter_valid = False
+        jitter_dt_s = math.nan
+        jitter_dx_px = math.nan
+        jitter_dy_px = math.nan
+        jitter_center_px = math.nan
+        jitter_center_norm = math.nan
+        jitter_width_delta_px = math.nan
+        jitter_height_delta_px = math.nan
+        jitter_iou = math.nan
         if previous_center is not None and previous_center_ts > 0.0:
             dt = frame_ts - previous_center_ts
             if 1e-3 <= dt <= 1.0:
@@ -1408,6 +1419,30 @@ class GimbalVisionRangingService:
                     0.6 * state["center_velocity"]
                     + 0.4 * measured_velocity
                 ).astype(np.float32)
+                if previous_box is not None and previous_missing_frames == 0:
+                    current_box = detection["box"]
+                    jitter_dx_px = float(
+                        detection["center"][0] - previous_center[0]
+                    )
+                    jitter_dy_px = float(
+                        detection["center"][1] - previous_center[1]
+                    )
+                    jitter_center_px = math.hypot(
+                        jitter_dx_px, jitter_dy_px
+                    )
+                    previous_width = float(previous_box[2] - previous_box[0])
+                    previous_height = float(previous_box[3] - previous_box[1])
+                    current_width = float(current_box[2] - current_box[0])
+                    current_height = float(current_box[3] - current_box[1])
+                    previous_diagonal = max(
+                        1.0, math.hypot(previous_width, previous_height)
+                    )
+                    jitter_center_norm = jitter_center_px / previous_diagonal
+                    jitter_width_delta_px = current_width - previous_width
+                    jitter_height_delta_px = current_height - previous_height
+                    jitter_iou = self._bbox_iou(previous_box, current_box)
+                    jitter_dt_s = float(dt)
+                    jitter_valid = True
         state["last_box"] = detection["box"].copy()
         state["last_center"] = detection["center"].copy()
         state["last_center_ts"] = frame_ts
@@ -1434,6 +1469,16 @@ class GimbalVisionRangingService:
             "safe": self._is_safe(box),
             "reposition_requested": False,
             "association_error_px": float(association_error_px),
+            "bbox_jitter_valid": jitter_valid,
+            "bbox_jitter_dt_s": jitter_dt_s,
+            "bbox_jitter_dx_px": jitter_dx_px,
+            "bbox_jitter_dy_px": jitter_dy_px,
+            "bbox_jitter_center_px": jitter_center_px,
+            "bbox_jitter_center_norm": jitter_center_norm,
+            "bbox_jitter_width_delta_px": jitter_width_delta_px,
+            "bbox_jitter_height_delta_px": jitter_height_delta_px,
+            "bbox_jitter_iou": jitter_iou,
+            "bbox_jitter_previous_missing_frames": previous_missing_frames,
             "reason": measurement.get("reason", ""),
         }
 
