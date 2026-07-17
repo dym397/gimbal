@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Gimbal-camera YOLO ranging service.
+"""Gimbal-camera YOLO detection and optional ranging service.
 
 The service deliberately separates camera capture from inference:
 - capture always drains the camera so movement-blurred frames do not remain queued;
@@ -983,11 +983,12 @@ class _LatestFrameCamera:
 
 
 class GimbalVisionRangingService:
-    """CPU-only multi-target stop-and-measure service.
+    """Gimbal-camera YOLO service with optional legacy distance inference.
 
     In simple mode, detections are buffered by temporary image-space IDs and
-    ranged independently of SORT. The main thread associates completed ranging
-    results back to SORT tracks afterwards.
+    kept independent of SORT.  ``detection_only=True`` is the single-laser
+    production path: it never constructs or calls the physical/MLP/GRU distance
+    runtime and returns YOLO bbox/center data only.
     """
 
     def __init__(
@@ -1001,6 +1002,7 @@ class GimbalVisionRangingService:
         association_max_px: float = 260.0,
         association_ambiguity_margin_px: float = 30.0,
         track_state_ttl_s: float = 2.0,
+        detection_only: bool = False,
     ):
         self.camera = _LatestFrameCamera(
             camera_source,
@@ -1011,9 +1013,13 @@ class GimbalVisionRangingService:
             weights or (DISTANCE_ROOT / "best.pt"),
             confidence,
         )
-        # Eagerly validate all ranging assets. The first per-track state reuses
-        # this runtime; later tracks share model weights but own temporal state.
-        self._spare_distance_runtime = _DistanceRuntime()
+        self.detection_only = bool(detection_only)
+        # The single-laser branch must not load physical/MLP/GRU assets.  Keep
+        # the legacy runtime available only for callers that explicitly use
+        # this service for monocular ranging.
+        self._spare_distance_runtime = (
+            None if self.detection_only else _DistanceRuntime()
+        )
         self.settle_delay_s = float(settle_delay_s)
         self.min_sharpness = float(min_sharpness)
         self.unsafe_confirm_frames = max(1, int(unsafe_confirm_frames))
@@ -1021,10 +1027,15 @@ class GimbalVisionRangingService:
         self.association_ambiguity_margin_px = max(
             0.0, float(association_ambiguity_margin_px)
         )
-        self.simple_mode = os.getenv(
+        self.simple_mode = self.detection_only or os.getenv(
             "GIMBAL_VISION_SIMPLE_MODE", "1"
         ).strip().lower() not in ("0", "false", "no", "off")
-        if self.simple_mode:
+        if self.detection_only:
+            print(
+                "[GimbalVision] YOLO detection-only mode enabled: "
+                "physical/MLP/GRU distance models are disabled"
+            )
+        elif self.simple_mode:
             print(
                 "[GimbalVision] simple ranging mode enabled: "
                 "YOLO buffers are independent of SORT; ranging is associated afterwards"
@@ -1101,7 +1112,11 @@ class GimbalVisionRangingService:
             )
         self.thread = threading.Thread(
             target=self._run,
-            name="gimbal-vision-ranging",
+            name=(
+                "gimbal-yolo-detection"
+                if self.detection_only
+                else "gimbal-vision-ranging"
+            ),
             daemon=True,
         )
         self.thread.start()
@@ -1125,6 +1140,36 @@ class GimbalVisionRangingService:
         try:
             canvas = frame.copy()
             result = result or {}
+            frame_h, frame_w = canvas.shape[:2]
+            optical_center = (frame_w // 2, frame_h // 2)
+            cross_half_size = max(18, int(round(min(frame_w, frame_h) * 0.025)))
+            # Black outline keeps the optical-center marker visible over both
+            # bright sky and dark targets; yellow matches the manual test UI.
+            for thickness, color in ((7, (0, 0, 0)), (3, (0, 255, 255))):
+                cv2.line(
+                    canvas,
+                    (optical_center[0] - cross_half_size, optical_center[1]),
+                    (optical_center[0] + cross_half_size, optical_center[1]),
+                    color,
+                    thickness,
+                    cv2.LINE_AA,
+                )
+                cv2.line(
+                    canvas,
+                    (optical_center[0], optical_center[1] - cross_half_size),
+                    (optical_center[0], optical_center[1] + cross_half_size),
+                    color,
+                    thickness,
+                    cv2.LINE_AA,
+                )
+                cv2.circle(
+                    canvas,
+                    optical_center,
+                    8,
+                    color,
+                    thickness,
+                    cv2.LINE_AA,
+                )
             for detection in result.get("simple_detections", []):
                 box = detection.get("bbox")
                 if not isinstance(box, (list, tuple)) or len(box) != 4:
@@ -1143,13 +1188,20 @@ class GimbalVisionRangingService:
                     continue
                 x1, y1, x2, y2 = (int(round(float(v))) for v in box)
                 valid = bool(measurement.get("distance_valid", False))
-                color = (40, 220, 40) if valid else (0, 80, 255)
+                color = (
+                    (0, 220, 255)
+                    if self.detection_only
+                    else ((40, 220, 40) if valid else (0, 80, 255))
+                )
                 cv2.rectangle(canvas, (x1, y1), (x2, y2), color, 3)
-                warmup = int(measurement.get("warmup_count", 0))
-                label = f"id={measurement.get('simple_id', '?')} warmup={warmup}/25"
-                if valid:
+                if self.detection_only:
+                    label = f"id={measurement.get('simple_id', '?')} YOLO"
+                else:
+                    warmup = int(measurement.get("warmup_count", 0))
+                    label = f"id={measurement.get('simple_id', '?')} warmup={warmup}/25"
+                if valid and not self.detection_only:
                     label += f" {float(measurement.get('distance', math.nan)):.1f}m"
-                elif measurement.get("reason"):
+                elif measurement.get("reason") and not self.detection_only:
                     label += f" {measurement['reason']}"
                 cv2.putText(
                     canvas, label, (x1, min(FRAME_H - 12, y2 + 26)),
@@ -1296,7 +1348,9 @@ class GimbalVisionRangingService:
     def _simple_state_for(self, simple_id: int, now_t: float) -> dict:
         state = self.simple_track_states.get(simple_id)
         if state is None:
-            if self._spare_distance_runtime is not None:
+            if self.detection_only:
+                distance = None
+            elif self._spare_distance_runtime is not None:
                 distance = self._spare_distance_runtime
                 self._spare_distance_runtime = None
             else:
@@ -1449,11 +1503,22 @@ class GimbalVisionRangingService:
         state["class_id"] = int(detection["class_id"])
         state["missing_frames"] = 0
 
-        measurement = state["distance"].update(detection, frame_ts)
+        if self.detection_only:
+            measurement = {
+                "valid": False,
+                "reason": "YOLO_DETECTION_ONLY",
+                "warmup_count": 0,
+            }
+        else:
+            measurement = state["distance"].update(detection, frame_ts)
         distance_valid = bool(measurement.get("valid", False))
         box = detection["box"]
         return {
-            "state": "MEASURING" if distance_valid else "WARMING",
+            "state": (
+                "DETECTED"
+                if self.detection_only
+                else ("MEASURING" if distance_valid else "WARMING")
+            ),
             "track_id": simple_id,
             "simple_id": simple_id,
             "bbox": [float(value) for value in box],
@@ -1963,39 +2028,57 @@ class GimbalVisionRangingService:
                 frame, simple_roi_origins
             )
             self._prune_simple_states(frame_ts)
-            matches, unmatched_detection_indices = (
-                self._associate_simple_detections(detections, frame_ts)
-            )
-
             simple_measurements = []
             matched_simple_ids = set()
-            for simple_id, (detection_index, assoc_err) in matches.items():
-                result = self._simple_measurement_result(
-                    simple_id,
-                    detections[detection_index],
-                    assoc_err,
-                    frame_ts,
+            if self.detection_only:
+                # single-laser does not need image-space Hungarian matching.
+                # With exactly one detection its identity is simply slot 1;
+                # multi-detection frames are rejected later by the alignment
+                # gate, so their index IDs are diagnostic only.
+                unmatched_detection_indices = set()
+                for detection_index, detection in enumerate(detections):
+                    simple_id = detection_index + 1
+                    result = self._simple_measurement_result(
+                        simple_id,
+                        detection,
+                        0.0,
+                        frame_ts,
+                    )
+                    simple_measurements.append(result)
+                    matched_simple_ids.add(simple_id)
+            else:
+                matches, unmatched_detection_indices = (
+                    self._associate_simple_detections(detections, frame_ts)
                 )
-                simple_measurements.append(result)
-                matched_simple_ids.add(simple_id)
+                for simple_id, (detection_index, assoc_err) in matches.items():
+                    result = self._simple_measurement_result(
+                        simple_id,
+                        detections[detection_index],
+                        assoc_err,
+                        frame_ts,
+                    )
+                    simple_measurements.append(result)
+                    matched_simple_ids.add(simple_id)
 
             for simple_id, state in self.simple_track_states.items():
                 if simple_id in matched_simple_ids:
                     continue
                 state["missing_frames"] += 1
-                state["distance"].mark_missing(frame_ts)
+                if state["distance"] is not None:
+                    state["distance"].mark_missing(frame_ts)
 
-            for detection_index in sorted(unmatched_detection_indices):
-                simple_id = self.simple_next_track_id
-                self.simple_next_track_id += 1
-                result = self._simple_measurement_result(
-                    simple_id,
-                    detections[detection_index],
-                    0.0,
-                    frame_ts,
-                )
-                simple_measurements.append(result)
-                matched_simple_ids.add(simple_id)
+            if not self.detection_only:
+                for detection_index in sorted(unmatched_detection_indices):
+                    simple_id = self.simple_next_track_id
+                    self.simple_next_track_id += 1
+                    result = self._simple_measurement_result(
+                        simple_id,
+                        detections[detection_index],
+                        0.0,
+                        frame_ts,
+                    )
+                    simple_measurements.append(result)
+                    matched_simple_ids.add(simple_id)
 
             if simple_measurements:
                 master_result = dict(simple_measurements[0])
@@ -2154,7 +2237,11 @@ class GimbalVisionRangingService:
         }
 
     def _run(self) -> None:
-        print("[GimbalVision] multi-target ranging thread started")
+        print(
+            "[GimbalVision] YOLO detection thread started"
+            if self.detection_only
+            else "[GimbalVision] multi-target ranging thread started"
+        )
         while not self.stop_event.is_set():
             with self.lock:
                 master_track_id = self.master_track_id

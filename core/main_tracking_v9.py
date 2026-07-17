@@ -38,6 +38,16 @@ try:
     from gimbal_vision_ranging import GimbalVisionRangingService
 except ImportError:
     GimbalVisionRangingService = None
+try:
+    from single_target_visual_alignment import (
+        SingleTargetAlignmentConfig,
+        SingleTargetVisualAlignment,
+        quantize_angle_0p1,
+    )
+except ImportError:
+    SingleTargetAlignmentConfig = None
+    SingleTargetVisualAlignment = None
+    quantize_angle_0p1 = None
 # ==========================================
 # 配置
 # ==========================================
@@ -270,6 +280,9 @@ STRIKE_LEAD_TIME = _env_float("STRIKE_LEAD_TIME", 0.3)
 STRIKE_SETTLED_EVENT_TTL = _env_float("STRIKE_SETTLED_EVENT_TTL", 0.5)
 TRACK_DISTANCE_TTL = _env_float("TRACK_DISTANCE_TTL", 3.0)
 ENABLE_GIMBAL_VISION = _env_flag("ENABLE_GIMBAL_VISION", True)
+# This branch has one authoritative range source: the coaxial SDDM laser.
+# Fixed-camera packets and gimbal-camera YOLO provide direction/identity only.
+SINGLE_LASER_MODE = True
 GIMBAL_CAMERA_SOURCE = os.getenv(
     "GIMBAL_CAMERA_SOURCE",
     WINDOWS_GIMBAL_CAMERA_SOURCE if os.name == "nt" else LINUX_GIMBAL_CAMERA_SOURCE,
@@ -286,6 +299,48 @@ GIMBAL_VISION_AMBIGUITY_MARGIN_PX = _env_float(
 )
 GIMBAL_VISION_TRACK_STATE_TTL = _env_float(
     "GIMBAL_VISION_TRACK_STATE_TTL", 2.0
+)
+ENABLE_SINGLE_TARGET_YOLO_ALIGNMENT = _env_flag(
+    "ENABLE_SINGLE_TARGET_YOLO_ALIGNMENT", True
+)
+GIMBAL_YOLO_ALIGN_STABLE_FRAMES = _env_int(
+    "GIMBAL_YOLO_ALIGN_STABLE_FRAMES", 6
+)
+GIMBAL_YOLO_ALIGN_MAX_STD_X_PX = _env_float(
+    "GIMBAL_YOLO_ALIGN_MAX_STD_X_PX", 12.0
+)
+GIMBAL_YOLO_ALIGN_MAX_STD_Y_PX = _env_float(
+    "GIMBAL_YOLO_ALIGN_MAX_STD_Y_PX", 12.0
+)
+GIMBAL_YOLO_ALIGN_MAX_SPEED_X_PX_S = _env_float(
+    "GIMBAL_YOLO_ALIGN_MAX_SPEED_X_PX_S", 15.0
+)
+GIMBAL_YOLO_ALIGN_MAX_SPEED_Y_PX_S = _env_float(
+    "GIMBAL_YOLO_ALIGN_MAX_SPEED_Y_PX_S", 15.0
+)
+GIMBAL_YOLO_ALIGN_TRIGGER_X_PX = _env_float(
+    "GIMBAL_YOLO_ALIGN_TRIGGER_X_PX", 50.0
+)
+GIMBAL_YOLO_ALIGN_TRIGGER_Y_PX = _env_float(
+    "GIMBAL_YOLO_ALIGN_TRIGGER_Y_PX", 50.0
+)
+GIMBAL_YOLO_ALIGN_CENTERED_X_PX = _env_float(
+    "GIMBAL_YOLO_ALIGN_CENTERED_X_PX", 30.0
+)
+GIMBAL_YOLO_ALIGN_CENTERED_Y_PX = _env_float(
+    "GIMBAL_YOLO_ALIGN_CENTERED_Y_PX", 30.0
+)
+GIMBAL_YOLO_ALIGN_MAX_FRAME_GAP_S = _env_float(
+    "GIMBAL_YOLO_ALIGN_MAX_FRAME_GAP_S", 1.0
+)
+GIMBAL_YOLO_ALIGN_MAX_STEP_AZ_DEG = _env_float(
+    "GIMBAL_YOLO_ALIGN_MAX_STEP_AZ_DEG", 3.0
+)
+GIMBAL_YOLO_ALIGN_MAX_STEP_EL_DEG = _env_float(
+    "GIMBAL_YOLO_ALIGN_MAX_STEP_EL_DEG", 2.0
+)
+GIMBAL_YOLO_ALIGN_MAX_CORRECTIONS = _env_int(
+    "GIMBAL_YOLO_ALIGN_MAX_CORRECTIONS", 3
 )
 GIMBAL_PORT = _serial_port("GIMBAL_PORT", "gimbal")
 LASER_PORT = _serial_port("LASER_PORT", "laser")
@@ -324,6 +379,7 @@ GIMBAL_STATIONARY_DWELL_SECONDS = _env_float(
 )
 GIMBAL_PROGRESS_LOG_INTERVAL = 0.10
 LASER_LOG_INTERVAL = _env_float("LASER_LOG_INTERVAL", 1.0)
+LASER_RESULT_TTL = _env_float("LASER_RESULT_TTL", 1.0)
 MONO_DIST_TTL = 1.2
 DEFAULT_TRACKING_DISTANCE_M = 450.0  # 仅用于内部参数冷启动（保持稳定）
 DEFAULT_DISTANCE_MIN_M = 200.0
@@ -450,6 +506,10 @@ class FieldLogger:
             "bbox_jitter_iou", "bbox_jitter_previous_missing_frames",
             "center_dx_norm", "center_dy_norm",
             "center_offset_az_deg", "center_offset_el_deg",
+            "alignment_state", "alignment_sample_count",
+            "alignment_std_x_px", "alignment_std_y_px",
+            "alignment_speed_x_px_s", "alignment_speed_y_px_s",
+            "alignment_delta_az_deg", "alignment_delta_el_deg",
             "is_edge_bbox", "visible_ratio",
         ]
         self.gimbal_fields = [
@@ -459,6 +519,7 @@ class FieldLogger:
             "is_settled", "is_stationary", "settle_time",
             "retry_axes", "driver_status", "laser_valid", "laser_dist",
             "laser_source", "laser_ts", "laser_age", "laser_interval",
+            "reason",
         ]
 
         self.measurements_writer = csv.DictWriter(self.measurements_f, fieldnames=self.measurements_fields, extrasaction="ignore")
@@ -858,10 +919,21 @@ class SharedHardwareState:
         # angle.  Ranging uses this flag; strike safety still uses is_settled.
         self.is_stationary = False
         self.stationary_ts = 0.0
+        self.raw_laser_dist = None
+        self.raw_laser_ts = 0.0
 
 shared_state = SharedHardwareState()
 gimbal_cmd_queue = queue.Queue(maxsize=1)
 packet_queue = deque(maxlen=PACKET_QUEUE_MAXLEN)
+
+
+def quantize_gimbal_command_angle(value):
+    """Normalize every queued gimbal target to the protocol's 0.1 degree."""
+    if quantize_angle_0p1 is not None:
+        return quantize_angle_0p1(value)
+    value = float(value)
+    magnitude = math.floor(abs(value) * 10.0 + 0.5) / 10.0
+    return math.copysign(magnitude, value)
 
 
 def sample_default_distance():
@@ -933,6 +1005,9 @@ def rk3588_thread():
             continue
 
 def push_latest_gimbal_cmd(cmd):
+    cmd = dict(cmd)
+    cmd["az"] = quantize_gimbal_command_angle(cmd["az"])
+    cmd["el"] = quantize_gimbal_command_angle(cmd["el"])
     while True:
         try:
             gimbal_cmd_queue.put_nowait(cmd)
@@ -975,6 +1050,9 @@ def laser_reader_thread(laser, stop_event):
         if dist is None:
             continue
         now_t = time.time()
+        with shared_state.lock:
+            shared_state.raw_laser_dist = float(dist)
+            shared_state.raw_laser_ts = now_t
         if (now_t - last_log_t) >= LASER_LOG_INTERVAL:
             field_log_gimbal({
                 "timestamp": f"{now_t:.6f}",
@@ -1498,7 +1576,9 @@ def gimbal_control_thread(gimbal):
                 last_progress_log_t = 0.0
                 settle_candidate_since = None
                 send_status = gimbal.set_attitude(
-                    elevation=target_el, azimuth=target_az
+                    elevation=target_el,
+                    azimuth=target_az,
+                    force=bool(active_cmd.get("force", False)),
                 )
                 send_t = time.time()
                 last_az_send_t = send_t
@@ -1539,8 +1619,13 @@ def gimbal_control_thread(gimbal):
 
                 # 目标切换时必须整条命令替换，避免“新方位 + 旧俯仰”混合指向。
                 full_replace = (new_track_id != curr_track_id)
-                update_az = full_replace or (d_az > AZ_PREEMPT_DEG)
-                update_el = full_replace or (d_el > EL_PREEMPT_DEG)
+                force_update = bool(newer_cmd.get("force", False))
+                update_az = (
+                    full_replace or force_update or (d_az > AZ_PREEMPT_DEG)
+                )
+                update_el = (
+                    full_replace or force_update or (d_el > EL_PREEMPT_DEG)
+                )
 
                 if update_az or update_el:
                     if update_az:
@@ -1552,7 +1637,9 @@ def gimbal_control_thread(gimbal):
                     last_progress_log_t = 0.0
                     settle_candidate_since = None
                     send_status = gimbal.set_attitude(
-                        elevation=target_el, azimuth=target_az
+                        elevation=target_el,
+                        azimuth=target_az,
+                        force=force_update,
                     )
                     send_t = time.time()
                     if update_az:
@@ -2792,12 +2879,15 @@ def main():
                         GIMBAL_VISION_AMBIGUITY_MARGIN_PX
                     ),
                     track_state_ttl_s=GIMBAL_VISION_TRACK_STATE_TTL,
+                    # single-laser uses this camera only for YOLO guidance.
+                    # Do not load or run physics/MLP/GRU distance inference.
+                    detection_only=SINGLE_LASER_MODE,
                 )
                 vision_service.start()
                 print(
                     f"[GimbalVision] enabled camera={GIMBAL_CAMERA_SOURCE!r}, "
                     "YOLO=bestall_2k.rknn native 2560x1440 on RKNN/NPU, "
-                    "association=simple_center_yolo"
+                    "mode=YOLO_detection_only, distance=SDDM_laser"
                 )
             except Exception as e:
                 vision_service = None
@@ -2805,11 +2895,68 @@ def main():
     else:
         print("[GimbalVision] disabled by ENABLE_GIMBAL_VISION=False")
 
-    distance_mode = (
-        "gimbal camera YOLO/MLP/GRU"
-        if vision_service is not None
-        else "none"
-    )
+    visual_alignment = None
+    if ENABLE_SINGLE_TARGET_YOLO_ALIGNMENT and vision_service is not None:
+        if (
+            SingleTargetAlignmentConfig is None
+            or SingleTargetVisualAlignment is None
+        ):
+            print(
+                "[GimbalAlign][Warn] alignment module import failed; "
+                "single-target YOLO alignment disabled"
+            )
+        else:
+            visual_alignment = SingleTargetVisualAlignment(
+                SingleTargetAlignmentConfig(
+                    image_width=IMG_W,
+                    image_height=IMG_H,
+                    fov_x_deg=FOV_X,
+                    fov_y_deg=FOV_Y,
+                    stable_frames=GIMBAL_YOLO_ALIGN_STABLE_FRAMES,
+                    max_center_std_x_px=GIMBAL_YOLO_ALIGN_MAX_STD_X_PX,
+                    max_center_std_y_px=GIMBAL_YOLO_ALIGN_MAX_STD_Y_PX,
+                    max_center_speed_x_px_s=(
+                        GIMBAL_YOLO_ALIGN_MAX_SPEED_X_PX_S
+                    ),
+                    max_center_speed_y_px_s=(
+                        GIMBAL_YOLO_ALIGN_MAX_SPEED_Y_PX_S
+                    ),
+                    trigger_x_px=GIMBAL_YOLO_ALIGN_TRIGGER_X_PX,
+                    trigger_y_px=GIMBAL_YOLO_ALIGN_TRIGGER_Y_PX,
+                    centered_x_px=GIMBAL_YOLO_ALIGN_CENTERED_X_PX,
+                    centered_y_px=GIMBAL_YOLO_ALIGN_CENTERED_Y_PX,
+                    max_frame_gap_s=GIMBAL_YOLO_ALIGN_MAX_FRAME_GAP_S,
+                    max_step_az_deg=GIMBAL_YOLO_ALIGN_MAX_STEP_AZ_DEG,
+                    max_step_el_deg=GIMBAL_YOLO_ALIGN_MAX_STEP_EL_DEG,
+                    max_corrections_per_lock=(
+                        GIMBAL_YOLO_ALIGN_MAX_CORRECTIONS
+                    ),
+                )
+            )
+            print(
+                "[GimbalAlign] enabled single-target stable YOLO alignment: "
+                f"frames={GIMBAL_YOLO_ALIGN_STABLE_FRAMES}, "
+                f"std<=({GIMBAL_YOLO_ALIGN_MAX_STD_X_PX:.1f},"
+                f"{GIMBAL_YOLO_ALIGN_MAX_STD_Y_PX:.1f})px, "
+                f"speed<=({GIMBAL_YOLO_ALIGN_MAX_SPEED_X_PX_S:.1f},"
+                f"{GIMBAL_YOLO_ALIGN_MAX_SPEED_Y_PX_S:.1f})px/s, "
+                f"trigger=({GIMBAL_YOLO_ALIGN_TRIGGER_X_PX:.1f},"
+                f"{GIMBAL_YOLO_ALIGN_TRIGGER_Y_PX:.1f})px, "
+                f"centered=({GIMBAL_YOLO_ALIGN_CENTERED_X_PX:.1f},"
+                f"{GIMBAL_YOLO_ALIGN_CENTERED_Y_PX:.1f})px, "
+                f"max_corrections={GIMBAL_YOLO_ALIGN_MAX_CORRECTIONS}"
+            )
+    elif ENABLE_SINGLE_TARGET_YOLO_ALIGNMENT:
+        print(
+            "[GimbalAlign] requested but gimbal vision is unavailable; disabled"
+        )
+    else:
+        print(
+            "[GimbalAlign] disabled by "
+            "ENABLE_SINGLE_TARGET_YOLO_ALIGNMENT=False"
+        )
+
+    distance_mode = "SDDM laser -> current master_id"
     print(
         f"[Init] UI/Strike distance source: {distance_mode} "
         f"(ttl={TRACK_DISTANCE_TTL:.1f}s)"
@@ -2853,6 +3000,7 @@ def main():
     angle_unsafe_frames = 0
     last_applied_vision_ts = {}
     last_logged_vision_frame_ts = 0.0
+    last_bound_laser_ts = 0.0
     strike_window = {
         "track_id": None,
         "distance": None,
@@ -3034,6 +3182,8 @@ def main():
                 gimbal_is_settled = shared_state.is_settled
                 gimbal_is_stationary = shared_state.is_stationary
                 gimbal_stationary_ts = shared_state.stationary_ts
+                raw_laser_dist = shared_state.raw_laser_dist
+                raw_laser_ts = shared_state.raw_laser_ts
 
             for pkt in window_pkgs:
                 pkt_board_str = pkt.get("board", "Unknown")
@@ -3048,6 +3198,8 @@ def main():
                 for obj_raw_idx, obj_item in enumerate(parsed_objs):
                     raw_rect = obj_item["box"]
                     mono_dist = obj_item["mono_dist"]
+                    if SINGLE_LASER_MODE:
+                        mono_dist = None
                     obj_board = obj_item.get("board") or pkt_board_str
                     obj_cam_raw = obj_item.get("cam")
                     try:
@@ -3380,147 +3532,51 @@ def main():
                 "reposition_requested": False,
                 "bbox": None,
             }
+            alignment_decision = {
+                "state": "DISABLED",
+                "processed_new_frame": False,
+                "command_requested": False,
+                "laser_ready": False,
+            }
+            simple_measurements = []
             if vision_service is not None:
-                track_predictions = []
-                for track in valid_tracks:
-                    expected_delta_az = angular_diff(
-                        track.state[0, 0],
-                        shared_gimbal_az,
-                    )
-                    expected_delta_el = (
-                        track.state[1, 0] - shared_gimbal_el
-                    )
-                    track_predictions.append({
-                        "track_id": int(track.id),
-                        "center": (
-                            IMG_W / 2.0
-                            + expected_delta_az / FOV_X * IMG_W,
-                            IMG_H / 2.0
-                            - expected_delta_el / FOV_Y * IMG_H,
-                        ),
-                    })
                 vision_service.update_context(
                     master_track_id=master_id,
                     # Distance inference needs a stable image, not necessarily
                     # exact convergence to the requested mechanical angle.
                     gimbal_settled=gimbal_is_stationary,
                     settled_ts=gimbal_stationary_ts,
-                    track_predictions=track_predictions,
+                    # single-laser is intentionally single-target: YOLO does
+                    # not need SORT projection candidates or Hungarian match.
+                    track_predictions=[],
                 )
                 vision_result = vision_service.get_result()
                 simple_measurements = (
                     vision_result.get("simple_measurements", []) or []
                 )
-                if simple_measurements:
-                    association_max_px = float(
-                        vision_result.get(
-                            "simple_association_max_px", 180.0
-                        )
-                        or 180.0
-                    )
-                    prediction_map = {
-                        int(item["track_id"]): np.asarray(
-                            item["center"], dtype=np.float32
-                        )
-                        for item in track_predictions
-                        if "track_id" in item and "center" in item
-                    }
-                    post_assoc_results = {}
-                    matched_measurement_indices = set()
-                    if prediction_map:
-                        predicted_track_ids = list(prediction_map)
-                        invalid_cost = association_max_px * 10.0
-                        cost_matrix = np.full(
-                            (
-                                len(predicted_track_ids),
-                                len(simple_measurements),
-                            ),
-                            invalid_cost,
-                            dtype=np.float32,
-                        )
-                        geometric_distances = np.full_like(
-                            cost_matrix, np.inf
-                        )
-                        for track_index, track_id in enumerate(
-                            predicted_track_ids
-                        ):
-                            expected_center = prediction_map[track_id]
-                            for measurement_index, measurement in enumerate(
-                                simple_measurements
-                            ):
-                                measured_center = np.asarray(
-                                    measurement.get(
-                                        "center", [math.nan, math.nan]
-                                    ),
-                                    dtype=np.float32,
-                                )
-                                if not np.all(np.isfinite(measured_center)):
-                                    continue
-                                distance_px = float(
-                                    np.linalg.norm(
-                                        measured_center - expected_center
-                                    )
-                                )
-                                geometric_distances[
-                                    track_index, measurement_index
-                                ] = distance_px
-                                if distance_px <= association_max_px:
-                                    cost_matrix[
-                                        track_index, measurement_index
-                                    ] = distance_px
-
-                        track_indices, measurement_indices = (
-                            linear_sum_assignment(cost_matrix)
-                        )
-                        for track_index, measurement_index in zip(
-                            track_indices, measurement_indices
-                        ):
-                            distance_px = float(
-                                geometric_distances[
-                                    track_index, measurement_index
-                                ]
-                            )
-                            if distance_px > association_max_px:
-                                continue
-                            track_id = predicted_track_ids[track_index]
-                            result_item = dict(
-                                simple_measurements[measurement_index]
-                            )
-                            result_item["track_id"] = track_id
-                            result_item[
-                                "association_error_px"
-                            ] = distance_px
-                            post_assoc_results[track_id] = result_item
-                            matched_measurement_indices.add(
-                                measurement_index
-                            )
-
-                    unmatched_measurements = [
-                        measurement
-                        for measurement_index, measurement in enumerate(
-                            simple_measurements
-                        )
-                        if measurement_index
-                        not in matched_measurement_indices
-                    ]
-                    vision_result["track_results"] = post_assoc_results
-                    vision_result["matched_track_ids"] = sorted(
-                        post_assoc_results
-                    )
-                    vision_result["matched_count"] = len(
-                        post_assoc_results
-                    )
-                    vision_result["unmatched_track_ids"] = sorted(
-                        track_id
-                        for track_id in prediction_map
-                        if track_id not in post_assoc_results
-                    )
-                    vision_result[
-                        "unmatched_detection_count"
-                    ] = len(unmatched_measurements)
-                    vision_result[
-                        "unmatched_detections"
-                    ] = unmatched_measurements[:5]
+                direct_master_results = {}
+                if master_id is not None and len(simple_measurements) == 1:
+                    direct_result = dict(simple_measurements[0])
+                    direct_result["track_id"] = int(master_id)
+                    direct_result["association_error_px"] = 0.0
+                    direct_result["binding_mode"] = "single_target_master"
+                    direct_master_results[int(master_id)] = direct_result
+                vision_result["track_results"] = direct_master_results
+                vision_result["matched_track_ids"] = sorted(
+                    direct_master_results
+                )
+                vision_result["matched_count"] = len(direct_master_results)
+                vision_result["unmatched_track_ids"] = (
+                    [int(master_id)]
+                    if master_id is not None and not direct_master_results
+                    else []
+                )
+                vision_result["unmatched_detection_count"] = (
+                    0 if direct_master_results else len(simple_measurements)
+                )
+                vision_result["unmatched_detections"] = (
+                    [] if direct_master_results else simple_measurements[:5]
+                )
                 track_results = vision_result.get("track_results", {})
                 vision_frame_ts = float(vision_result.get("frame_ts", 0.0) or 0.0)
                 if vision_frame_ts > last_logged_vision_frame_ts:
@@ -3840,7 +3896,12 @@ def main():
                 track_by_id = {
                     int(track.id): track for track in valid_tracks
                 }
-                for track_id, track_result in track_results.items():
+                distance_track_results = (
+                    {}
+                    if getattr(vision_service, "detection_only", False)
+                    else track_results
+                )
+                for track_id, track_result in distance_track_results.items():
                     track_id = int(track_id)
                     track = track_by_id.get(track_id)
                     result_ts = float(
@@ -4017,6 +4078,170 @@ def main():
                     if stale_track_id not in active_track_ids:
                         del last_applied_vision_ts[stale_track_id]
 
+            if visual_alignment is not None:
+                aligned_measurement = (
+                    simple_measurements[0]
+                    if master_id is not None
+                    and len(simple_measurements) == 1
+                    else None
+                )
+                alignment_decision = visual_alignment.update(
+                    frame_ts=float(
+                        vision_result.get("frame_ts", 0.0) or 0.0
+                    ),
+                    master_track_id=master_id,
+                    measurement=aligned_measurement,
+                    detection_count=int(
+                        vision_result.get("detection_count", 0) or 0
+                    ),
+                    gimbal_stationary=gimbal_is_stationary,
+                    stationary_ts=gimbal_stationary_ts,
+                )
+                if alignment_decision.get("processed_new_frame"):
+                    field_log_event({
+                        "timestamp": f"{curr_time:.6f}",
+                        "seq": sender_seq,
+                        "mode": sender_mode,
+                        "event": "GIMBAL_YOLO_ALIGNMENT",
+                        "track_id": (
+                            "" if master_id is None else int(master_id)
+                        ),
+                        "master_id": (
+                            "" if master_id is None else int(master_id)
+                        ),
+                        "vision_frame_ts": f"{float(vision_result.get('frame_ts', 0.0) or 0.0):.6f}",
+                        "detection_count": int(
+                            vision_result.get("detection_count", 0) or 0
+                        ),
+                        "simple_id": (
+                            "" if not aligned_measurement
+                            else aligned_measurement.get("simple_id", "")
+                        ),
+                        "bbox_cx": (
+                            "" if not math.isfinite(float(alignment_decision.get("control_x", math.nan)))
+                            else f"{float(alignment_decision['control_x']):.3f}"
+                        ),
+                        "bbox_cy": (
+                            "" if not math.isfinite(float(alignment_decision.get("control_y", math.nan)))
+                            else f"{float(alignment_decision['control_y']):.3f}"
+                        ),
+                        "center_dx_px": (
+                            "" if not math.isfinite(float(alignment_decision.get("dx_px", math.nan)))
+                            else f"{float(alignment_decision['dx_px']):.3f}"
+                        ),
+                        "center_dy_px": (
+                            "" if not math.isfinite(float(alignment_decision.get("dy_px", math.nan)))
+                            else f"{float(alignment_decision['dy_px']):.3f}"
+                        ),
+                        "alignment_state": alignment_decision.get(
+                            "state", ""
+                        ),
+                        "alignment_sample_count": int(
+                            alignment_decision.get("sample_count", 0) or 0
+                        ),
+                        "alignment_std_x_px": (
+                            "" if not math.isfinite(float(alignment_decision.get("std_x_px", math.nan)))
+                            else f"{float(alignment_decision['std_x_px']):.3f}"
+                        ),
+                        "alignment_std_y_px": (
+                            "" if not math.isfinite(float(alignment_decision.get("std_y_px", math.nan)))
+                            else f"{float(alignment_decision['std_y_px']):.3f}"
+                        ),
+                        "alignment_speed_x_px_s": (
+                            "" if not math.isfinite(float(alignment_decision.get("speed_x_px_s", math.nan)))
+                            else f"{float(alignment_decision['speed_x_px_s']):.3f}"
+                        ),
+                        "alignment_speed_y_px_s": (
+                            "" if not math.isfinite(float(alignment_decision.get("speed_y_px_s", math.nan)))
+                            else f"{float(alignment_decision['speed_y_px_s']):.3f}"
+                        ),
+                        "alignment_delta_az_deg": f"{float(alignment_decision.get('delta_az_deg', 0.0)):.6f}",
+                        "alignment_delta_el_deg": f"{float(alignment_decision.get('delta_el_deg', 0.0)):.6f}",
+                        "reason": (
+                            f"state={alignment_decision.get('state')},"
+                            f"stable={1 if alignment_decision.get('stable') else 0},"
+                            f"command={1 if alignment_decision.get('command_requested') else 0}"
+                        ),
+                    })
+
+            # In the single-laser branch the sole YOLO box is already treated
+            # as the current master.  Bind only laser samples captured after a
+            # six-frame stable, centered confirmation; no visual distance
+            # model or SORT-to-YOLO distance association participates here.
+            laser_distance = _parse_positive_float(raw_laser_dist)
+            laser_age = curr_time - float(raw_laser_ts or 0.0)
+            laser_ready_since_ts = float(
+                alignment_decision.get("laser_ready_since_ts", 0.0) or 0.0
+            )
+            laser_bind_ready = (
+                master_track is not None
+                and gimbal_is_stationary
+                and bool(alignment_decision.get("laser_ready", False))
+                and laser_distance is not None
+                and 0.0 <= laser_age <= LASER_RESULT_TTL
+                and float(raw_laser_ts) >= laser_ready_since_ts
+                and float(raw_laser_ts) > last_bound_laser_ts
+            )
+            if laser_bind_ready:
+                if master_track.dist_source != "sddm_laser":
+                    # Do not mix a historical monocular/model estimate into
+                    # the first authoritative laser update for this track.
+                    master_track.dist_state = None
+                master_track.set_mono_distance(
+                    laser_distance,
+                    float(raw_laser_ts),
+                )
+                master_track.dist_source = "sddm_laser"
+                last_bound_laser_ts = float(raw_laser_ts)
+                field_log_event({
+                    "timestamp": f"{curr_time:.6f}",
+                    "seq": sender_seq,
+                    "mode": sender_mode,
+                    "event": "LASER_BOUND_MASTER",
+                    "track_id": int(master_track.id),
+                    "master_id": int(master_track.id),
+                    "is_master": 1,
+                    "distance": f"{laser_distance:.6f}",
+                    "distance_source": "sddm_laser",
+                    "vision_frame_ts": f"{laser_ready_since_ts:.6f}",
+                    "reason": (
+                        "single_yolo_stable_and_centered,"
+                        f"laser_ts={float(raw_laser_ts):.6f},"
+                        f"laser_age={laser_age:.3f}"
+                    ),
+                })
+
+            # Publish the fresh laser as the master's current distance result
+            # so the existing UI/strike freshness gates can remain unchanged.
+            # The bbox still comes from YOLO; the distance always comes from
+            # the track's laser-backed distance filter.
+            if (
+                master_track is not None
+                and gimbal_is_stationary
+                and bool(alignment_decision.get("laser_ready", False))
+                and master_track.dist_source == "sddm_laser"
+                and 0.0
+                <= curr_time - float(master_track.last_dist_ts)
+                <= TRACK_DISTANCE_TTL
+            ):
+                laser_master_result = dict(
+                    vision_result.get("track_results", {}).get(
+                        int(master_track.id), {}
+                    )
+                )
+                laser_master_result.update({
+                    "track_id": int(master_track.id),
+                    "distance": float(master_track.dist_state[0, 0]),
+                    "distance_source": "sddm_laser",
+                    "distance_valid": True,
+                    "frame_ts": float(master_track.last_dist_ts),
+                    "safe": True,
+                    "reason": "SINGLE_LASER_MASTER_BOUND",
+                })
+                vision_result.setdefault("track_results", {})[
+                    int(master_track.id)
+                ] = laser_master_result
+
             track_results_for_strike = (
                 vision_result.get("track_results", {})
                 if isinstance(vision_result, dict)
@@ -4120,18 +4345,51 @@ def main():
                 fut_az, fut_el = master_track.get_future_position(dt_delay=PREDICT_DELAY)
                 ctrl_az, ctrl_el = ui_to_ctrl_angles(fut_az, fut_el)
 
+                master_vision_result = (
+                    vision_result.get("track_results", {}).get(
+                        int(master_id)
+                    )
+                    if master_id is not None
+                    else None
+                )
                 vision_frame_age = curr_time - float(
-                    vision_result.get("frame_ts", 0.0)
+                    (
+                        master_vision_result.get("frame_ts", 0.0)
+                        if master_vision_result
+                        else vision_result.get("frame_ts", 0.0)
+                    )
+                    or 0.0
                 )
                 vision_bbox_fresh = (
-                    vision_result.get("track_id") == master_id
-                    and vision_result.get("bbox") is not None
+                    master_vision_result is not None
+                    and master_vision_result.get("bbox") is not None
                     and 0.0 <= vision_frame_age <= GIMBAL_VISION_RESULT_TTL
                 )
                 reposition_reason = "none"
-                if vision_bbox_fresh:
+                visual_alignment_ready = bool(
+                    alignment_decision.get("command_requested", False)
+                )
+                if visual_alignment_ready:
+                    alignment_target_ui_az = (
+                        shared_gimbal_az
+                        + float(alignment_decision["delta_az_deg"])
+                    ) % 360.0
+                    alignment_target_ui_el = (
+                        shared_gimbal_el
+                        + float(alignment_decision["delta_el_deg"])
+                    )
+                    ctrl_az, ctrl_el = ui_to_ctrl_angles(
+                        alignment_target_ui_az,
+                        alignment_target_ui_el,
+                    )
+                    need_reposition = True
+                    angle_unsafe_frames = 0
+                    reposition_reason = "stable_single_yolo_center_alignment"
+                elif vision_bbox_fresh:
                     need_reposition = bool(
-                        vision_result.get("reposition_requested", False)
+                        master_vision_result.get(
+                            "reposition_requested", False
+                        )
                     )
                     angle_unsafe_frames = 0
                     if need_reposition:
@@ -4159,6 +4417,12 @@ def main():
                     if need_reposition:
                         reposition_reason = "global_track_outside_safe_fov"
 
+                # The GT06Z command payload has 0.1-degree resolution.  Use
+                # the same quantized values for deadband checks, logs and the
+                # actual queue so software never waits for an unsendable angle.
+                ctrl_az = quantize_gimbal_command_angle(ctrl_az)
+                ctrl_el = quantize_gimbal_command_angle(ctrl_el)
+
                 # The target may move freely inside the central safe FOV. Only
                 # reposition after three unsafe frames, and never continuously
                 # preempt while the camera is physically moving. A target
@@ -4169,6 +4433,8 @@ def main():
                 )
                 need_send = need_reposition and can_issue_command
                 if (
+                    not visual_alignment_ready
+                    and
                     active_gimbal_track_id == master_id
                     and last_sent_ctrl_az is not None
                     and last_sent_ctrl_el is not None
@@ -4192,7 +4458,12 @@ def main():
                         "az": ctrl_az,
                         "el": ctrl_el,
                         "ts": curr_time,
+                        "force": visual_alignment_ready,
                     })
+                    if visual_alignment_ready and visual_alignment is not None:
+                        visual_alignment.mark_command_sent(
+                            gimbal_stationary_ts
+                        )
                     last_sent_ctrl_az = ctrl_az
                     last_sent_ctrl_el = ctrl_el
                     field_log_gimbal({

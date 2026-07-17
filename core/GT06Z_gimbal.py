@@ -2,6 +2,7 @@ import serial
 import time
 import struct
 import os
+import math
 
 
 def _env_flag(name, default=False):
@@ -166,6 +167,20 @@ class GT06ZGimbal:
             status["reason"] = "no_axis_requested"
             return status
 
+        # The protocol carries angles in 0.1-degree units.  Quantize before
+        # deadband checks and before updating last_sent_* so callers can never
+        # leave an unsendable multi-decimal target in the driver state.
+        if elevation_deg is not None:
+            elevation_deg = math.copysign(
+                math.floor(abs(float(elevation_deg)) * 10.0 + 0.5) / 10.0,
+                float(elevation_deg),
+            )
+        if azimuth_deg is not None:
+            normalized_az = float(azimuth_deg) % 360.0
+            azimuth_deg = math.floor(normalized_az * 10.0 + 0.5) / 10.0
+            if azimuth_deg >= 360.0:
+                azimuth_deg = 0.0
+
         now = time.time()
         if (now - self.last_cmd_time) < self.min_interval:
             status["reason"] = "rate_limited"
@@ -198,9 +213,9 @@ class GT06ZGimbal:
 
         if need_send_el:
             if elevation_deg > 0:
-                el_cmd_val = 3600 - int(elevation_deg * 10)
+                el_cmd_val = 3600 - int(round(elevation_deg * 10))
             else:
-                el_cmd_val = int(abs(elevation_deg) * 10)
+                el_cmd_val = int(round(abs(elevation_deg) * 10))
 
             el_cmd_val = max(0, min(3600, el_cmd_val))
             self._send_frame(0x00, 0x4D, el_cmd_val)
@@ -215,7 +230,7 @@ class GT06ZGimbal:
 
         if need_send_az:
             norm_az = azimuth_deg % 360.0
-            az_cmd_val = int(norm_az * 10)
+            az_cmd_val = int(round(norm_az * 10))
             az_cmd_val = max(0, min(3600, az_cmd_val))
             self._send_frame(0x00, 0x4B, az_cmd_val)
             status["az_sent"] = True
