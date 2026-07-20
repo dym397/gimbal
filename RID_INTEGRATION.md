@@ -24,6 +24,15 @@ RID path above is the default, so `RID_PORT` is only needed as an override.
 Windows still requires an explicit `RID_PORT=COMx` because its physical COM
 assignment is installation-specific.
 
+The systemd entry script waits for all three configured serial paths to exist
+and be readable/writable before it starts Python. Missing hardware therefore
+produces only a rate-limited `[HardwareWait]` journal message and does not
+create timestamped run directories. Once all devices are available, Python
+starts once and creates the normal run directory. The wait interval defaults
+to 2 seconds and its unchanged-state journal interval defaults to 30 seconds;
+they can be overridden with `HARDWARE_WAIT_INTERVAL` and
+`HARDWARE_WAIT_LOG_INTERVAL`.
+
 ```powershell
 $env:ENABLE_RID = "1"
 $env:RID_PORT = "COM13"       # replace with the actual XP-MRID-04 port
