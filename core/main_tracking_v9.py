@@ -29,11 +29,27 @@ try:
 except ImportError:
     SDDMLaser = None
 try:
-    from gps import DEFAULT_LATITUDE, DEFAULT_LONGITUDE, read_gps_fix
+    from gps import (
+        DEFAULT_LATITUDE,
+        DEFAULT_LONGITUDE,
+        read_gps_fix,
+        wgs84_to_gcj02,
+    )
 except ImportError:
     DEFAULT_LATITUDE = None
     DEFAULT_LONGITUDE = None
     read_gps_fix = None
+    wgs84_to_gcj02 = None
+try:
+    from rid_tracking import (
+        RIDStreamParser,
+        RIDTrackManager,
+        enrich_rid_tracks,
+    )
+except ImportError:
+    RIDStreamParser = None
+    RIDTrackManager = None
+    enrich_rid_tracks = None
 try:
     from gimbal_vision_ranging import GimbalVisionRangingService
 except ImportError:
@@ -269,7 +285,7 @@ STRIKE_WINDOW_SECONDS = _env_float("STRIKE_WINDOW_SECONDS", 1.0)
 STRIKE_LEAD_TIME = _env_float("STRIKE_LEAD_TIME", 0.3)
 STRIKE_SETTLED_EVENT_TTL = _env_float("STRIKE_SETTLED_EVENT_TTL", 0.5)
 TRACK_DISTANCE_TTL = _env_float("TRACK_DISTANCE_TTL", 3.0)
-ENABLE_GIMBAL_VISION = _env_flag("ENABLE_GIMBAL_VISION", True)
+ENABLE_GIMBAL_VISION = _env_flag("ENABLE_GIMBAL_VISION", False)
 GIMBAL_CAMERA_SOURCE = os.getenv(
     "GIMBAL_CAMERA_SOURCE",
     WINDOWS_GIMBAL_CAMERA_SOURCE if os.name == "nt" else LINUX_GIMBAL_CAMERA_SOURCE,
@@ -290,9 +306,11 @@ GIMBAL_VISION_TRACK_STATE_TTL = _env_float(
 GIMBAL_PORT = _serial_port("GIMBAL_PORT", "gimbal")
 LASER_PORT = _serial_port("LASER_PORT", "laser")
 GPS_PORT = _serial_port("GPS_PORT", "gps")
+RID_PORT = os.getenv("RID_PORT", "").strip()
 USE_MOCK_GIMBAL = _env_flag("USE_MOCK_GIMBAL", False)  # True: 使用 mock_gimbal.py; False: 使用真实 GT06Z
-USE_MOCK_LASER = _env_flag("USE_MOCK_LASER", False)   # True: do not open real laser; distance fusion still uses mono only.
+USE_MOCK_LASER = _env_flag("USE_MOCK_LASER", True)   # RID branch default: do not open the legacy laser.
 ENABLE_GPS = _env_flag("ENABLE_GPS", True)
+ENABLE_RID = _env_flag("ENABLE_RID", bool(RID_PORT))
 ENABLE_IMU = _env_flag("ENABLE_IMU", False)      # Manual switch: True to enable IMU read/print
 IMU_PORT = _serial_port("IMU_PORT", "imu")
 IMU_BAUDRATE = 9600
@@ -302,11 +320,40 @@ GPS_FIX_TIMEOUT_SECONDS = 5
 GPS_STATUS_INTERVAL = 5.0
 GPS_UI_SEND_INTERVAL = 10.0
 GPS_DEBUG_RAW = _env_flag("GPS_DEBUG_RAW", False)
+RID_BAUDRATE = _env_int("RID_BAUDRATE", 115200)
+RID_SERIAL_TIMEOUT = _env_float("RID_SERIAL_TIMEOUT", 0.20)
+RID_RECONNECT_SECONDS = _env_float("RID_RECONNECT_SECONDS", 2.0)
+RID_TRACK_TTL_SECONDS = _env_float("RID_TRACK_TTL_SECONDS", 5.0)
+RID_ASSOC_MAX_AZ_DEG = _env_float("RID_ASSOC_MAX_AZ_DEG", 8.0)
+RID_ASSOC_AMBIGUITY_MARGIN_DEG = _env_float(
+    "RID_ASSOC_AMBIGUITY_MARGIN_DEG", 2.0
+)
+RID_ASSOC_CONFIRM_UPDATES = _env_int("RID_ASSOC_CONFIRM_UPDATES", 3)
+RID_ASSOC_TRAJECTORY_POINTS = _env_int("RID_ASSOC_TRAJECTORY_POINTS", 10)
+RID_ASSOC_MIN_TRAJECTORY_POINTS = _env_int(
+    "RID_ASSOC_MIN_TRAJECTORY_POINTS", 4
+)
+RID_ASSOC_HISTORY_SECONDS = _env_float("RID_ASSOC_HISTORY_SECONDS", 12.0)
+RID_ASSOC_SYNC_TOLERANCE_SECONDS = _env_float(
+    "RID_ASSOC_SYNC_TOLERANCE_SECONDS", 0.50
+)
+RID_ASSOC_CURRENT_WEIGHT = _env_float("RID_ASSOC_CURRENT_WEIGHT", 0.35)
+RID_ASSOC_CURVE_WEIGHT = _env_float("RID_ASSOC_CURVE_WEIGHT", 0.40)
+RID_ASSOC_TREND_WEIGHT = _env_float("RID_ASSOC_TREND_WEIGHT", 0.25)
+RID_ASSOC_MAX_CURVE_ERROR_DEG = _env_float(
+    "RID_ASSOC_MAX_CURVE_ERROR_DEG", 8.0
+)
+RID_ASSOC_HOLD_SECONDS = _env_float("RID_ASSOC_HOLD_SECONDS", 3.0)
+RID_ASSOC_HOLD_MAX_AZ_DEG = _env_float("RID_ASSOC_HOLD_MAX_AZ_DEG", 12.0)
+RID_ASSOC_LOG_INTERVAL = _env_float("RID_ASSOC_LOG_INTERVAL", 0.50)
+RID_ALLOW_DEFAULT_STATION_POSITION = _env_flag(
+    "RID_ALLOW_DEFAULT_STATION_POSITION", False
+)
 DEVICE_HEADING_DEG = _env_float("DEVICE_HEADING_DEG", 180) % 360.0  # 设备自身0度方向的地图方位：北0/东90/南180
 # GIMBAL_AZ_BASE = 57.4  # 云台水平基准角（UI绝对方位 0° 映射到控制角的基准）
 # GIMBAL_INIT_EL = -0.4  # 启动时俯仰归位角，目标通常从该方向进入
 #测试版本基准角度
-GIMBAL_AZ_BASE = 59.3  # 云台水平基准角（UI绝对方位 0° 映射到控制角的基准）
+GIMBAL_AZ_BASE = 60.3  # 云台编码器基准：设备自身相对方位0°映射到该控制角
 GIMBAL_INIT_EL = -0.4# 启动时俯仰归位角，目标通常从该方向进入
 GIMBAL_CMD_DEADBAND_AZ = 0.20
 GIMBAL_CMD_DEADBAND_EL = 0.12
@@ -395,10 +442,18 @@ class FieldLogger:
         self.last_flush_t = time.monotonic()
         self.flush_interval = 1.0
         self.raw_f = open(os.path.join(log_dir, f"raw_udp_{timestamp}.jsonl"), "a", encoding="utf-8", newline="\n")
+        self.raw_rid_f = open(os.path.join(log_dir, f"raw_rid_{timestamp}.jsonl"), "a", encoding="utf-8", newline="\n")
+        self.raw_rid_serial_f = open(
+            os.path.join(log_dir, f"raw_rid_serial_{timestamp}.jsonl"),
+            "a",
+            encoding="utf-8",
+            newline="\n",
+        )
         self.measurements_f = open(os.path.join(log_dir, f"measurements_{timestamp}.csv"), "a", encoding="utf-8", newline="")
         self.summary_f = open(os.path.join(log_dir, f"track_summary_{timestamp}.csv"), "a", encoding="utf-8", newline="")
         self.events_f = open(os.path.join(log_dir, f"events_{timestamp}.csv"), "a", encoding="utf-8", newline="")
         self.gimbal_f = open(os.path.join(log_dir, f"gimbal_{timestamp}.csv"), "a", encoding="utf-8", newline="")
+        self.rid_association_f = open(os.path.join(log_dir, f"rid_association_{timestamp}.csv"), "a", encoding="utf-8", newline="")
 
         self.measurements_fields = [
             "timestamp", "seq", "mode", "board", "cam", "logic_id", "meas_idx",
@@ -460,15 +515,40 @@ class FieldLogger:
             "retry_axes", "driver_status", "laser_valid", "laser_dist",
             "laser_source", "laser_ts", "laser_age", "laser_interval",
         ]
+        self.rid_association_fields = [
+            "timestamp", "event", "cycle", "master_id",
+            "sort_count", "rid_count", "binding_count",
+            "sort_track_id", "board", "cam", "logic_id",
+            "sort_relative_az", "sort_map_az", "sort_el", "sort_lost_seconds",
+            "rid_ui_id", "rid_id", "rid_id_type", "rid_standard",
+            "rid_map_az", "rid_elevation_deg", "rid_height",
+            "az_error_deg", "curve_error_deg",
+            "shape_error_deg", "trend_error_deg", "curve_bias_deg",
+            "association_cost_deg", "trajectory_samples", "trajectory_ready",
+            "max_az_error_deg", "max_curve_error_deg",
+            "selected", "ambiguous", "binding_state", "reason",
+            "distance_m", "rid_age_s", "rid_update_seq",
+            "rid_measurement_seq", "rid_timestamp",
+            "rid_latitude", "rid_longitude", "rid_alt_geo",
+            "station_latitude", "station_longitude", "station_source",
+            "station_altitude_m", "vertical_delta_m",
+            "station_age_s", "device_heading_deg",
+        ]
 
         self.measurements_writer = csv.DictWriter(self.measurements_f, fieldnames=self.measurements_fields, extrasaction="ignore")
         self.summary_writer = csv.DictWriter(self.summary_f, fieldnames=self.summary_fields, extrasaction="ignore")
         self.events_writer = csv.DictWriter(self.events_f, fieldnames=self.events_fields, extrasaction="ignore")
         self.gimbal_writer = csv.DictWriter(self.gimbal_f, fieldnames=self.gimbal_fields, extrasaction="ignore")
+        self.rid_association_writer = csv.DictWriter(
+            self.rid_association_f,
+            fieldnames=self.rid_association_fields,
+            extrasaction="ignore",
+        )
         self.measurements_writer.writeheader()
         self.summary_writer.writeheader()
         self.events_writer.writeheader()
         self.gimbal_writer.writeheader()
+        self.rid_association_writer.writeheader()
         print(f"[FieldLog] enabled: {os.path.abspath(log_dir)}")
 
     def _handle_write_error(self, exc):
@@ -484,10 +564,13 @@ class FieldLogger:
         if (now - self.last_flush_t) < self.flush_interval:
             return
         self.raw_f.flush()
+        self.raw_rid_f.flush()
+        self.raw_rid_serial_f.flush()
         self.measurements_f.flush()
         self.summary_f.flush()
         self.events_f.flush()
         self.gimbal_f.flush()
+        self.rid_association_f.flush()
         self.last_flush_t = now
 
     def write_raw_udp(self, row):
@@ -506,6 +589,30 @@ class FieldLogger:
         try:
             with self.lock:
                 self._write_csv(self.measurements_writer, self.measurements_fields, row)
+                self._flush_if_due_locked()
+        except Exception as e:
+            self._handle_write_error(e)
+
+    def write_raw_rid(self, row):
+        if self.disabled:
+            return
+        try:
+            with self.lock:
+                self.raw_rid_f.write(
+                    json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n"
+                )
+                self._flush_if_due_locked()
+        except Exception as e:
+            self._handle_write_error(e)
+
+    def write_raw_rid_serial(self, row):
+        if self.disabled:
+            return
+        try:
+            with self.lock:
+                self.raw_rid_serial_f.write(
+                    json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n"
+                )
                 self._flush_if_due_locked()
         except Exception as e:
             self._handle_write_error(e)
@@ -540,23 +647,49 @@ class FieldLogger:
         except Exception as e:
             self._handle_write_error(e)
 
+    def write_rid_association(self, row):
+        if self.disabled:
+            return
+        try:
+            with self.lock:
+                self._write_csv(
+                    self.rid_association_writer,
+                    self.rid_association_fields,
+                    row,
+                )
+                self._flush_if_due_locked()
+        except Exception as e:
+            self._handle_write_error(e)
+
     def flush(self):
         if self.disabled:
             return
         try:
             with self.lock:
                 self.raw_f.flush()
+                self.raw_rid_f.flush()
+                self.raw_rid_serial_f.flush()
                 self.measurements_f.flush()
                 self.summary_f.flush()
                 self.events_f.flush()
                 self.gimbal_f.flush()
+                self.rid_association_f.flush()
                 self.last_flush_t = time.monotonic()
         except Exception as e:
             self._handle_write_error(e)
 
     def close(self):
         with self.lock:
-            for f in (self.raw_f, self.measurements_f, self.summary_f, self.events_f, self.gimbal_f):
+            for f in (
+                self.raw_f,
+                self.raw_rid_f,
+                self.raw_rid_serial_f,
+                self.measurements_f,
+                self.summary_f,
+                self.events_f,
+                self.gimbal_f,
+                self.rid_association_f,
+            ):
                 try:
                     f.flush()
                     f.close()
@@ -581,61 +714,61 @@ def field_log_gimbal(row):
             FIELD_LOGGER.write_gimbal(row)
         except Exception:
             pass
-#最终版本theta
+# 最终版本 theta；水平角已整体执行 (原值 - 1°) % 360°，以第一层第三摄像头为0°基准。
 DEVICE_THETA = {
-    1: {"theta_vertical": 0.0000, "theta_horizontal": 33.4501},  # Layer 1 cam1
-    2: {"theta_vertical": 0.0000, "theta_horizontal": 17.7874},  # Layer 1 cam2
-    3: {"theta_vertical": 0.0000, "theta_horizontal": 1.0000},   # Layer 1 cam3
-    4: {"theta_vertical": 0.0000, "theta_horizontal": 344.8421}, # Layer 1 cam4
-    5: {"theta_vertical": 0.0000, "theta_horizontal": 327.6701}, # Layer 1 cam5
+    1: {"theta_vertical": 0.0000, "theta_horizontal": 32.4501},  # Layer 1 cam1
+    2: {"theta_vertical": 0.0000, "theta_horizontal": 16.7874},  # Layer 1 cam2
+    3: {"theta_vertical": 0.0000, "theta_horizontal": 0.0000},   # Layer 1 cam3
+    4: {"theta_vertical": 0.0000, "theta_horizontal": 343.8421}, # Layer 1 cam4
+    5: {"theta_vertical": 0.0000, "theta_horizontal": 326.6701}, # Layer 1 cam5
 
-    6: {"theta_vertical": 5.5, "theta_horizontal": 35.3086},     # Layer 2 cam1
-    7: {"theta_vertical": 5.5, "theta_horizontal": 16.5593},     # Layer 2 cam2
-    8: {"theta_vertical": 5.5, "theta_horizontal": 1.0759},      # Layer 2 cam3
-    9: {"theta_vertical": 5.5, "theta_horizontal": 343.7710},    # Layer 2 cam4
-    10: {"theta_vertical": 5.5, "theta_horizontal": 322.0000},   # Layer 2 cam5
+    6: {"theta_vertical": 5.5, "theta_horizontal": 34.3086},     # Layer 2 cam1
+    7: {"theta_vertical": 5.5, "theta_horizontal": 15.5593},     # Layer 2 cam2
+    8: {"theta_vertical": 5.5, "theta_horizontal": 0.0759},      # Layer 2 cam3
+    9: {"theta_vertical": 5.5, "theta_horizontal": 342.7710},    # Layer 2 cam4
+    10: {"theta_vertical": 5.5, "theta_horizontal": 321.0000},   # Layer 2 cam5
 
-    11: {"theta_vertical": 15.5000, "theta_horizontal": 32.9870},  # Layer 3 cam1
-    12: {"theta_vertical": 15.5000, "theta_horizontal": 20.6921},  # Layer 3 cam2
-    13: {"theta_vertical": 15.5000, "theta_horizontal": 1.9703},   # Layer 3 cam3
-    14: {"theta_vertical": 15.5000, "theta_horizontal": 340.9173}, # Layer 3 cam4
-    15: {"theta_vertical": 15.5000, "theta_horizontal": 323.7531}, # Layer 3 cam5
+    11: {"theta_vertical": 15.5000, "theta_horizontal": 31.9870},  # Layer 3 cam1
+    12: {"theta_vertical": 15.5000, "theta_horizontal": 19.6921},  # Layer 3 cam2
+    13: {"theta_vertical": 15.5000, "theta_horizontal": 0.9703},   # Layer 3 cam3
+    14: {"theta_vertical": 15.5000, "theta_horizontal": 339.9173}, # Layer 3 cam4
+    15: {"theta_vertical": 15.5000, "theta_horizontal": 322.7531}, # Layer 3 cam5
 
-    16: {"theta_vertical": 25.5000, "theta_horizontal": 37.7386},  # Layer 4 cam1
-    17: {"theta_vertical": 25.5000, "theta_horizontal": 19.9455},  # Layer 4 cam2
-    18: {"theta_vertical": 25.5000, "theta_horizontal": 1.7703},   # Layer 4 cam3
-    19: {"theta_vertical": 25.5000, "theta_horizontal": 342.8870}, # Layer 4 cam4
-    20: {"theta_vertical": 25.5000, "theta_horizontal": 324.5302}, # Layer 4 cam5
+    16: {"theta_vertical": 25.5000, "theta_horizontal": 36.7386},  # Layer 4 cam1
+    17: {"theta_vertical": 25.5000, "theta_horizontal": 18.9455},  # Layer 4 cam2
+    18: {"theta_vertical": 25.5000, "theta_horizontal": 0.7703},   # Layer 4 cam3
+    19: {"theta_vertical": 25.5000, "theta_horizontal": 341.8870}, # Layer 4 cam4
+    20: {"theta_vertical": 25.5000, "theta_horizontal": 323.5302}, # Layer 4 cam5
 
-    21: {"theta_vertical": 35.0000, "theta_horizontal": 38.5403},  # Layer 5 cam1
-    22: {"theta_vertical": 35.0000, "theta_horizontal": 19.5903},  # Layer 5 cam2
-    23: {"theta_vertical": 35.0000, "theta_horizontal": 1.7703},   # Layer 5 cam3
-    24: {"theta_vertical": 35.0000, "theta_horizontal": 341.7103}, # Layer 5 cam4
-    25: {"theta_vertical": 35.0000, "theta_horizontal": 322.7703}, # Layer 5 cam5
+    21: {"theta_vertical": 35.0000, "theta_horizontal": 37.5403},  # Layer 5 cam1
+    22: {"theta_vertical": 35.0000, "theta_horizontal": 18.5903},  # Layer 5 cam2
+    23: {"theta_vertical": 35.0000, "theta_horizontal": 0.7703},   # Layer 5 cam3
+    24: {"theta_vertical": 35.0000, "theta_horizontal": 340.7103}, # Layer 5 cam4
+    25: {"theta_vertical": 35.0000, "theta_horizontal": 321.7703}, # Layer 5 cam5
 
-    26: {"theta_vertical": 44.5000, "theta_horizontal": 42.7703},  # Layer 6 cam1
-    27: {"theta_vertical": 44.5000, "theta_horizontal": 22.7703},  # Layer 6 cam2
-    28: {"theta_vertical": 44.5000, "theta_horizontal": 2.7703},   # Layer 6 cam3
-    29: {"theta_vertical": 44.5000, "theta_horizontal": 342.7703}, # Layer 6 cam4
-    30: {"theta_vertical": 44.5000, "theta_horizontal": 322.7703}, # Layer 6 cam5
+    26: {"theta_vertical": 44.5000, "theta_horizontal": 41.7703},  # Layer 6 cam1
+    27: {"theta_vertical": 44.5000, "theta_horizontal": 21.7703},  # Layer 6 cam2
+    28: {"theta_vertical": 44.5000, "theta_horizontal": 1.7703},   # Layer 6 cam3
+    29: {"theta_vertical": 44.5000, "theta_horizontal": 341.7703}, # Layer 6 cam4
+    30: {"theta_vertical": 44.5000, "theta_horizontal": 321.7703}, # Layer 6 cam5
 
-    31: {"theta_vertical": 54.0000, "theta_horizontal": 46.2403},  # Layer 7 cam1
-    32: {"theta_vertical": 54.0000, "theta_horizontal": 25.0403},  # Layer 7 cam2
-    33: {"theta_vertical": 54.0000, "theta_horizontal": 3.8703},   # Layer 7 cam3
-    34: {"theta_vertical": 54.0000, "theta_horizontal": 341.6003}, # Layer 7 cam4
-    35: {"theta_vertical": 54.0000, "theta_horizontal": 320.4303}, # Layer 7 cam5
+    31: {"theta_vertical": 54.0000, "theta_horizontal": 45.2403},  # Layer 7 cam1
+    32: {"theta_vertical": 54.0000, "theta_horizontal": 24.0403},  # Layer 7 cam2
+    33: {"theta_vertical": 54.0000, "theta_horizontal": 2.8703},   # Layer 7 cam3
+    34: {"theta_vertical": 54.0000, "theta_horizontal": 340.6003}, # Layer 7 cam4
+    35: {"theta_vertical": 54.0000, "theta_horizontal": 319.4303}, # Layer 7 cam5
 
-    36: {"theta_vertical": 63.5000, "theta_horizontal": 48.8703},  # Layer 8 cam1
-    37: {"theta_vertical": 63.5000, "theta_horizontal": 26.3703},  # Layer 8 cam2
-    38: {"theta_vertical": 63.5000, "theta_horizontal": 3.8703},   # Layer 8 cam3
-    39: {"theta_vertical": 63.5000, "theta_horizontal": 341.3703}, # Layer 8 cam4
-    40: {"theta_vertical": 63.5000, "theta_horizontal": 318.8703}, # Layer 8 cam5
+    36: {"theta_vertical": 63.5000, "theta_horizontal": 47.8703},  # Layer 8 cam1
+    37: {"theta_vertical": 63.5000, "theta_horizontal": 25.3703},  # Layer 8 cam2
+    38: {"theta_vertical": 63.5000, "theta_horizontal": 2.8703},   # Layer 8 cam3
+    39: {"theta_vertical": 63.5000, "theta_horizontal": 340.3703}, # Layer 8 cam4
+    40: {"theta_vertical": 63.5000, "theta_horizontal": 317.8703}, # Layer 8 cam5
 
-    41: {"theta_vertical": 73.0000, "theta_horizontal": 62.6703},  # Layer 9 cam1
-    42: {"theta_vertical": 73.0000, "theta_horizontal": 38.6703},  # Layer 9 cam2
-    43: {"theta_vertical": 73.0000, "theta_horizontal": 14.6703},  # Layer 9 cam3
-    44: {"theta_vertical": 73.0000, "theta_horizontal": 350.6703}, # Layer 9 cam4
-    45: {"theta_vertical": 73.0000, "theta_horizontal": 326.6703}, # Layer 9 cam5
+    41: {"theta_vertical": 73.0000, "theta_horizontal": 61.6703},  # Layer 9 cam1
+    42: {"theta_vertical": 73.0000, "theta_horizontal": 37.6703},  # Layer 9 cam2
+    43: {"theta_vertical": 73.0000, "theta_horizontal": 13.6703},  # Layer 9 cam3
+    44: {"theta_vertical": 73.0000, "theta_horizontal": 349.6703}, # Layer 9 cam4
+    45: {"theta_vertical": 73.0000, "theta_horizontal": 325.6703}, # Layer 9 cam5
 }
 # ==========================================
 #  摄像头物理位置配置 (不变)
@@ -987,7 +1120,233 @@ def laser_reader_thread(laser, stop_event):
             last_log_t = now_t
 
 
-def gps_sender_thread(sender):
+class SharedPositionState:
+    """Thread-safe WGS-84 station position and ellipsoid height for RID."""
+
+    def __init__(
+        self,
+        longitude=None,
+        latitude=None,
+        altitude=None,
+        source="unavailable",
+    ):
+        self.lock = threading.Lock()
+        self.longitude = longitude
+        self.latitude = latitude
+        self.altitude = altitude
+        self.source = source
+        self.updated_ts = time.time() if longitude is not None and latitude is not None else 0.0
+
+    def update(
+        self,
+        longitude,
+        latitude,
+        source,
+        altitude=None,
+        updated_ts=None,
+    ):
+        with self.lock:
+            self.longitude = float(longitude)
+            self.latitude = float(latitude)
+            if altitude is not None:
+                self.altitude = float(altitude)
+            self.source = str(source)
+            self.updated_ts = time.time() if updated_ts is None else float(updated_ts)
+
+    def snapshot(self, now_ts=None):
+        now_ts = time.time() if now_ts is None else float(now_ts)
+        with self.lock:
+            longitude = self.longitude
+            latitude = self.latitude
+            altitude = self.altitude
+            source = self.source
+            updated_ts = self.updated_ts
+        return {
+            "longitude": longitude,
+            "latitude": latitude,
+            "altitude": altitude,
+            "source": source,
+            "updated_ts": updated_ts,
+            "age_s": (
+                max(0.0, now_ts - updated_ts)
+                if updated_ts > 0.0
+                else math.inf
+            ),
+            "valid": longitude is not None and latitude is not None,
+            "altitude_valid": altitude is not None and math.isfinite(altitude),
+        }
+
+
+def rid_reader_thread(track_manager, stop_event):
+    if RIDStreamParser is None:
+        print("[RID][Warn] rid_tracking.py import failed; RID reader disabled.")
+        return
+    try:
+        import serial
+    except ImportError as e:
+        print(f"[RID][Warn] pyserial unavailable: {e}")
+        return
+
+    parser = RIDStreamParser()
+    parser_counter_names = (
+        "discarded_bytes",
+        "decode_errors",
+        "valid_frames",
+        "header_errors",
+        "length_errors",
+        "tail_errors",
+        "truncated_frames",
+        "utf8_errors",
+        "json_errors",
+        "json_type_errors",
+    )
+    while not stop_event.is_set():
+        try:
+            with serial.Serial(
+                RID_PORT,
+                RID_BAUDRATE,
+                bytesize=serial.EIGHTBITS,
+                parity=serial.PARITY_NONE,
+                stopbits=serial.STOPBITS_ONE,
+                timeout=RID_SERIAL_TIMEOUT,
+            ) as ser:
+                print(f"[RID] Serial reader connected: {RID_PORT}@{RID_BAUDRATE}")
+                field_log_event({
+                    "timestamp": f"{time.time():.6f}",
+                    "event": "RID_SERIAL_OPEN",
+                    "reason": (
+                        f"port={RID_PORT},baud={RID_BAUDRATE},format=8N1,"
+                        "frame=081730+len_le_including_2_length_bytes+json+3f55"
+                    ),
+                })
+                while not stop_event.is_set():
+                    waiting = int(getattr(ser, "in_waiting", 0) or 0)
+                    chunk = ser.read(max(1, min(waiting, 65536)))
+                    if not chunk:
+                        continue
+                    receive_ts = time.time()
+                    counters_before = {
+                        name: int(getattr(parser, name))
+                        for name in parser_counter_names
+                    }
+                    payloads = parser.feed(chunk)
+                    counter_deltas = {
+                        name: int(getattr(parser, name)) - counters_before[name]
+                        for name in parser_counter_names
+                    }
+                    decoded_frames = list(parser.last_feed_frames)
+                    if FIELD_LOGGER is not None:
+                        FIELD_LOGGER.write_raw_rid_serial({
+                            "receive_ts": receive_ts,
+                            "byte_count": len(chunk),
+                            "chunk_hex": chunk.hex(),
+                            "parsed_payload_count": len(payloads),
+                            "decoded_length_fields": [
+                                item["length_field"] for item in decoded_frames
+                            ],
+                            "decoded_payload_lengths": [
+                                item["payload_length"] for item in decoded_frames
+                            ],
+                            "decoded_frame_lengths": [
+                                item["frame_length"] for item in decoded_frames
+                            ],
+                            "discarded_bytes_delta": counter_deltas["discarded_bytes"],
+                            "discarded_bytes_total": parser.discarded_bytes,
+                            "decode_errors_delta": counter_deltas["decode_errors"],
+                            "decode_errors_total": parser.decode_errors,
+                            "valid_frames_delta": counter_deltas["valid_frames"],
+                            "valid_frames_total": parser.valid_frames,
+                            "header_errors_delta": counter_deltas["header_errors"],
+                            "header_errors_total": parser.header_errors,
+                            "length_errors_delta": counter_deltas["length_errors"],
+                            "length_errors_total": parser.length_errors,
+                            "tail_errors_delta": counter_deltas["tail_errors"],
+                            "tail_errors_total": parser.tail_errors,
+                            "truncated_frames_delta": counter_deltas["truncated_frames"],
+                            "truncated_frames_total": parser.truncated_frames,
+                            "utf8_errors_delta": counter_deltas["utf8_errors"],
+                            "utf8_errors_total": parser.utf8_errors,
+                            "json_errors_delta": counter_deltas["json_errors"],
+                            "json_errors_total": parser.json_errors,
+                            "json_type_errors_delta": counter_deltas["json_type_errors"],
+                            "json_type_errors_total": parser.json_type_errors,
+                            "parser_buffer_bytes_after": len(parser.buffer),
+                        })
+                    parse_error_deltas = {
+                        name: counter_deltas[name]
+                        for name in (
+                            "header_errors",
+                            "length_errors",
+                            "tail_errors",
+                            "truncated_frames",
+                            "utf8_errors",
+                            "json_errors",
+                            "json_type_errors",
+                        )
+                        if counter_deltas[name]
+                    }
+                    if parse_error_deltas:
+                        field_log_event({
+                            "timestamp": f"{receive_ts:.6f}",
+                            "event": "RID_FRAME_PARSE_ERROR",
+                            "reason": (
+                                f"chunk_bytes={len(chunk)},"
+                                f"errors={parse_error_deltas},"
+                                f"resync_discarded_delta="
+                                f"{counter_deltas['discarded_bytes']},"
+                                f"buffer_after={len(parser.buffer)}"
+                            ),
+                        })
+                    for payload in payloads:
+                        if FIELD_LOGGER is not None:
+                            FIELD_LOGGER.write_raw_rid({
+                                "receive_ts": receive_ts,
+                                "payload": payload,
+                            })
+                        result = track_manager.update_payload(
+                            payload,
+                            receive_ts=receive_ts,
+                        )
+                        track = result.get("track") or {}
+                        if result.get("accepted"):
+                            rid_event = (
+                                "RID_TRACK_UPDATE"
+                                if track.get("position_valid")
+                                else "RID_POSITION_INVALID"
+                            )
+                        else:
+                            rid_event = "RID_PAYLOAD_REJECT"
+                        field_log_event({
+                            "timestamp": f"{receive_ts:.6f}",
+                            "event": rid_event,
+                            "ui_id": track.get("ui_id", ""),
+                            "distance_source": (
+                                "rid_gps" if track.get("position_valid") else ""
+                            ),
+                            "reason": (
+                                f"result={result.get('reason', '')},"
+                                f"rid_id={track.get('rid_id', result.get('rid_id', ''))},"
+                                f"position_valid={track.get('position_valid', '')},"
+                                f"lat={track.get('latitude', '')},"
+                                f"lon={track.get('longitude', '')},"
+                                f"rid_ts={track.get('rid_timestamp', '')},"
+                                f"update_seq={track.get('update_seq', '')},"
+                                f"measurement_seq={track.get('measurement_seq', '')},"
+                                f"invalid_position_count="
+                                f"{track.get('invalid_position_count', '')}"
+                            ),
+                        })
+        except Exception as e:
+            print(f"[RID][Warn] serial reader error on {RID_PORT}: {e}")
+            field_log_event({
+                "timestamp": f"{time.time():.6f}",
+                "event": "RID_SERIAL_ERROR",
+                "reason": str(e),
+            })
+            stop_event.wait(max(0.1, RID_RECONNECT_SECONDS))
+
+
+def gps_sender_thread(sender, position_state=None):
     if read_gps_fix is None:
         print("[GPS][Warn] gps.py import failed, GPS location packet disabled.")
         return
@@ -1003,35 +1362,76 @@ def gps_sender_thread(sender):
 
     last_sent_latitude = None
     last_sent_longitude = None
+    last_sent_altitude = None
     last_sent_source = "default"
 
     while True:
         cycle_start = time.monotonic()
         #print("[GPS] Searching satellites and waiting for valid latitude/longitude...")
-        longitude, latitude, source = read_gps_fix(
+        longitude, latitude, altitude, source = read_gps_fix(
             port=GPS_PORT,
             baudrate=GPS_BAUDRATE,
             timeout_seconds=GPS_FIX_TIMEOUT_SECONDS,
             print_raw=GPS_DEBUG_RAW,
             print_status=True,
             status_interval=GPS_STATUS_INTERVAL,
+            coordinate_system="wgs84",
+            include_altitude=True,
         )
 
         send_source = source
         if longitude is not None and latitude is not None:
             last_sent_longitude = longitude
             last_sent_latitude = latitude
+            if altitude is not None:
+                last_sent_altitude = altitude
             last_sent_source = source
         elif last_sent_longitude is not None and last_sent_latitude is not None:
             longitude = last_sent_longitude
             latitude = last_sent_latitude
+            altitude = last_sent_altitude
             send_source = f"cached:{last_sent_source}"
         else:
             longitude = DEFAULT_LONGITUDE
             latitude = DEFAULT_LATITUDE
+            altitude = None
             send_source = "default"
 
-        sender.send_gps_location(latitude=latitude, longitude=longitude)
+        if (
+            position_state is not None
+            and (
+                send_source != "default"
+                or RID_ALLOW_DEFAULT_STATION_POSITION
+            )
+        ):
+            position_state.update(
+                longitude=longitude,
+                latitude=latitude,
+                altitude=altitude,
+                source=send_source,
+            )
+            field_log_event({
+                "timestamp": f"{time.time():.6f}",
+                "event": "GPS_STATION_FIX",
+                "reason": (
+                    f"source={send_source},lat={latitude:.8f},"
+                    f"lon={longitude:.8f},ellipsoid_height_m={altitude}"
+                ),
+            })
+
+        # Keep the historical UI coordinate behavior while RID calculations
+        # use the unrounded WGS-84 fix stored above.
+        ui_longitude = longitude
+        ui_latitude = latitude
+        if send_source != "default" and wgs84_to_gcj02 is not None:
+            ui_longitude, ui_latitude = wgs84_to_gcj02(
+                round(float(longitude), 4),
+                round(float(latitude), 4),
+            )
+        sender.send_gps_location(
+            latitude=ui_latitude,
+            longitude=ui_longitude,
+        )
         # print(
         #     f"[GPS] Sent location to UI: "
         #     f"source={send_source}, latitude={latitude:.6f}, longitude={longitude:.6f}"
@@ -1367,6 +1767,50 @@ def track_ui_source(track, fallback_board, fallback_cam):
 def track_is_ui_fresh(track, now_t):
     """Hide stale prediction-only tracks while retaining them internally."""
     return track.lost_seconds(now_t) <= UI_MAX_LOST_SECONDS
+
+
+def pair_ui_tracks_with_rid(ui_tracks, rid_tracks):
+    """Create stateless UI pairs, limited by the smaller current track set.
+
+    Current azimuth proximity is used only to choose camera provenance and,
+    when SORT has fewer tracks than RID, which RID targets can be emitted.
+    No identity binding, trajectory confirmation, threshold, or hold state is
+    created by this function.
+    """
+    if not ui_tracks or not rid_tracks:
+        return []
+    cost_matrix = np.zeros((len(ui_tracks), len(rid_tracks)), dtype=float)
+    for sort_idx, track in enumerate(ui_tracks):
+        sort_map_az = relative_to_map_azimuth(track.state[0, 0])
+        for rid_idx, rid_item in enumerate(rid_tracks):
+            cost_matrix[sort_idx, rid_idx] = abs(
+                angular_diff(rid_item["map_az"], sort_map_az)
+            )
+    sort_indices, rid_indices = linear_sum_assignment(cost_matrix)
+    pairs = [
+        {
+            "sort_track": ui_tracks[int(sort_idx)],
+            "rid": rid_tracks[int(rid_idx)],
+            "az_error_deg": float(cost_matrix[sort_idx, rid_idx]),
+        }
+        for sort_idx, rid_idx in zip(sort_indices, rid_indices)
+    ]
+    return sorted(pairs, key=lambda item: int(item["rid"]["ui_id"]))
+
+
+def build_stateless_rid_ui_values(rid_item):
+    """Return all RID-owned UI fields for one stateless send pair."""
+    rid_elevation = rid_item.get("elevation_deg")
+    return {
+        "target_id": int(rid_item["ui_id"]),
+        "azimuth": float(rid_item["map_az"]) % 360.0,
+        "elevation": (
+            float(rid_elevation)
+            if rid_elevation is not None
+            else float("nan")
+        ),
+        "distance": float(rid_item["distance_m"]),
+    }
 
 
 def get_turn_direction_label(delta_az, delta_el, deadband_az=0.35, deadband_el=0.25):
@@ -1817,7 +2261,7 @@ class RangeSmoother:
         return self.d
 
 def ui_to_ctrl_angles(ui_az, ui_el):
-    """将绝对角度转为云台控制角度 (复用原先 calculate_angles 里的逻辑)"""
+    """将设备自身相对方位/俯仰转换为云台编码器控制角。"""
     rel_az = ui_az
     if rel_az > 180.0:
         rel_az -= 360.0
@@ -1923,15 +2367,15 @@ class StandardKalmanTrack:
         except (TypeError, ValueError):
             self.last_source_ts = float(ts)
 
-    def set_mono_distance(self, dist, ts):
+    def set_mono_distance(self, dist, ts, source="mono"):
         d = _parse_positive_float(dist)
         if d is None:
             return
         self.last_mono_dist = d
         self.mono_ts = float(ts)
-        self._update_distance_filter(d, ts)
+        self._update_distance_filter(d, ts, source=source)
 
-    def _update_distance_filter(self, dist_val, ts):
+    def _update_distance_filter(self, dist_val, ts, source="mono"):
         """1D 距离卡尔曼滤波，含异常门控与新鲜度管理"""
         curr_t = float(ts)
         
@@ -1942,7 +2386,7 @@ class StandardKalmanTrack:
         if self.dist_state is None:
             self.dist_state = np.array([[dist_val], [0.0]], dtype=float)
             self.last_dist_ts = curr_t
-            self.dist_source = "mono"
+            self.dist_source = str(source)
             self.dist_uncertainty = np.sqrt(self.dist_P[0, 0])
             return
             
@@ -1955,7 +2399,7 @@ class StandardKalmanTrack:
         if dt < self.min_dt:
             dt = self.min_dt
         self.last_dist_ts = curr_t
-        self.dist_source = "mono"
+        self.dist_source = str(source)
         
         # 1. Predict
         F_d = np.array([[1.0, dt],
@@ -2498,7 +2942,7 @@ def calculate_angles(
     offset_az = diff_x * FOV_X / image_w
     offset_el = -diff_y * FOV_Y / image_h
 
-    # 3. 计算系统绝对角度 (UI显示用, 保持0~360的罗盘习惯)
+    # 3. 计算设备自身坐标系角度；这还不是真北地图方位角。
     ui_az = (base_az + offset_az) % 360.0
     ui_el = base_el + offset_el
 
@@ -2691,6 +3135,35 @@ def main():
 
     sender = UISender(UI_IP, UI_PORT)
     strike_sender = StrikeSender(STRIKE_IP, STRIKE_PORT) if ENABLE_STRIKE_SEND else None
+    station_position = SharedPositionState(
+        longitude=(
+            DEFAULT_LONGITUDE if RID_ALLOW_DEFAULT_STATION_POSITION else None
+        ),
+        latitude=(
+            DEFAULT_LATITUDE if RID_ALLOW_DEFAULT_STATION_POSITION else None
+        ),
+        source=(
+            "configured_default"
+            if RID_ALLOW_DEFAULT_STATION_POSITION
+            else "waiting_for_wgs84_fix"
+        ),
+    )
+    rid_track_manager = None
+    # Persistent SORT/RID association is intentionally disabled. The legacy
+    # diagnostic block remains unreachable for rollback comparison only;
+    # current runtime behavior is the stateless per-send pairing below.
+    rid_associator = None
+    rid_stop_event = None
+    if ENABLE_RID:
+        if not RID_PORT:
+            print("[RID][Warn] ENABLE_RID=True but RID_PORT is empty; RID disabled.")
+        elif RIDTrackManager is None:
+            print("[RID][Warn] rid_tracking.py import failed; RID disabled.")
+        else:
+            rid_track_manager = RIDTrackManager(
+                track_ttl_s=RID_TRACK_TTL_SECONDS,
+            )
+            rid_stop_event = threading.Event()
     print(f"[Config] DEVICE_HEADING_DEG={DEVICE_HEADING_DEG:.2f} (map north=0, east=90, south=180)")
     print(
         "[Config] Detection UDP coordinates: "
@@ -2706,6 +3179,31 @@ def main():
         f"internal_keep={TRACK_MAX_LOST_SECONDS:.2f}s, "
         f"ui_fresh={UI_MAX_LOST_SECONDS:.2f}s"
     )
+    _legacy_rid_association_config = (
+        "[Config] RID UI fusion: "
+        f"enabled={1 if rid_track_manager is not None else 0}, "
+        f"port={RID_PORT or 'unset'}, baud={RID_BAUDRATE}, "
+        "persistent_binding=0, stateless_nearest_camera=1, "
+        f"max_az={RID_ASSOC_MAX_AZ_DEG:.2f}°, "
+        f"ambiguity={RID_ASSOC_AMBIGUITY_MARGIN_DEG:.2f}°, "
+        f"trajectory={RID_ASSOC_MIN_TRAJECTORY_POINTS}/{RID_ASSOC_TRAJECTORY_POINTS}, "
+        f"history={RID_ASSOC_HISTORY_SECONDS:.2f}s, "
+        f"sync={RID_ASSOC_SYNC_TOLERANCE_SECONDS:.2f}s, "
+        f"curve_gate={RID_ASSOC_MAX_CURVE_ERROR_DEG:.2f}°, "
+        f"weights={RID_ASSOC_CURRENT_WEIGHT:.2f}/"
+        f"{RID_ASSOC_CURVE_WEIGHT:.2f}/{RID_ASSOC_TREND_WEIGHT:.2f}, "
+        f"confirm_updates={RID_ASSOC_CONFIRM_UPDATES}, "
+        f"hold={RID_ASSOC_HOLD_SECONDS:.2f}s, "
+        f"rid_ttl={RID_TRACK_TTL_SECONDS:.2f}s"
+    )
+    print(
+        "[Config] RID UI fusion: "
+        f"enabled={1 if rid_track_manager is not None else 0}, "
+        f"port={RID_PORT or 'unset'}, baud={RID_BAUDRATE}, "
+        "persistent_binding=0, stateless_nearest_camera=1, "
+        "ui=rid_id/rid_az/rid_el/rid_distance+sort_camera, "
+        f"rid_ttl={RID_TRACK_TTL_SECONDS:.2f}s"
+    )
     if ENABLE_STRIKE_SEND:
         print(
             f"[Strike] Enabled target UDP sender: {STRIKE_IP}:{STRIKE_PORT}, "
@@ -2718,11 +3216,23 @@ def main():
         _validate_serial_port("LASER_PORT", LASER_PORT)
     if ENABLE_GPS:
         _validate_serial_port("GPS_PORT", GPS_PORT)
+    if rid_track_manager is not None:
+        _validate_serial_port("RID_PORT", RID_PORT)
     if ENABLE_IMU:
         _validate_serial_port("IMU_PORT", IMU_PORT)
 
     if ENABLE_GPS:
-        threading.Thread(target=gps_sender_thread, args=(sender,), daemon=True).start()
+        threading.Thread(
+            target=gps_sender_thread,
+            args=(sender, station_position),
+            daemon=True,
+        ).start()
+    if rid_track_manager is not None:
+        threading.Thread(
+            target=rid_reader_thread,
+            args=(rid_track_manager, rid_stop_event),
+            daemon=True,
+        ).start()
     
     if USE_MOCK_GIMBAL:
         if MockGimbalAdapter is None:
@@ -2743,7 +3253,10 @@ def main():
     laser = None
     laser_stop_event = None
     if USE_MOCK_LASER:
-        print("[Init] Real laser logging disabled by USE_MOCK_LASER=True; distance source remains mono")
+        print(
+            "[Init] Legacy laser disabled by USE_MOCK_LASER=True; "
+            "RID distance path is independent"
+        )
     else:
         if SDDMLaser is None:
             print("[Laser][Warn] sddm_laser.py import failed; distance source remains mono.")
@@ -2806,9 +3319,13 @@ def main():
         print("[GimbalVision] disabled by ENABLE_GIMBAL_VISION=False")
 
     distance_mode = (
-        "gimbal camera YOLO/MLP/GRU"
-        if vision_service is not None
-        else "none"
+        "RID WGS-84 horizontal distance"
+        if rid_track_manager is not None
+        else (
+            "gimbal camera YOLO/MLP/GRU"
+            if vision_service is not None
+            else "none"
+        )
     )
     print(
         f"[Init] UI/Strike distance source: {distance_mode} "
@@ -2870,6 +3387,10 @@ def main():
     ui_send_counter = Counter()  # {ui_id: send_count}
     next_ui_id = 1
     track_to_ui_id = {}  # Allocate a stable UI ID when any valid track is first sent.
+    latest_rid_bindings = {}
+    last_applied_rid_measurement = {}
+    rid_assoc_last_log_ts = 0.0
+    rid_assoc_cycle = 0
     stats_last_print = last_time
     live_last_print = last_time
     live_packet_count = 0
@@ -2884,6 +3405,9 @@ def main():
     def get_or_assign_ui_id(track):
         nonlocal next_ui_id, track_to_ui_id
         internal_id = int(track.id)
+        rid_binding = latest_rid_bindings.get(internal_id)
+        if rid_binding is not None:
+            return int(rid_binding["rid"]["ui_id"])
         if internal_id not in track_to_ui_id:
             track_to_ui_id[internal_id] = next_ui_id
             next_ui_id += 1
@@ -2970,6 +3494,100 @@ def main():
                 live_last_packet_t = curr_time
 
             if not fusion_packet_buffer:
+                # Legacy persistent-association diagnostics. This block is
+                # intentionally unreachable because rid_associator is None.
+                if rid_track_manager is not None and rid_associator is not None:
+                    idle_station = station_position.snapshot(curr_time)
+                    if idle_station["valid"]:
+                        idle_rid_tracks = enrich_rid_tracks(
+                            rid_track_manager.snapshot(now_ts=curr_time),
+                            station_latitude=idle_station["latitude"],
+                            station_longitude=idle_station["longitude"],
+                            station_altitude=idle_station["altitude"],
+                        )
+                        idle_sort_assoc_items = [
+                            {
+                                "track_id": int(track.id),
+                                "created_ts": float(track.created_ts),
+                                "map_az": relative_to_map_azimuth(
+                                    track.state[0, 0]
+                                ),
+                            }
+                            for track in tracker.tracks
+                            if track_is_rid_association_eligible(
+                                track, curr_time
+                            )
+                        ]
+                        rid_associator.observe(
+                            idle_sort_assoc_items,
+                            idle_rid_tracks,
+                            now_ts=curr_time,
+                        )
+                        idle_has_valid_sort = bool(idle_sort_assoc_items)
+                        if (
+                            idle_rid_tracks
+                            and not idle_has_valid_sort
+                            and FIELD_LOGGER is not None
+                            and (curr_time - rid_assoc_last_log_ts)
+                            >= RID_ASSOC_LOG_INTERVAL
+                        ):
+                            rid_assoc_last_log_ts = curr_time
+                            rid_assoc_cycle += 1
+                            FIELD_LOGGER.write_rid_association({
+                                "timestamp": f"{curr_time:.6f}",
+                                "event": "RID_ONLY_WAITING_FOR_SORT",
+                                "cycle": rid_assoc_cycle,
+                                "master_id": "",
+                                "sort_count": 0,
+                                "rid_count": len(idle_rid_tracks),
+                                "binding_count": 0,
+                                "max_az_error_deg": f"{RID_ASSOC_MAX_AZ_DEG:.6f}",
+                                "max_curve_error_deg": f"{RID_ASSOC_MAX_CURVE_ERROR_DEG:.6f}",
+                                "reason": (
+                                    "rid_history_kept_no_ui_eligible_sort_track"
+                                ),
+                                "station_latitude": f"{float(idle_station['latitude']):.8f}",
+                                "station_longitude": f"{float(idle_station['longitude']):.8f}",
+                                "station_source": idle_station["source"],
+                                "station_age_s": f"{idle_station['age_s']:.6f}",
+                                "device_heading_deg": f"{DEVICE_HEADING_DEG:.6f}",
+                            })
+                            for rid_item in idle_rid_tracks:
+                                FIELD_LOGGER.write_rid_association({
+                                    "timestamp": f"{curr_time:.6f}",
+                                    "event": "RID_TRACK",
+                                    "cycle": rid_assoc_cycle,
+                                    "master_id": "",
+                                    "sort_count": 0,
+                                    "rid_count": len(idle_rid_tracks),
+                                    "binding_count": 0,
+                                    "rid_ui_id": rid_item["ui_id"],
+                                    "rid_id": rid_item["rid_id"],
+                                    "rid_id_type": rid_item["id_type"],
+                                    "rid_standard": rid_item["standard"],
+                                    "rid_map_az": f"{rid_item['map_az']:.6f}",
+                                    "distance_m": f"{rid_item['distance_m']:.6f}",
+                                    "rid_age_s": f"{rid_item['age_s']:.6f}",
+                                    "rid_update_seq": rid_item["update_seq"],
+                                    "rid_measurement_seq": rid_item.get(
+                                        "measurement_seq", ""
+                                    ),
+                                    "rid_timestamp": rid_item.get(
+                                        "rid_timestamp", ""
+                                    ),
+                                    "rid_latitude": f"{rid_item['latitude']:.8f}",
+                                    "rid_longitude": f"{rid_item['longitude']:.8f}",
+                                    "rid_alt_geo": (
+                                        "" if rid_item.get("alt_geo") is None
+                                        else f"{rid_item['alt_geo']:.3f}"
+                                    ),
+                                    "reason": "rid_only_no_sort_track",
+                                    "station_latitude": f"{float(idle_station['latitude']):.8f}",
+                                    "station_longitude": f"{float(idle_station['longitude']):.8f}",
+                                    "station_source": idle_station["source"],
+                                    "station_age_s": f"{idle_station['age_s']:.6f}",
+                                    "device_heading_deg": f"{DEVICE_HEADING_DEG:.6f}",
+                                })
                 if tracker.tracks and (curr_time - last_time) >= NO_PACKET_TRACKER_UPDATE_INTERVAL:
                     dt = curr_time - last_time
                     if dt > MAX_DT:
@@ -3230,7 +3848,264 @@ def main():
                 and getattr(t, "strike_confirmed", False)
             ]
 
+            # Legacy persistent-association and SORT-distance-writeback block.
+            # It is intentionally unreachable because rid_associator is None;
+            # current RID geometry is materialized independently below and is
+            # used only for stateless UI packet construction.
+            latest_rid_bindings = {}
+            rid_diagnostics = []
+            rid_tracks = []
+            station_snapshot = station_position.snapshot(curr_time)
+            sort_assoc_items = []
+            if rid_track_manager is not None and rid_associator is not None:
+                for track in ui_tracks:
+                    source_board, source_cam = track_ui_source(
+                        track, board_str, cam_idx
+                    )
+                    sort_assoc_items.append({
+                        "track_id": int(track.id),
+                        "created_ts": float(track.created_ts),
+                        "relative_az": float(track.state[0, 0]),
+                        "map_az": relative_to_map_azimuth(track.state[0, 0]),
+                        "el": float(track.state[1, 0]),
+                        "lost_seconds": float(track.lost_seconds(curr_time)),
+                        "board": source_board,
+                        "cam": source_cam,
+                        "logic_id": getattr(track, "last_source_logic_id", ""),
+                    })
+
+                rid_tracks = rid_track_manager.snapshot(now_ts=curr_time)
+                if station_snapshot["valid"]:
+                    rid_tracks = enrich_rid_tracks(
+                        rid_tracks,
+                        station_latitude=station_snapshot["latitude"],
+                        station_longitude=station_snapshot["longitude"],
+                        station_altitude=station_snapshot["altitude"],
+                    )
+                    latest_rid_bindings, rid_diagnostics = rid_associator.associate(
+                        sort_assoc_items,
+                        rid_tracks,
+                        now_ts=curr_time,
+                    )
+
+                    track_by_id = {int(track.id): track for track in valid_tracks}
+                    for sort_id, binding in latest_rid_bindings.items():
+                        rid_item = binding["rid"]
+                        rid_measurement_seq = int(
+                            rid_item.get("measurement_seq", rid_item["update_seq"])
+                        )
+                        if (
+                            last_applied_rid_measurement.get(sort_id)
+                            == rid_measurement_seq
+                        ):
+                            continue
+                        track = track_by_id.get(int(sort_id))
+                        if track is None:
+                            continue
+                        track.set_mono_distance(
+                            rid_item["distance_m"],
+                            curr_time,
+                            source="rid_gps",
+                        )
+                        last_applied_rid_measurement[sort_id] = rid_measurement_seq
+
+                if (
+                    station_snapshot["valid"]
+                    and
+                    FIELD_LOGGER is not None
+                    and (curr_time - rid_assoc_last_log_ts) >= RID_ASSOC_LOG_INTERVAL
+                ):
+                    rid_assoc_last_log_ts = curr_time
+                    rid_assoc_cycle += 1
+                    station_fields = {
+                        "station_latitude": (
+                            "" if station_snapshot["latitude"] is None
+                            else f"{float(station_snapshot['latitude']):.8f}"
+                        ),
+                        "station_longitude": (
+                            "" if station_snapshot["longitude"] is None
+                            else f"{float(station_snapshot['longitude']):.8f}"
+                        ),
+                        "station_altitude_m": (
+                            "" if station_snapshot["altitude"] is None
+                            else f"{float(station_snapshot['altitude']):.3f}"
+                        ),
+                        "station_source": station_snapshot["source"],
+                        "station_age_s": (
+                            "" if not math.isfinite(station_snapshot["age_s"])
+                            else f"{station_snapshot['age_s']:.6f}"
+                        ),
+                        "device_heading_deg": f"{DEVICE_HEADING_DEG:.6f}",
+                    }
+                    FIELD_LOGGER.write_rid_association({
+                        "timestamp": f"{curr_time:.6f}",
+                        "event": "RID_ASSOC_SUMMARY",
+                        "cycle": rid_assoc_cycle,
+                        "master_id": "" if master_id is None else int(master_id),
+                        "sort_count": len(sort_assoc_items),
+                        "rid_count": len(rid_tracks),
+                        "binding_count": len(latest_rid_bindings),
+                        "max_az_error_deg": f"{RID_ASSOC_MAX_AZ_DEG:.6f}",
+                        "max_curve_error_deg": f"{RID_ASSOC_MAX_CURVE_ERROR_DEG:.6f}",
+                        "reason": (
+                            "no_ui_eligible_sort_tracks" if not sort_assoc_items
+                            else ("no_rid_tracks" if not rid_tracks else "evaluated")
+                        ),
+                        **station_fields,
+                    })
+                    for sort_item in sort_assoc_items:
+                        FIELD_LOGGER.write_rid_association({
+                            "timestamp": f"{curr_time:.6f}",
+                            "event": "SORT_TRACK",
+                            "cycle": rid_assoc_cycle,
+                            "master_id": "" if master_id is None else int(master_id),
+                            "sort_track_id": sort_item["track_id"],
+                            "board": sort_item["board"],
+                            "cam": sort_item["cam"],
+                            "logic_id": sort_item["logic_id"],
+                            "sort_relative_az": f"{sort_item['relative_az']:.6f}",
+                            "sort_map_az": f"{sort_item['map_az']:.6f}",
+                            "sort_el": f"{sort_item['el']:.6f}",
+                            "sort_lost_seconds": f"{sort_item['lost_seconds']:.6f}",
+                            **station_fields,
+                        })
+                    for rid_item in rid_tracks:
+                        FIELD_LOGGER.write_rid_association({
+                            "timestamp": f"{curr_time:.6f}",
+                            "event": "RID_TRACK",
+                            "cycle": rid_assoc_cycle,
+                            "master_id": "" if master_id is None else int(master_id),
+                            "rid_ui_id": rid_item["ui_id"],
+                            "rid_id": rid_item["rid_id"],
+                            "rid_id_type": rid_item["id_type"],
+                            "rid_standard": rid_item["standard"],
+                            "rid_map_az": f"{rid_item['map_az']:.6f}",
+                            "distance_m": f"{rid_item['distance_m']:.6f}",
+                            "rid_age_s": f"{rid_item['age_s']:.6f}",
+                            "rid_update_seq": rid_item["update_seq"],
+                            "rid_measurement_seq": rid_item.get("measurement_seq", ""),
+                            "rid_timestamp": rid_item.get("rid_timestamp", ""),
+                            "rid_latitude": f"{rid_item['latitude']:.8f}",
+                            "rid_longitude": f"{rid_item['longitude']:.8f}",
+                            "rid_alt_geo": (
+                                "" if rid_item.get("alt_geo") is None
+                                else f"{rid_item['alt_geo']:.3f}"
+                            ),
+                            **station_fields,
+                        })
+                    sort_log_by_id = {
+                        item["track_id"]: item for item in sort_assoc_items
+                    }
+                    rid_log_by_key = {item["key"]: item for item in rid_tracks}
+                    for diagnostic in rid_diagnostics:
+                        sort_item = sort_log_by_id[diagnostic["sort_track_id"]]
+                        rid_item = rid_log_by_key[diagnostic["rid_key"]]
+                        binding = latest_rid_bindings.get(
+                            diagnostic["sort_track_id"]
+                        )
+                        binding_state = ""
+                        if (
+                            binding is not None
+                            and binding["rid"]["key"] == diagnostic["rid_key"]
+                        ):
+                            binding_state = binding["state"]
+                        FIELD_LOGGER.write_rid_association({
+                            "timestamp": f"{curr_time:.6f}",
+                            "event": "RID_SORT_PAIR",
+                            "cycle": rid_assoc_cycle,
+                            "master_id": "" if master_id is None else int(master_id),
+                            "sort_track_id": diagnostic["sort_track_id"],
+                            "board": sort_item["board"],
+                            "cam": sort_item["cam"],
+                            "logic_id": sort_item["logic_id"],
+                            "sort_relative_az": f"{sort_item['relative_az']:.6f}",
+                            "sort_map_az": f"{diagnostic['sort_map_az']:.6f}",
+                            "sort_el": f"{sort_item['el']:.6f}",
+                            "sort_lost_seconds": f"{sort_item['lost_seconds']:.6f}",
+                            "rid_ui_id": diagnostic["rid_ui_id"],
+                            "rid_id": diagnostic["rid_id"],
+                            "rid_id_type": rid_item["id_type"],
+                            "rid_standard": rid_item["standard"],
+                            "rid_map_az": f"{diagnostic['rid_map_az']:.6f}",
+                            "az_error_deg": f"{diagnostic['az_error_deg']:.6f}",
+                            "curve_error_deg": f"{diagnostic['curve_error_deg']:.6f}",
+                            "shape_error_deg": f"{diagnostic['shape_error_deg']:.6f}",
+                            "trend_error_deg": f"{diagnostic['trend_error_deg']:.6f}",
+                            "curve_bias_deg": f"{diagnostic['curve_bias_deg']:.6f}",
+                            "association_cost_deg": f"{diagnostic['association_cost_deg']:.6f}",
+                            "trajectory_samples": diagnostic["trajectory_samples"],
+                            "trajectory_ready": 1 if diagnostic["trajectory_ready"] else 0,
+                            "max_az_error_deg": f"{diagnostic['max_az_error_deg']:.6f}",
+                            "max_curve_error_deg": f"{diagnostic['max_curve_error_deg']:.6f}",
+                            "selected": 1 if diagnostic["selected"] else 0,
+                            "ambiguous": 1 if diagnostic["ambiguous"] else 0,
+                            "binding_state": binding_state,
+                            "reason": diagnostic["reason"],
+                            "distance_m": f"{diagnostic['distance_m']:.6f}",
+                            "rid_age_s": f"{diagnostic['rid_age_s']:.6f}",
+                            "rid_update_seq": diagnostic["rid_update_seq"],
+                            "rid_measurement_seq": diagnostic["rid_measurement_seq"],
+                            "rid_timestamp": rid_item.get("rid_timestamp", ""),
+                            "rid_latitude": f"{rid_item['latitude']:.8f}",
+                            "rid_longitude": f"{rid_item['longitude']:.8f}",
+                            "rid_alt_geo": (
+                                "" if rid_item.get("alt_geo") is None
+                                else f"{rid_item['alt_geo']:.3f}"
+                            ),
+                            **station_fields,
+                        })
+                elif (
+                    not station_snapshot["valid"]
+                    and (curr_time - rid_assoc_last_log_ts) >= RID_ASSOC_LOG_INTERVAL
+                ):
+                    rid_assoc_last_log_ts = curr_time
+                    rid_assoc_cycle += 1
+                    if FIELD_LOGGER is not None:
+                        FIELD_LOGGER.write_rid_association({
+                            "timestamp": f"{curr_time:.6f}",
+                            "event": "RID_ASSOC_SUMMARY",
+                            "cycle": rid_assoc_cycle,
+                            "master_id": "" if master_id is None else int(master_id),
+                            "sort_count": len(sort_assoc_items),
+                            "rid_count": len(rid_tracks),
+                            "binding_count": 0,
+                            "max_az_error_deg": f"{RID_ASSOC_MAX_AZ_DEG:.6f}",
+                            "max_curve_error_deg": f"{RID_ASSOC_MAX_CURVE_ERROR_DEG:.6f}",
+                            "reason": "station_wgs84_position_unavailable",
+                            "station_source": station_snapshot["source"],
+                            "device_heading_deg": f"{DEVICE_HEADING_DEG:.6f}",
+                        })
+                    field_log_event({
+                        "timestamp": f"{curr_time:.6f}",
+                        "seq": sender_seq,
+                        "mode": sender_mode,
+                        "event": "RID_ASSOC_SKIP",
+                        "reason": "station_wgs84_position_unavailable",
+                    })
+
             # --- 4. 状态机：调度决策 ---
+            # Keep SORT and RID trajectories independent. Materialize only the
+            # current RID geometry needed by stateless UI pairing; never write
+            # RID identity or distance into a SORT track.
+            rid_tracks = []
+            if rid_track_manager is not None:
+                if station_snapshot["valid"]:
+                    rid_tracks = enrich_rid_tracks(
+                        rid_track_manager.snapshot(now_ts=curr_time),
+                        station_latitude=station_snapshot["latitude"],
+                        station_longitude=station_snapshot["longitude"],
+                        station_altitude=station_snapshot["altitude"],
+                    )
+                elif (curr_time - rid_assoc_last_log_ts) >= RID_ASSOC_LOG_INTERVAL:
+                    rid_assoc_last_log_ts = curr_time
+                    field_log_event({
+                        "timestamp": f"{curr_time:.6f}",
+                        "seq": sender_seq,
+                        "mode": sender_mode,
+                        "event": "RID_UI_FUSION_SKIP",
+                        "reason": "station_wgs84_position_unavailable",
+                    })
+
             master_track = next((t for t in valid_tracks if t.id == master_id), None)
             prev_master_id = master_id
             master_lost = (prev_master_id is not None and master_track is None)
@@ -4358,41 +5233,239 @@ def main():
                     gimbal_is_stationary
                     and 0.0 <= vision_result_age <= GIMBAL_VISION_RESULT_TTL
                 )
-                # E. UI receives every valid global track. A fresh matched
-                # result refreshes the track filter; brief vision misses keep
-                # the last filtered distance until TRACK_DISTANCE_TTL expires.
-                for t in ui_tracks:
-                    ui_track_result = track_results_for_strike.get(
-                        int(t.id), {}
+                # E. RID mode performs a stateless one-cycle pairing only for
+                # UI packet construction. The rectangular assignment emits
+                # min(SORT count, RID count) packets: all RID targets when
+                # SORT is sufficient, or the nearest-bearing RID subset when
+                # SORT has fewer tracks. No pair is retained next cycle.
+                if rid_track_manager is not None:
+                    ui_fusion_pairs = pair_ui_tracks_with_rid(
+                        ui_tracks, rid_tracks
                     )
-                    ui_result_age = curr_time - float(
-                        ui_track_result.get("frame_ts", 0.0) or 0.0
-                    )
-                    ui_distance_ready = (
-                        vision_result_fresh
-                        and ui_track_result.get("distance_valid")
-                        and 0.0 <= ui_result_age <= GIMBAL_VISION_RESULT_TTL
-                    )
-                    if ui_distance_ready:
-                        send_dist, dist_source = select_track_distance(
-                            t, master_id, curr_time
+                else:
+                    ui_fusion_pairs = [
+                        {
+                            "sort_track": track,
+                            "rid": None,
+                            "az_error_deg": math.nan,
+                        }
+                        for track in ui_tracks
+                    ]
+                selected_rid_keys = {
+                    item["rid"]["key"]
+                    for item in ui_fusion_pairs
+                    if item["rid"] is not None
+                }
+                if rid_track_manager is not None:
+                    for dropped_rid in rid_tracks:
+                        if dropped_rid["key"] in selected_rid_keys:
+                            continue
+                        field_log_event({
+                            "timestamp": f"{curr_time:.6f}",
+                            "seq": sender_seq,
+                            "mode": sender_mode,
+                            "event": "RID_UI_COUNT_LIMIT_SKIP",
+                            "ui_id": int(dropped_rid["ui_id"]),
+                            "reason": (
+                                f"sort_count={len(ui_tracks)},"
+                                f"rid_count={len(rid_tracks)},"
+                                "sort_tracks_fewer_than_rid"
+                            ),
+                        })
+
+                if (
+                    rid_track_manager is not None
+                    and FIELD_LOGGER is not None
+                    and (curr_time - rid_assoc_last_log_ts)
+                    >= RID_ASSOC_LOG_INTERVAL
+                ):
+                    rid_assoc_last_log_ts = curr_time
+                    rid_assoc_cycle += 1
+                    station_fields = {
+                        "station_latitude": (
+                            "" if station_snapshot["latitude"] is None
+                            else f"{float(station_snapshot['latitude']):.8f}"
+                        ),
+                        "station_longitude": (
+                            "" if station_snapshot["longitude"] is None
+                            else f"{float(station_snapshot['longitude']):.8f}"
+                        ),
+                        "station_altitude_m": (
+                            "" if station_snapshot["altitude"] is None
+                            else f"{float(station_snapshot['altitude']):.3f}"
+                        ),
+                        "station_source": station_snapshot["source"],
+                        "station_age_s": (
+                            "" if not math.isfinite(station_snapshot["age_s"])
+                            else f"{station_snapshot['age_s']:.6f}"
+                        ),
+                        "device_heading_deg": f"{DEVICE_HEADING_DEG:.6f}",
+                    }
+                    FIELD_LOGGER.write_rid_association({
+                        "timestamp": f"{curr_time:.6f}",
+                        "event": "RID_UI_FUSION_SUMMARY",
+                        "cycle": rid_assoc_cycle,
+                        "master_id": "" if master_id is None else int(master_id),
+                        "sort_count": len(ui_tracks),
+                        "rid_count": len(rid_tracks),
+                        "binding_count": len(ui_fusion_pairs),
+                        "reason": "stateless_current_azimuth_count_limited_pairing",
+                        **station_fields,
+                    })
+                    for sort_track in ui_tracks:
+                        source_board, source_cam = track_ui_source(
+                            sort_track, board_str, cam_idx
                         )
+                        FIELD_LOGGER.write_rid_association({
+                            "timestamp": f"{curr_time:.6f}",
+                            "event": "SORT_TRACK",
+                            "cycle": rid_assoc_cycle,
+                            "sort_track_id": int(sort_track.id),
+                            "board": source_board,
+                            "cam": source_cam,
+                            "logic_id": getattr(
+                                sort_track, "last_source_logic_id", ""
+                            ),
+                            "sort_relative_az": f"{sort_track.state[0, 0]:.6f}",
+                            "sort_map_az": f"{relative_to_map_azimuth(sort_track.state[0, 0]):.6f}",
+                            "sort_el": f"{sort_track.state[1, 0]:.6f}",
+                            "sort_lost_seconds": f"{sort_track.lost_seconds(curr_time):.6f}",
+                            "reason": "ui_eligible_sort_input",
+                            **station_fields,
+                        })
+                    for current_rid in rid_tracks:
+                        FIELD_LOGGER.write_rid_association({
+                            "timestamp": f"{curr_time:.6f}",
+                            "event": "RID_TRACK",
+                            "cycle": rid_assoc_cycle,
+                            "rid_ui_id": current_rid["ui_id"],
+                            "rid_id": current_rid["rid_id"],
+                            "rid_id_type": current_rid["id_type"],
+                            "rid_standard": current_rid["standard"],
+                            "rid_map_az": f"{current_rid['map_az']:.6f}",
+                            "rid_elevation_deg": (
+                                "" if current_rid.get("elevation_deg") is None
+                                else f"{current_rid['elevation_deg']:.6f}"
+                            ),
+                            "rid_height": (
+                                "" if current_rid.get("height") is None
+                                else f"{current_rid['height']:.3f}"
+                            ),
+                            "distance_m": f"{current_rid['distance_m']:.6f}",
+                            "rid_age_s": f"{current_rid['age_s']:.6f}",
+                            "rid_update_seq": current_rid["update_seq"],
+                            "rid_measurement_seq": current_rid.get(
+                                "measurement_seq", ""
+                            ),
+                            "rid_timestamp": current_rid.get("rid_timestamp", ""),
+                            "rid_latitude": f"{current_rid['latitude']:.8f}",
+                            "rid_longitude": f"{current_rid['longitude']:.8f}",
+                            "rid_alt_geo": (
+                                "" if current_rid.get("alt_geo") is None
+                                else f"{current_rid['alt_geo']:.3f}"
+                            ),
+                            "vertical_delta_m": (
+                                "" if current_rid.get("vertical_delta_m") is None
+                                else f"{current_rid['vertical_delta_m']:.3f}"
+                            ),
+                            "selected": (
+                                1 if current_rid["key"] in selected_rid_keys else 0
+                            ),
+                            "reason": (
+                                "selected_for_ui"
+                                if current_rid["key"] in selected_rid_keys
+                                else "dropped_sort_count_limit"
+                            ),
+                            **station_fields,
+                        })
+                    for current_pair in ui_fusion_pairs:
+                        pair_track = current_pair["sort_track"]
+                        pair_rid = current_pair["rid"]
+                        if pair_rid is None:
+                            continue
+                        source_board, source_cam = track_ui_source(
+                            pair_track, board_str, cam_idx
+                        )
+                        FIELD_LOGGER.write_rid_association({
+                            "timestamp": f"{curr_time:.6f}",
+                            "event": "RID_UI_STATELESS_PAIR",
+                            "cycle": rid_assoc_cycle,
+                            "sort_track_id": int(pair_track.id),
+                            "board": source_board,
+                            "cam": source_cam,
+                            "logic_id": getattr(
+                                pair_track, "last_source_logic_id", ""
+                            ),
+                            "sort_relative_az": f"{pair_track.state[0, 0]:.6f}",
+                            "sort_map_az": f"{relative_to_map_azimuth(pair_track.state[0, 0]):.6f}",
+                            "sort_el": f"{pair_track.state[1, 0]:.6f}",
+                            "rid_ui_id": pair_rid["ui_id"],
+                            "rid_id": pair_rid["rid_id"],
+                            "rid_map_az": f"{pair_rid['map_az']:.6f}",
+                            "rid_elevation_deg": (
+                                "" if pair_rid.get("elevation_deg") is None
+                                else f"{pair_rid['elevation_deg']:.6f}"
+                            ),
+                            "rid_height": (
+                                "" if pair_rid.get("height") is None
+                                else f"{pair_rid['height']:.3f}"
+                            ),
+                            "az_error_deg": f"{current_pair['az_error_deg']:.6f}",
+                            "distance_m": f"{pair_rid['distance_m']:.6f}",
+                            "vertical_delta_m": (
+                                "" if pair_rid.get("vertical_delta_m") is None
+                                else f"{pair_rid['vertical_delta_m']:.3f}"
+                            ),
+                            "selected": 1,
+                            "binding_state": "stateless",
+                            "reason": (
+                                "current_azimuth_nearest_no_gate_no_hold"
+                                if pair_rid.get("elevation_deg") is not None
+                                else "current_azimuth_nearest;altitude_difference_unavailable"
+                            ),
+                            **station_fields,
+                        })
+
+                for ui_pair in ui_fusion_pairs:
+                    t = ui_pair["sort_track"]
+                    rid_item = ui_pair["rid"]
+                    rid_ui_values = None
+                    if rid_item is not None:
+                        rid_ui_values = build_stateless_rid_ui_values(rid_item)
+                        send_dist = rid_ui_values["distance"]
+                        dist_source = "rid_gps"
                     else:
-                        held_dist, held_source = select_track_distance(
-                            t, master_id, curr_time
+                        ui_track_result = track_results_for_strike.get(
+                            int(t.id), {}
                         )
-                        if math.isfinite(held_dist):
-                            send_dist = held_dist
-                            dist_source = f"{held_source}_held"
-                        else:
-                            send_dist = float("nan")
-                            dist_source = (
-                                "vision_no_track_result"
-                                if not ui_track_result
-                                else (
-                                    f"vision_{ui_track_result.get('state', 'unavailable').lower()}"
-                                )
+                        ui_result_age = curr_time - float(
+                            ui_track_result.get("frame_ts", 0.0) or 0.0
+                        )
+                        ui_distance_ready = (
+                            vision_result_fresh
+                            and ui_track_result.get("distance_valid")
+                            and 0.0 <= ui_result_age <= GIMBAL_VISION_RESULT_TTL
+                        )
+                        if ui_distance_ready:
+                            send_dist, dist_source = select_track_distance(
+                                t, master_id, curr_time
                             )
+                        else:
+                            held_dist, held_source = select_track_distance(
+                                t, master_id, curr_time
+                            )
+                            if math.isfinite(held_dist):
+                                send_dist = held_dist
+                                dist_source = f"{held_source}_held"
+                            else:
+                                send_dist = float("nan")
+                                dist_source = (
+                                    "vision_no_track_result"
+                                    if not ui_track_result
+                                    else (
+                                        f"vision_{ui_track_result.get('state', 'unavailable').lower()}"
+                                    )
+                                )
                     if math.isfinite(send_dist):
                         t.last_sent_dist = send_dist
                     threat_item = ui_threat_by_track_id.get(int(t.id))
@@ -4401,17 +5474,40 @@ def main():
                         if threat_item is not None
                         else float("nan")
                     )
-                    map_az = relative_to_map_azimuth(t.state[0, 0])
-                    ui_id = get_or_assign_ui_id(t)
+                    sort_map_az = relative_to_map_azimuth(t.state[0, 0])
+                    if rid_ui_values is not None:
+                        map_az = rid_ui_values["azimuth"]
+                        send_el = rid_ui_values["elevation"]
+                        ui_id = rid_ui_values["target_id"]
+                        ui_az_source = "rid_gps"
+                    else:
+                        map_az = sort_map_az
+                        send_el = float(t.state[1, 0])
+                        ui_id = get_or_assign_ui_id(t)
+                        ui_az_source = "sort_map"
                     source_board, source_cam = track_ui_source(
                         t, board_str, cam_idx
                     )
                     sender.send_status(
                         source_board, source_cam, ui_id,
                         azimuth=map_az,
-                        elevation=t.state[1, 0], 
+                        elevation=send_el,
                         distance=send_dist,
                         threat_score=threat_score
+                    )
+                    rid_id_text = (
+                        "" if rid_item is None else rid_item["rid_id"]
+                    )
+                    rid_binding_text = (
+                        "" if rid_item is None else "stateless_ui_pair"
+                    )
+                    rid_error_text = (
+                        "" if rid_item is None
+                        else f"{float(ui_pair['az_error_deg']):.6f}"
+                    )
+                    rid_map_az_text = (
+                        "" if rid_item is None
+                        else f"{float(rid_item['map_az']):.6f}"
                     )
                     field_log_event({
                         "timestamp": f"{curr_time:.6f}",
@@ -4427,7 +5523,15 @@ def main():
                         "lost_seconds": f"{t.lost_seconds(curr_time):.6f}",
                         "reason": (
                             f"internal_id={int(t.id)},ui_id={int(ui_id)},"
-                            f"source={source_board}/{source_cam}"
+                            f"source={source_board}/{source_cam},"
+                            f"rid_id={rid_id_text},"
+                            f"rid_binding={rid_binding_text},"
+                            f"rid_az_error={rid_error_text},"
+                            f"ui_az_source={ui_az_source},"
+                            f"ui_el_source="
+                            f"{'rid_altgeo_minus_station_altitude' if rid_item is not None else 'sort'},"
+                            f"sort_map_az={sort_map_az:.6f},"
+                            f"rid_map_az={rid_map_az_text}"
                         ),
                         "internal_track_id": int(t.id),
                         "ui_id": int(ui_id),
@@ -4468,6 +5572,8 @@ def main():
 
     if imu:
         imu.close()
+    if rid_stop_event is not None:
+        rid_stop_event.set()
     if laser_stop_event is not None:
         laser_stop_event.set()
         time.sleep(0.05)

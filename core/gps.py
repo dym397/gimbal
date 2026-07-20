@@ -26,6 +26,27 @@ def _normalize_windows_com_port(port_name):
     return normalized
 
 
+def _finite_float(value):
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return None
+    return result if math.isfinite(result) else None
+
+
+def gga_ellipsoid_height(msg):
+    """Return WGS-84 ellipsoid height reconstructed from one NMEA GGA fix.
+
+    GGA ``altitude`` is orthometric/MSL height and ``geo_sep`` is geoid
+    separation. WGS-84 ellipsoid height is h = H + N.
+    """
+    altitude_msl = _finite_float(getattr(msg, "altitude", None))
+    geoid_separation = _finite_float(getattr(msg, "geo_sep", None))
+    if altitude_msl is None or geoid_separation is None:
+        return None
+    return altitude_msl + geoid_separation
+
+
 def wgs84_to_gcj02(lng, lat):
     """
     WGS84转GCJ02(火星坐标系)
@@ -78,6 +99,8 @@ def read_gps_fix(
     print_raw=True,
     print_status=True,
     status_interval=5.0,
+    coordinate_system="gcj02",
+    include_altitude=False,
 ):
     if port is None:
         port = default_gps_port()
@@ -86,13 +109,16 @@ def read_gps_fix(
     if os.name == "nt":
         available_ports = {_normalize_windows_com_port(item) for item in ports}
         if _normalize_windows_com_port(port) not in available_ports:
-            return None, None, "fallback"
+            result = (None, None, None, "fallback")
+            return result if include_altitude else (result[0], result[1], result[3])
 
     if not port:
-        return None, None, "fallback"
+        result = (None, None, None, "fallback")
+        return result if include_altitude else (result[0], result[1], result[3])
 
     longitude = None
     latitude = None
+    ellipsoid_height = None
 
     try:
         with serial.Serial(port, baudrate, timeout=1) as ser:
@@ -122,11 +148,15 @@ def read_gps_fix(
                         continue
 
                     if print_status:
+                        current_ellipsoid_height = gga_ellipsoid_height(msg)
                         print(
                             f"[GPS] GGA fix_quality={getattr(msg, 'gps_qual', '')}, "
                             f"num_sats={getattr(msg, 'num_sats', '')}, "
                             f"hdop={getattr(msg, 'horizontal_dil', '')}, "
-                            f"lat={msg.latitude}, lon={msg.longitude}",
+                            f"lat={msg.latitude}, lon={msg.longitude}, "
+                            f"alt_msl={getattr(msg, 'altitude', '')}, "
+                            f"geoid_sep={getattr(msg, 'geo_sep', '')}, "
+                            f"ellipsoid_h={current_ellipsoid_height}",
                             flush=True,
                         )
 
@@ -135,17 +165,37 @@ def read_gps_fix(
                     if msg.longitude == 0 or msg.latitude == 0:
                         continue
 
-                    longitude = round(msg.longitude, 4)
-                    latitude = round(msg.latitude, 4)
+                    longitude = float(msg.longitude)
+                    latitude = float(msg.latitude)
+                    ellipsoid_height = gga_ellipsoid_height(msg)
                     break
     except serial.SerialException:
-        return None, None, "serial_error"
+        result = (None, None, None, "serial_error")
+        return result if include_altitude else (result[0], result[1], result[3])
 
     if longitude is None or latitude is None:
-        return None, None, "no_fix"
+        result = (None, None, None, "no_fix")
+        return result if include_altitude else (result[0], result[1], result[3])
 
-    longitude, latitude = wgs84_to_gcj02(longitude, latitude)
-    return longitude, latitude, port
+    coordinate_system = str(coordinate_system).strip().lower()
+    if coordinate_system == "wgs84":
+        result = (longitude, latitude, ellipsoid_height, port)
+        return result if include_altitude else (result[0], result[1], result[3])
+    if coordinate_system != "gcj02":
+        raise ValueError(
+            f"unsupported coordinate_system={coordinate_system!r}; "
+            "expected 'wgs84' or 'gcj02'"
+        )
+
+    # Preserve the legacy UI result: the previous implementation rounded the
+    # WGS-84 fix to four decimal places before converting it to GCJ-02. RID
+    # geodesy requests WGS-84 explicitly above and therefore keeps full NMEA
+    # precision.
+    longitude, latitude = wgs84_to_gcj02(
+        round(longitude, 4), round(latitude, 4)
+    )
+    result = (longitude, latitude, ellipsoid_height, port)
+    return result if include_altitude else (result[0], result[1], result[3])
 
 
 def read_gps(port=None, baudrate=115200, timeout_seconds=GPS_FIX_TIMEOUT_SECONDS, print_raw=True):

@@ -1,4 +1,5 @@
 import importlib.util
+import math
 import sys
 import types
 from pathlib import Path
@@ -105,6 +106,87 @@ def test_ui_freshness_is_stricter_than_internal_retention():
     assert tracking.track_is_ui_fresh(track, 100.9)
     assert not tracking.track_is_ui_fresh(track, 101.1)
     assert track.lost_seconds(101.1) < tracking.TRACK_MAX_LOST_SECONDS
+
+
+def _track_at_map_az(map_az):
+    _, track = _tracker_with_track()
+    track.state[0, 0] = (
+        float(map_az) - tracking.DEVICE_HEADING_DEG
+    ) % 360.0
+    return track
+
+
+def _rid_at_map_az(ui_id, map_az):
+    return {
+        "key": ("GB42590-2023", 1, f"RID-{ui_id}"),
+        "ui_id": int(ui_id),
+        "rid_id": f"RID-{ui_id}",
+        "map_az": float(map_az),
+        "distance_m": 100.0 + ui_id,
+        "elevation_deg": 5.0 + ui_id,
+    }
+
+
+def test_stateless_ui_pair_selects_only_nearest_rid_when_sort_is_fewer():
+    pairs = tracking.pair_ui_tracks_with_rid(
+        [_track_at_map_az(100.0)],
+        [_rid_at_map_az(1, 102.0), _rid_at_map_az(2, 220.0)],
+    )
+
+    assert len(pairs) == 1
+    assert pairs[0]["rid"]["ui_id"] == 1
+    assert pairs[0]["az_error_deg"] == 2.0
+
+
+def test_stateless_ui_pair_emits_all_rid_when_counts_are_equal():
+    pairs = tracking.pair_ui_tracks_with_rid(
+        [_track_at_map_az(100.0), _track_at_map_az(200.0)],
+        [_rid_at_map_az(1, 198.0), _rid_at_map_az(2, 101.0)],
+    )
+
+    assert len(pairs) == 2
+    assert {item["rid"]["ui_id"] for item in pairs} == {1, 2}
+
+
+def test_stateless_ui_pair_emits_all_rid_when_sort_is_more_numerous():
+    pairs = tracking.pair_ui_tracks_with_rid(
+        [
+            _track_at_map_az(50.0),
+            _track_at_map_az(150.0),
+            _track_at_map_az(250.0),
+        ],
+        [_rid_at_map_az(1, 52.0), _rid_at_map_az(2, 248.0)],
+    )
+
+    assert len(pairs) == 2
+    assert {item["rid"]["ui_id"] for item in pairs} == {1, 2}
+
+
+def test_stateless_rid_ui_values_are_all_owned_by_rid():
+    rid = _rid_at_map_az(7, 361.5)
+    rid["distance_m"] = 432.1
+    rid["elevation_deg"] = 12.25
+
+    values = tracking.build_stateless_rid_ui_values(rid)
+
+    assert values == {
+        "target_id": 7,
+        "azimuth": 1.5,
+        "elevation": 12.25,
+        "distance": 432.1,
+    }
+
+
+def test_stateless_rid_ui_values_mark_unavailable_elevation_as_nan():
+    rid = _rid_at_map_az(8, 90.0)
+    rid["elevation_deg"] = None
+
+    values = tracking.build_stateless_rid_ui_values(rid)
+
+    assert values["target_id"] == 8
+    assert values["azimuth"] == 90.0
+    assert values["distance"] == 108.0
+    assert math.isnan(values["elevation"])
 
 
 def test_fused_measurement_preserves_all_sources_and_primary_source():
