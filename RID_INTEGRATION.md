@@ -10,6 +10,20 @@ packets; no cross-cycle identity binding is created or retained.
 RID is enabled when `ENABLE_RID=1` and `RID_PORT` is non-empty. The legacy
 gimbal-camera ranging and laser are disabled by default on this branch.
 
+The deployed Linux cabinet uses physical USB topology (`by-path`) rather than
+the unstable `ttyUSBx` enumeration:
+
+| Device | Linux default by-path |
+| --- | --- |
+| RID | `/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-port0` |
+| GPS | `/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2:1.0-port0` |
+| Gimbal | `/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4:1.0-port0` |
+
+Keep each device connected to its assigned physical USB socket. On Linux the
+RID path above is the default, so `RID_PORT` is only needed as an override.
+Windows still requires an explicit `RID_PORT=COMx` because its physical COM
+assignment is installation-specific.
+
 ```powershell
 $env:ENABLE_RID = "1"
 $env:RID_PORT = "COM13"       # replace with the actual XP-MRID-04 port

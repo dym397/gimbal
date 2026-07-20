@@ -108,6 +108,17 @@ def test_ui_freshness_is_stricter_than_internal_retention():
     assert track.lost_seconds(101.1) < tracking.TRACK_MAX_LOST_SECONDS
 
 
+def test_linux_rid_device_defaults_use_fixed_physical_usb_paths(monkeypatch):
+    monkeypatch.setattr(tracking.os, "name", "posix")
+
+    defaults = tracking._platform_serial_defaults()
+
+    prefix = "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:"
+    assert defaults["rid"] == f"{prefix}1.1:1.0-port0"
+    assert defaults["gps"] == f"{prefix}1.2:1.0-port0"
+    assert defaults["gimbal"] == f"{prefix}1.4:1.0-port0"
+
+
 def _track_at_map_az(map_az):
     _, track = _tracker_with_track()
     track.state[0, 0] = (

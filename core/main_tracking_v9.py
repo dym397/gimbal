@@ -65,12 +65,14 @@ def _platform_serial_defaults():
             "laser": "COM12",
             "imu": "COM11",
             "gps": "COM8",
+            "rid": "",
         }
     return {
         "gimbal": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4:1.0-port0",
         "laser": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-port0",
         "imu": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.2:1.0-port0",
         "gps": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2:1.0-port0",
+        "rid": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-port0",
     }
 
 
@@ -306,7 +308,7 @@ GIMBAL_VISION_TRACK_STATE_TTL = _env_float(
 GIMBAL_PORT = _serial_port("GIMBAL_PORT", "gimbal")
 LASER_PORT = _serial_port("LASER_PORT", "laser")
 GPS_PORT = _serial_port("GPS_PORT", "gps")
-RID_PORT = os.getenv("RID_PORT", "").strip()
+RID_PORT = _serial_port("RID_PORT", "rid")
 USE_MOCK_GIMBAL = _env_flag("USE_MOCK_GIMBAL", False)  # True: 使用 mock_gimbal.py; False: 使用真实 GT06Z
 USE_MOCK_LASER = _env_flag("USE_MOCK_LASER", True)   # RID branch default: do not open the legacy laser.
 ENABLE_GPS = _env_flag("ENABLE_GPS", True)
