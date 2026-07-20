@@ -25,9 +25,13 @@ try:
 except ImportError:
     MockGimbalAdapter = None
 try:
-    from sddm_laser import SDDMLaser
+    from sfl0603_driver import (
+        SFL0603,
+        ResponseTimeoutError as SFL0603ResponseTimeoutError,
+    )
 except ImportError:
-    SDDMLaser = None
+    SFL0603 = None
+    SFL0603ResponseTimeoutError = None
 try:
     from gps import DEFAULT_LATITUDE, DEFAULT_LONGITUDE, read_gps_fix
 except ImportError:
@@ -48,6 +52,16 @@ except ImportError:
     SingleTargetAlignmentConfig = None
     SingleTargetVisualAlignment = None
     quantize_angle_0p1 = None
+try:
+    from gimbal_visual_target_lock import (
+        GimbalVisualLockConfig,
+        GimbalVisualTargetLock,
+        should_run_vision_only_tick,
+    )
+except ImportError:
+    GimbalVisualLockConfig = None
+    GimbalVisualTargetLock = None
+    should_run_vision_only_tick = None
 # ==========================================
 # 配置
 # ==========================================
@@ -57,14 +71,12 @@ def _platform_serial_defaults():
         return {
             "gimbal": "COM8",
             "laser": "COM12",
-            "imu": "COM11",
             "gps": "COM8",
         }
     return {
-        "gimbal": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4:1.0-port0",
-        "laser": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-port0",
-        "imu": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.2:1.0-port0",
-        "gps": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2:1.0-port0",
+        "gimbal": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2.2:1.0-port0",
+        "laser": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4:1.0-port0",
+        "gps": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2.1:1.0-port0",
     }
 
 
@@ -280,7 +292,7 @@ STRIKE_LEAD_TIME = _env_float("STRIKE_LEAD_TIME", 0.3)
 STRIKE_SETTLED_EVENT_TTL = _env_float("STRIKE_SETTLED_EVENT_TTL", 0.5)
 TRACK_DISTANCE_TTL = _env_float("TRACK_DISTANCE_TTL", 3.0)
 ENABLE_GIMBAL_VISION = _env_flag("ENABLE_GIMBAL_VISION", True)
-# This branch has one authoritative range source: the coaxial SDDM laser.
+# This branch has one authoritative range source: the coaxial SFL0603 laser.
 # Fixed-camera packets and gimbal-camera YOLO provide direction/identity only.
 SINGLE_LASER_MODE = True
 GIMBAL_CAMERA_SOURCE = os.getenv(
@@ -304,13 +316,13 @@ ENABLE_SINGLE_TARGET_YOLO_ALIGNMENT = _env_flag(
     "ENABLE_SINGLE_TARGET_YOLO_ALIGNMENT", True
 )
 GIMBAL_YOLO_ALIGN_STABLE_FRAMES = _env_int(
-    "GIMBAL_YOLO_ALIGN_STABLE_FRAMES", 6
+    "GIMBAL_YOLO_ALIGN_STABLE_FRAMES", 1
 )
 GIMBAL_YOLO_ALIGN_MAX_STD_X_PX = _env_float(
-    "GIMBAL_YOLO_ALIGN_MAX_STD_X_PX", 12.0
+    "GIMBAL_YOLO_ALIGN_MAX_STD_X_PX", 10.0
 )
 GIMBAL_YOLO_ALIGN_MAX_STD_Y_PX = _env_float(
-    "GIMBAL_YOLO_ALIGN_MAX_STD_Y_PX", 12.0
+    "GIMBAL_YOLO_ALIGN_MAX_STD_Y_PX", 10.0
 )
 GIMBAL_YOLO_ALIGN_MAX_SPEED_X_PX_S = _env_float(
     "GIMBAL_YOLO_ALIGN_MAX_SPEED_X_PX_S", 15.0
@@ -319,19 +331,45 @@ GIMBAL_YOLO_ALIGN_MAX_SPEED_Y_PX_S = _env_float(
     "GIMBAL_YOLO_ALIGN_MAX_SPEED_Y_PX_S", 15.0
 )
 GIMBAL_YOLO_ALIGN_TRIGGER_X_PX = _env_float(
-    "GIMBAL_YOLO_ALIGN_TRIGGER_X_PX", 50.0
+    "GIMBAL_YOLO_ALIGN_TRIGGER_X_PX", 10.0
 )
 GIMBAL_YOLO_ALIGN_TRIGGER_Y_PX = _env_float(
-    "GIMBAL_YOLO_ALIGN_TRIGGER_Y_PX", 50.0
+    "GIMBAL_YOLO_ALIGN_TRIGGER_Y_PX", 10.0
 )
 GIMBAL_YOLO_ALIGN_CENTERED_X_PX = _env_float(
-    "GIMBAL_YOLO_ALIGN_CENTERED_X_PX", 30.0
+    "GIMBAL_YOLO_ALIGN_CENTERED_X_PX", 10.0
 )
 GIMBAL_YOLO_ALIGN_CENTERED_Y_PX = _env_float(
-    "GIMBAL_YOLO_ALIGN_CENTERED_Y_PX", 30.0
+    "GIMBAL_YOLO_ALIGN_CENTERED_Y_PX", 10.0
 )
 GIMBAL_YOLO_ALIGN_MAX_FRAME_GAP_S = _env_float(
-    "GIMBAL_YOLO_ALIGN_MAX_FRAME_GAP_S", 1.0
+    # Disabled by default: a YOLO dropout does not prove target motion.
+    # Set a positive value only when strict detection continuity is required.
+    "GIMBAL_YOLO_ALIGN_MAX_FRAME_GAP_S", 0.0
+)
+GIMBAL_YOLO_ALIGN_MAX_LATEST_TO_MEDIAN_PX = _env_float(
+    "GIMBAL_YOLO_ALIGN_MAX_LATEST_TO_MEDIAN_PX", 10.0
+)
+GIMBAL_YOLO_ALIGN_MAX_CENTER_JUMP_PX = _env_float(
+    "GIMBAL_YOLO_ALIGN_MAX_CENTER_JUMP_PX", 0.0
+)
+GIMBAL_YOLO_ALIGN_MIN_BBOX_IOU = _env_float(
+    "GIMBAL_YOLO_ALIGN_MIN_BBOX_IOU", 0.0
+)
+GIMBAL_YOLO_ALIGN_RECOVERY_CONFIRM_FRAMES = _env_int(
+    "GIMBAL_YOLO_ALIGN_RECOVERY_CONFIRM_FRAMES", 1
+)
+GIMBAL_YOLO_ALIGN_MAX_FRAME_AGE_S = _env_float(
+    "GIMBAL_YOLO_ALIGN_MAX_FRAME_AGE_S", 0.0
+)
+GIMBAL_LASER_READY_RADIUS_PX = _env_float(
+    "GIMBAL_LASER_READY_RADIUS_PX", 20.0
+)
+GIMBAL_YOLO_ALIGN_MIN_FINE_STEP_DEG = _env_float(
+    "GIMBAL_YOLO_ALIGN_MIN_FINE_STEP_DEG", 0.10
+)
+GIMBAL_YOLO_ALIGN_FINE_SCAN_MAX_ERROR_PX = _env_float(
+    "GIMBAL_YOLO_ALIGN_FINE_SCAN_MAX_ERROR_PX", 0.0
 )
 GIMBAL_YOLO_ALIGN_MAX_STEP_AZ_DEG = _env_float(
     "GIMBAL_YOLO_ALIGN_MAX_STEP_AZ_DEG", 3.0
@@ -340,7 +378,53 @@ GIMBAL_YOLO_ALIGN_MAX_STEP_EL_DEG = _env_float(
     "GIMBAL_YOLO_ALIGN_MAX_STEP_EL_DEG", 2.0
 )
 GIMBAL_YOLO_ALIGN_MAX_CORRECTIONS = _env_int(
-    "GIMBAL_YOLO_ALIGN_MAX_CORRECTIONS", 3
+    "GIMBAL_YOLO_ALIGN_MAX_CORRECTIONS", 0
+)
+GIMBAL_VISUAL_LOCK_LOST_SECONDS = _env_float(
+    "GIMBAL_VISUAL_LOCK_LOST_SECONDS", 1.0
+)
+GIMBAL_VISUAL_LOCK_OUTSIDE_CONFIRM_FRAMES = _env_int(
+    "GIMBAL_VISUAL_LOCK_OUTSIDE_CONFIRM_FRAMES", 3
+)
+GIMBAL_VISUAL_LOCK_MIN_X_RATIO = _env_float(
+    "GIMBAL_VISUAL_LOCK_MIN_X_RATIO", 0.05
+)
+GIMBAL_VISUAL_LOCK_MAX_X_RATIO = _env_float(
+    "GIMBAL_VISUAL_LOCK_MAX_X_RATIO", 0.95
+)
+GIMBAL_VISUAL_LOCK_MIN_Y_RATIO = _env_float(
+    "GIMBAL_VISUAL_LOCK_MIN_Y_RATIO", 0.05
+)
+GIMBAL_VISUAL_LOCK_MAX_Y_RATIO = _env_float(
+    "GIMBAL_VISUAL_LOCK_MAX_Y_RATIO", 0.95
+)
+# SFL0603 aim point on the 2560x1440 image: (1288, 728).
+GIMBAL_LASER_AIM_OFFSET_X_PX = _env_float(
+    "GIMBAL_LASER_AIM_OFFSET_X_PX", 8.0
+)
+GIMBAL_LASER_AIM_OFFSET_Y_PX = _env_float(
+    "GIMBAL_LASER_AIM_OFFSET_Y_PX", 8.0
+)
+SFL0603_CONTINUOUS_PERIOD_MS = _env_int(
+    "SFL0603_CONTINUOUS_PERIOD_MS", 100
+)
+SFL0603_SESSION_TIMEOUT_SECONDS = _env_float(
+    "SFL0603_SESSION_TIMEOUT_SECONDS", 1.5
+)
+SFL0603_READ_TIMEOUT_SECONDS = _env_float(
+    "SFL0603_READ_TIMEOUT_SECONDS", 0.15
+)
+SFL0603_STOP_RETRIES = _env_int("SFL0603_STOP_RETRIES", 3)
+SFL0603_REQUEST_HEARTBEAT_TIMEOUT_SECONDS = _env_float(
+    "SFL0603_REQUEST_HEARTBEAT_TIMEOUT_SECONDS", 1.0
+)
+# Four absolute 0.1-degree offsets around the latest bbox center.  Between
+# scan points each axis changes by no more than 0.1 degree.
+SFL0603_NO_RETURN_SCAN_OFFSETS_DEG = (
+    (0.1, 0.0),
+    (0.0, 0.1),
+    (-0.1, 0.0),
+    (0.0, -0.1),
 )
 GIMBAL_PORT = _serial_port("GIMBAL_PORT", "gimbal")
 LASER_PORT = _serial_port("LASER_PORT", "laser")
@@ -348,10 +432,6 @@ GPS_PORT = _serial_port("GPS_PORT", "gps")
 USE_MOCK_GIMBAL = _env_flag("USE_MOCK_GIMBAL", False)  # True: 使用 mock_gimbal.py; False: 使用真实 GT06Z
 USE_MOCK_LASER = _env_flag("USE_MOCK_LASER", False)   # True: do not open real laser; distance fusion still uses mono only.
 ENABLE_GPS = _env_flag("ENABLE_GPS", True)
-ENABLE_IMU = _env_flag("ENABLE_IMU", False)      # Manual switch: True to enable IMU read/print
-IMU_PORT = _serial_port("IMU_PORT", "imu")
-IMU_BAUDRATE = 9600
-IMU_PRINT_INTERVAL = 0.2
 GPS_BAUDRATE = 115200
 GPS_FIX_TIMEOUT_SECONDS = 5
 GPS_STATUS_INTERVAL = 5.0
@@ -367,7 +447,7 @@ GIMBAL_CMD_DEADBAND_AZ = 0.20
 GIMBAL_CMD_DEADBAND_EL = 0.12
 AZ_PREEMPT_DEG = 0.3     # 方位轴抢占阈值，单位：度
 EL_PREEMPT_DEG = 0.8      # 俯仰轴抢占阈值，单位：度
-GIMBAL_SETTLE_THRESHOLD = 0.3
+GIMBAL_SETTLE_THRESHOLD = 0.2
 GIMBAL_SETTLE_TIMEOUT = 2.5
 GIMBAL_SETTLE_DWELL_SECONDS = _env_float("GIMBAL_SETTLE_DWELL_SECONDS", 0.20)
 GIMBAL_THREAD_SLEEP = 0.02
@@ -509,6 +589,9 @@ class FieldLogger:
             "alignment_state", "alignment_sample_count",
             "alignment_std_x_px", "alignment_std_y_px",
             "alignment_speed_x_px_s", "alignment_speed_y_px_s",
+            "alignment_latest_to_median_px", "alignment_frame_age_s",
+            "alignment_fresh_after_dropout", "alignment_control_mode",
+            "alignment_outlier_center_jump_px", "alignment_outlier_bbox_iou",
             "alignment_delta_az_deg", "alignment_delta_el_deg",
             "is_edge_bbox", "visible_ratio",
         ]
@@ -921,6 +1004,18 @@ class SharedHardwareState:
         self.stationary_ts = 0.0
         self.raw_laser_dist = None
         self.raw_laser_ts = 0.0
+        self.raw_laser_request_ts = 0.0
+        self.raw_laser_track_id = -1
+        # SFL0603 is normally in standby. A positive request timestamp denotes
+        # one aligned-target session. It remains at 10 Hz while the alignment
+        # heartbeat is present, independent of the returned distance value.
+        self.laser_request_ts = 0.0
+        self.laser_request_track_id = -1
+        self.laser_request_heartbeat_ts = 0.0
+        self.laser_active = False
+        self.laser_status = "UNAVAILABLE"
+        self.laser_last_error = ""
+        self.laser_no_return_ts = 0.0
 
 shared_state = SharedHardwareState()
 gimbal_cmd_queue = queue.Queue(maxsize=1)
@@ -1037,32 +1132,245 @@ def _parse_positive_float(value):
     return None
 
 def laser_reader_thread(laser, stop_event):
-    print("[LaserThread] 激光读取线程已启动")
-    try:
-        laser.start_measurement(continuous=True)
-    except Exception as e:
-        print(f"[Laser][Fatal] 启动连续测量失败: {e}")
-        return
+    """Run SFL0603 at 10 Hz while the target request remains live."""
+    print("[LaserThread] SFL0603 target-continuous reader started in standby")
+    with shared_state.lock:
+        shared_state.laser_status = "STANDBY"
+        shared_state.laser_last_error = ""
+    active_request_ts = 0.0
+    active_track_id = -1
+    active_started_mono = 0.0
+    completed_request_ts = 0.0
 
-    last_log_t = 0.0
-    while not stop_event.is_set():
-        dist = laser.read_distance()
-        if dist is None:
-            continue
-        now_t = time.time()
+    def stop_active(reason, final_status="STANDBY"):
+        nonlocal active_request_ts, active_track_id, active_started_mono
+        if active_request_ts <= 0.0:
+            return True
+        stopped = False
+        stop_error = None
+        for attempt in range(1, max(1, SFL0603_STOP_RETRIES) + 1):
+            try:
+                laser.stop_measurement()
+                stopped = True
+                stop_error = None
+                break
+            except Exception as exc:
+                stop_error = exc
+                print(
+                    f"[Laser][Warn] SFL0603 stop attempt {attempt}/"
+                    f"{max(1, SFL0603_STOP_RETRIES)} failed: {exc}"
+                )
+                time.sleep(0.03)
+        try:
+            laser.disarm_ranging(stop=False)
+        except Exception as exc:
+            print(f"[Laser][Warn] SFL0603 disarm failed: {exc}")
         with shared_state.lock:
-            shared_state.raw_laser_dist = float(dist)
-            shared_state.raw_laser_ts = now_t
-        if (now_t - last_log_t) >= LASER_LOG_INTERVAL:
+            shared_state.laser_active = False
+            shared_state.laser_status = (
+                final_status if stopped else "STOP_FAILED"
+            )
+            shared_state.laser_last_error = (
+                "" if stopped else str(stop_error or "unknown stop failure")
+            )
+            shared_state.laser_no_return_ts = 0.0
+        now_t = time.time()
+        field_log_gimbal({
+            "timestamp": f"{now_t:.6f}",
+            "event": "LASER_SESSION_STOP" if stopped else "LASER_SESSION_STOP_FAILED",
+            "track_id": active_track_id,
+            "laser_source": "sfl0603",
+            "reason": (
+                f"{reason},request_ts={active_request_ts:.6f}"
+                if stopped else
+                f"{reason},request_ts={active_request_ts:.6f},error={stop_error}"
+            ),
+        })
+        active_request_ts = 0.0
+        active_track_id = -1
+        active_started_mono = 0.0
+        if not stopped:
+            # close() performs one final best-effort STOP before releasing the
+            # port. Do not permit another emission session after stop failure.
+            try:
+                laser.close()
+            except Exception as exc:
+                print(f"[Laser][Fatal] SFL0603 close after stop failure: {exc}")
+        return stopped
+
+    try:
+        while not stop_event.is_set():
+            with shared_state.lock:
+                requested_ts = float(shared_state.laser_request_ts or 0.0)
+                requested_track_id = int(shared_state.laser_request_track_id)
+                request_heartbeat_ts = float(
+                    shared_state.laser_request_heartbeat_ts or 0.0
+                )
+            request_heartbeat_fresh = (
+                request_heartbeat_ts > 0.0
+                and 0.0
+                <= time.time() - request_heartbeat_ts
+                <= SFL0603_REQUEST_HEARTBEAT_TIMEOUT_SECONDS
+            )
+            if not request_heartbeat_fresh:
+                requested_ts = 0.0
+                requested_track_id = -1
+
+            if (
+                active_request_ts > 0.0
+                and (
+                    requested_ts <= 0.0
+                    or abs(requested_ts - active_request_ts) > 1e-6
+                    or requested_track_id != active_track_id
+                )
+            ):
+                if not stop_active(
+                    "request_cancelled_or_changed", "REQUEST_CANCELLED"
+                ):
+                    return
+                continue
+
+            if requested_ts <= 0.0:
+                stop_event.wait(0.02)
+                continue
+
+            if (
+                active_request_ts <= 0.0
+                and abs(requested_ts - completed_request_ts) <= 1e-6
+            ):
+                stop_event.wait(0.02)
+                continue
+
+            if active_request_ts <= 0.0:
+                try:
+                    laser.arm_ranging()
+                    laser.start_continuous(
+                        period_ms=SFL0603_CONTINUOUS_PERIOD_MS
+                    )
+                except Exception as exc:
+                    try:
+                        laser.disarm_ranging(stop=True)
+                    except Exception:
+                        pass
+                    completed_request_ts = requested_ts
+                    print(f"[Laser][Error] SFL0603 session start failed: {exc}")
+                    with shared_state.lock:
+                        shared_state.laser_active = False
+                        shared_state.laser_status = "START_ERROR"
+                        shared_state.laser_last_error = str(exc)
+                    field_log_gimbal({
+                        "timestamp": f"{time.time():.6f}",
+                        "event": "LASER_SESSION_START_FAILED",
+                        "track_id": requested_track_id,
+                        "laser_source": "sfl0603",
+                        "reason": str(exc),
+                    })
+                    stop_event.wait(0.05)
+                    continue
+                active_request_ts = requested_ts
+                active_track_id = requested_track_id
+                active_started_mono = time.monotonic()
+                with shared_state.lock:
+                    shared_state.laser_active = True
+                    shared_state.laser_status = "RANGING_10HZ"
+                    shared_state.laser_last_error = ""
+                    shared_state.raw_laser_dist = None
+                    shared_state.raw_laser_ts = 0.0
+                    shared_state.raw_laser_request_ts = 0.0
+                    shared_state.raw_laser_track_id = -1
+                    shared_state.laser_no_return_ts = 0.0
+                field_log_gimbal({
+                    "timestamp": f"{time.time():.6f}",
+                    "event": "LASER_SESSION_START",
+                    "track_id": active_track_id,
+                    "laser_source": "sfl0603",
+                    "reason": (
+                        f"aligned_request_ts={active_request_ts:.6f},"
+                        f"period_ms={SFL0603_CONTINUOUS_PERIOD_MS}"
+                    ),
+                })
+
+            if (
+                time.monotonic() - active_started_mono
+                >= SFL0603_SESSION_TIMEOUT_SECONDS
+            ):
+                no_return_t = time.time()
+                active_started_mono = time.monotonic()
+                with shared_state.lock:
+                    shared_state.laser_status = "RANGING_NO_VALID_RETURN"
+                    shared_state.laser_no_return_ts = no_return_t
+                field_log_gimbal({
+                    "timestamp": f"{no_return_t:.6f}",
+                    "event": "LASER_NO_VALID_RETURN_SCAN_REQUEST",
+                    "track_id": active_track_id,
+                    "laser_source": "sfl0603",
+                    "reason": (
+                        f"continuous_10hz_kept_active,"
+                        f"request_ts={active_request_ts:.6f}"
+                    ),
+                })
+                continue
+
+            try:
+                measurement = laser.read_measurement(
+                    timeout=SFL0603_READ_TIMEOUT_SECONDS
+                )
+            except SFL0603ResponseTimeoutError:
+                continue
+            except Exception as exc:
+                completed_request_ts = active_request_ts
+                print(f"[Laser][Error] SFL0603 read failed: {exc}")
+                if not stop_active(f"read_error={exc}", "READ_ERROR"):
+                    return
+                with shared_state.lock:
+                    shared_state.laser_last_error = str(exc)
+                continue
+
+            if not measurement.valid:
+                with shared_state.lock:
+                    shared_state.laser_status = "INVALID_RETURN_CONTINUE"
+                field_log_gimbal({
+                    "timestamp": f"{time.time():.6f}",
+                    "event": "LASER_MEASUREMENT_REJECTED",
+                    "track_id": active_track_id,
+                    "laser_source": "sfl0603",
+                    "laser_valid": 0,
+                    "reason": f"flags=0x{measurement.flags.raw:02X}",
+                })
+                continue
+
+            result_request_ts = active_request_ts
+            result_track_id = active_track_id
+            distance_m = float(measurement.target_1_m)
+            now_t = time.time()
+            with shared_state.lock:
+                shared_state.raw_laser_dist = distance_m
+                shared_state.raw_laser_ts = now_t
+                shared_state.raw_laser_request_ts = result_request_ts
+                shared_state.raw_laser_track_id = result_track_id
+                shared_state.laser_no_return_ts = 0.0
+            # Any valid return proves that the link is producing data. Keep
+            # the same continuous 10 Hz session alive while bbox alignment
+            # continues, regardless of the distance value.
+            active_started_mono = time.monotonic()
+            with shared_state.lock:
+                shared_state.laser_status = "RANGING_VALID_RETURN"
             field_log_gimbal({
                 "timestamp": f"{now_t:.6f}",
-                "event": "LASER_READ_ONLY",
+                "event": "LASER_VALID_RESULT_CONTINUE",
+                "track_id": result_track_id,
                 "laser_valid": 1,
-                "laser_dist": f"{float(dist):.6f}",
-                "laser_source": "sddm",
+                "laser_dist": f"{distance_m:.6f}",
+                "laser_source": "sfl0603",
                 "laser_ts": f"{now_t:.6f}",
+                "reason": (
+                    f"aligned_request_ts={result_request_ts:.6f},stopped=0"
+                ),
             })
-            last_log_t = now_t
+            continue
+    finally:
+        if active_request_ts > 0.0:
+            stop_active("reader_shutdown", "SHUTDOWN")
 
 
 def gps_sender_thread(sender):
@@ -1503,8 +1811,12 @@ def gimbal_control_thread(gimbal):
     def record_feedback_motion(curr_el, curr_az, feedback_t):
         """Update UI attitude and physical stationary state from encoder deltas."""
         nonlocal last_motion_az, last_motion_el, stationary_candidate_since
-        curr_ui_az = (curr_az - GIMBAL_AZ_BASE) % 360.0
-        curr_ui_el = curr_el - GIMBAL_INIT_EL
+        curr_el = quantize_gimbal_command_angle(curr_el)
+        curr_az = quantize_gimbal_command_angle(curr_az)
+        curr_ui_az = quantize_gimbal_command_angle(
+            (curr_az - GIMBAL_AZ_BASE) % 360.0
+        )
+        curr_ui_el = quantize_gimbal_command_angle(curr_el - GIMBAL_INIT_EL)
         was_stationary = False
         with shared_state.lock:
             was_stationary = shared_state.is_stationary
@@ -1543,10 +1855,10 @@ def gimbal_control_thread(gimbal):
             field_log_gimbal({
                 "timestamp": f"{feedback_t:.6f}",
                 "event": "GIMBAL_STATIONARY",
-                "gimbal_ui_az": f"{curr_ui_az:.6f}",
-                "gimbal_ui_el": f"{curr_ui_el:.6f}",
-                "gimbal_ctrl_az": f"{curr_az:.6f}",
-                "gimbal_ctrl_el": f"{curr_el:.6f}",
+                "gimbal_ui_az": f"{curr_ui_az:.1f}",
+                "gimbal_ui_el": f"{curr_ui_el:.1f}",
+                "gimbal_ctrl_az": f"{curr_az:.1f}",
+                "gimbal_ctrl_el": f"{curr_el:.1f}",
                 "is_settled": 1 if shared_state.is_settled else 0,
                 "is_stationary": 1,
             })
@@ -1570,8 +1882,10 @@ def gimbal_control_thread(gimbal):
                         )
                     continue
                 #若成功取到指令，下发指令到云台
-                target_az = float(active_cmd["az"])#方位角
-                target_el = float(active_cmd["el"])#俯仰角
+                target_az = quantize_gimbal_command_angle(active_cmd["az"])
+                target_el = quantize_gimbal_command_angle(active_cmd["el"])
+                active_cmd["az"] = target_az
+                active_cmd["el"] = target_el
                 cmd_start_t = time.time()
                 last_progress_log_t = 0.0
                 settle_candidate_since = None
@@ -1593,28 +1907,34 @@ def gimbal_control_thread(gimbal):
                     print(
                         f"[GimbalCmd] cmd_id={int(active_cmd['cmd_id'])}, "
                         f"track_id={int(active_cmd.get('track_id', -1))}, "
-                        f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°)"
+                        f"target_ctrl=(Az={target_az:.1f}°, El={target_el:.1f}°)"
                     )
                 field_log_gimbal({
                     "timestamp": f"{cmd_start_t:.6f}",
                     "event": "GIMBAL_CMD_SEND",
                     "cmd_id": int(active_cmd["cmd_id"]),
                     "track_id": int(active_cmd.get("track_id", -1)),
-                    "target_ctrl_az": f"{target_az:.6f}",
-                    "target_ctrl_el": f"{target_el:.6f}",
+                    "target_ctrl_az": f"{target_az:.1f}",
+                    "target_ctrl_el": f"{target_el:.1f}",
                 })
             #2.若当前有指令在执行(执行态)
             now_t = time.time()
             #检查指令队列中是否有更新的指令，如果有则取出最新的一条（丢弃旧指令），准备进行抢占式执行判断
             newer_cmd = drain_latest_gimbal_cmd()
             if newer_cmd is not None:
-                new_az = float(newer_cmd["az"])#新指令的方位角
-                new_el = float(newer_cmd["el"])#新指令的俯仰角
+                new_az = quantize_gimbal_command_angle(newer_cmd["az"])
+                new_el = quantize_gimbal_command_angle(newer_cmd["el"])
+                newer_cmd["az"] = new_az
+                newer_cmd["el"] = new_el
                 new_track_id = int(newer_cmd.get("track_id", -1))
                 curr_track_id = int(active_cmd.get("track_id", -1))
                 #计算新指令与当前指令的角度差
-                d_az = abs(angular_diff(new_az, target_az))
-                d_el = abs(new_el - target_el)
+                d_az = quantize_gimbal_command_angle(
+                    abs(angular_diff(new_az, target_az))
+                )
+                d_el = quantize_gimbal_command_angle(
+                    abs(new_el - target_el)
+                )
                 d_total = math.hypot(d_az, d_el)
 
                 # 目标切换时必须整条命令替换，避免“新方位 + 旧俯仰”混合指向。
@@ -1664,18 +1984,18 @@ def gimbal_control_thread(gimbal):
                         print(
                             f"[GimbalCmd] preempt cmd_id={int(active_cmd['cmd_id'])}, "
                             f"track_id={new_track_id}, mode={update_mode}, axes={updated_axes_text}, "
-                            f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°), "
-                            f"delta=(dAz={d_az:.2f}°, dEl={d_el:.2f}°, total={d_total:.2f}°)"
+                            f"target_ctrl=(Az={target_az:.1f}°, El={target_el:.1f}°), "
+                            f"delta=(dAz={d_az:.1f}°, dEl={d_el:.1f}°, total={d_total:.1f}°)"
                         )
                     field_log_gimbal({
                         "timestamp": f"{now_t:.6f}",
                         "event": "GIMBAL_CMD_PREEMPT",
                         "cmd_id": int(active_cmd["cmd_id"]),
                         "track_id": new_track_id,
-                        "target_ctrl_az": f"{target_az:.6f}",
-                        "target_ctrl_el": f"{target_el:.6f}",
-                        "err_az": f"{d_az:.6f}",
-                        "err_el": f"{d_el:.6f}",
+                        "target_ctrl_az": f"{target_az:.1f}",
+                        "target_ctrl_el": f"{target_el:.1f}",
+                        "err_az": f"{d_az:.1f}",
+                        "err_el": f"{d_el:.1f}",
                     })
 
             if time.time() < next_feedback_query_t:
@@ -1685,11 +2005,17 @@ def gimbal_control_thread(gimbal):
             real_att = gimbal.get_attitude()
             if real_att:
                 curr_el, curr_az, _ = real_att
+                curr_el = quantize_gimbal_command_angle(curr_el)
+                curr_az = quantize_gimbal_command_angle(curr_az)
                 curr_ui_az, curr_ui_el, gimbal_is_stationary = (
                     record_feedback_motion(curr_el, curr_az, now_t)
                 )
-                err_az = abs(angular_diff(target_az, curr_az))
-                err_el = abs(curr_el - target_el)
+                err_az = quantize_gimbal_command_angle(
+                    abs(angular_diff(target_az, curr_az))
+                )
+                err_el = quantize_gimbal_command_angle(
+                    abs(curr_el - target_el)
+                )
 
                 if (last_progress_log_t == 0.0) or ((now_t - last_progress_log_t) >= GIMBAL_PROGRESS_LOG_INTERVAL):
                     elapsed = now_t - cmd_start_t
@@ -1697,24 +2023,24 @@ def gimbal_control_thread(gimbal):
                         print(
                             f"[GimbalAtt] cmd_id={int(active_cmd['cmd_id'])}, "
                             f"elapsed={elapsed:.3f}s, "
-                            f"actual_ctrl=(Az={curr_az:.2f}°, El={curr_el:.2f}°), "
-                            f"actual_ui=(Az={curr_ui_az:.2f}°, El={curr_el:.2f}°), "
-                            f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°), "
-                            f"err=(dAz={err_az:.2f}°, dEl={err_el:.2f}°)"
+                            f"actual_ctrl=(Az={curr_az:.1f}°, El={curr_el:.1f}°), "
+                            f"actual_ui=(Az={curr_ui_az:.1f}°, El={curr_el:.1f}°), "
+                            f"target_ctrl=(Az={target_az:.1f}°, El={target_el:.1f}°), "
+                            f"err=(dAz={err_az:.1f}°, dEl={err_el:.1f}°)"
                         )
                     field_log_gimbal({
                         "timestamp": f"{now_t:.6f}",
                         "event": "GIMBAL_ATT",
                         "cmd_id": int(active_cmd["cmd_id"]),
                         "track_id": int(active_cmd.get("track_id", -1)),
-                        "gimbal_ui_az": f"{curr_ui_az:.6f}",
-                        "gimbal_ui_el": f"{curr_ui_el:.6f}",
-                        "gimbal_ctrl_az": f"{curr_az:.6f}",
-                        "gimbal_ctrl_el": f"{curr_el:.6f}",
-                        "target_ctrl_az": f"{target_az:.6f}",
-                        "target_ctrl_el": f"{target_el:.6f}",
-                        "err_az": f"{err_az:.6f}",
-                        "err_el": f"{err_el:.6f}",
+                        "gimbal_ui_az": f"{curr_ui_az:.1f}",
+                        "gimbal_ui_el": f"{curr_ui_el:.1f}",
+                        "gimbal_ctrl_az": f"{curr_az:.1f}",
+                        "gimbal_ctrl_el": f"{curr_el:.1f}",
+                        "target_ctrl_az": f"{target_az:.1f}",
+                        "target_ctrl_el": f"{target_el:.1f}",
+                        "err_az": f"{err_az:.1f}",
+                        "err_el": f"{err_el:.1f}",
                         "is_stationary": 1 if gimbal_is_stationary else 0,
                     })
                     last_progress_log_t = now_t
@@ -1752,10 +2078,10 @@ def gimbal_control_thread(gimbal):
                         "event": "GIMBAL_CMD_RETRY",
                         "cmd_id": int(active_cmd["cmd_id"]),
                         "track_id": int(active_cmd.get("track_id", -1)),
-                        "target_ctrl_az": f"{target_az:.6f}",
-                        "target_ctrl_el": f"{target_el:.6f}",
-                        "err_az": f"{err_az:.6f}",
-                        "err_el": f"{err_el:.6f}",
+                        "target_ctrl_az": f"{target_az:.1f}",
+                        "target_ctrl_el": f"{target_el:.1f}",
+                        "err_az": f"{err_az:.1f}",
+                        "err_el": f"{err_el:.1f}",
                         "retry_axes": retry_axes,
                         "driver_status": str(retry_status),
                     })
@@ -1783,29 +2109,29 @@ def gimbal_control_thread(gimbal):
                         print(
                             f"[GimbalSettled] cmd_id={active_cmd_id}, track_id={active_track_id}, "
                             f"settle_time={settle_dt:.3f}s, "
-                            f"actual_ctrl=(Az={curr_az:.2f}°, El={curr_el:.2f}°), "
-                            f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°), "
-                            f"err=(dAz={err_az:.2f}°, dEl={err_el:.2f}°)"
+                            f"actual_ctrl=(Az={curr_az:.1f}°, El={curr_el:.1f}°), "
+                            f"target_ctrl=(Az={target_az:.1f}°, El={target_el:.1f}°), "
+                            f"err=(dAz={err_az:.1f}°, dEl={err_el:.1f}°)"
                         )
                     field_log_gimbal({
                         "timestamp": f"{now_t:.6f}",
                         "event": "GIMBAL_SETTLED",
                         "cmd_id": int(active_cmd_id),
                         "track_id": int(active_track_id),
-                        "gimbal_ui_az": f"{curr_ui_az:.6f}",
-                        "gimbal_ui_el": f"{curr_ui_el:.6f}",
-                        "gimbal_ctrl_az": f"{curr_az:.6f}",
-                        "gimbal_ctrl_el": f"{curr_el:.6f}",
-                        "target_ctrl_az": f"{target_az:.6f}",
-                        "target_ctrl_el": f"{target_el:.6f}",
-                        "err_az": f"{err_az:.6f}",
-                        "err_el": f"{err_el:.6f}",
+                        "gimbal_ui_az": f"{curr_ui_az:.1f}",
+                        "gimbal_ui_el": f"{curr_ui_el:.1f}",
+                        "gimbal_ctrl_az": f"{curr_az:.1f}",
+                        "gimbal_ctrl_el": f"{curr_el:.1f}",
+                        "target_ctrl_az": f"{target_az:.1f}",
+                        "target_ctrl_el": f"{target_el:.1f}",
+                        "err_az": f"{err_az:.1f}",
+                        "err_el": f"{err_el:.1f}",
                         "is_settled": 1,
                         "is_stationary": 1 if gimbal_is_stationary else 0,
                         "settle_time": f"{settle_dt:.6f}",
                     })
 
-                    # Laser readings are logged by laser_reader_thread only; distance fusion uses mono only.
+                    # Real SFL0603 sessions are controlled by the visual-alignment request gate.
                     active_cmd = None
                     settle_candidate_since = None
                     continue
@@ -1821,9 +2147,9 @@ def gimbal_control_thread(gimbal):
                         print(
                             f"[GimbalTimeout] cmd_id={cmd_id}, track_id={track_id}, "
                             f"elapsed={elapsed:.3f}s, "
-                            f"actual_ctrl=(Az={curr_az:.2f}°, El={curr_el:.2f}°), "
-                            f"target_ctrl=(Az={target_az:.2f}°, El={target_el:.2f}°), "
-                            f"err=(dAz={err_az:.2f}°, dEl={err_el:.2f}°)"
+                            f"actual_ctrl=(Az={curr_az:.1f}°, El={curr_el:.1f}°), "
+                            f"target_ctrl=(Az={target_az:.1f}°, El={target_el:.1f}°), "
+                            f"err=(dAz={err_az:.1f}°, dEl={err_el:.1f}°)"
                         )
                 else:
                     if PRINT_EVENT_LOGS:
@@ -1836,10 +2162,10 @@ def gimbal_control_thread(gimbal):
                     "event": "GIMBAL_TIMEOUT",
                     "cmd_id": cmd_id,
                     "track_id": track_id,
-                    "target_ctrl_az": f"{target_az:.6f}",
-                    "target_ctrl_el": f"{target_el:.6f}",
-                    "err_az": "" if not real_att else f"{err_az:.6f}",
-                    "err_el": "" if not real_att else f"{err_el:.6f}",
+                    "target_ctrl_az": f"{target_az:.1f}",
+                    "target_ctrl_el": f"{target_el:.1f}",
+                    "err_az": "" if not real_att else f"{err_az:.1f}",
+                    "err_el": "" if not real_att else f"{err_el:.1f}",
                     "is_settled": 0,
                     "is_stationary": (
                         "" if not real_att
@@ -2805,8 +3131,6 @@ def main():
         _validate_serial_port("LASER_PORT", LASER_PORT)
     if ENABLE_GPS:
         _validate_serial_port("GPS_PORT", GPS_PORT)
-    if ENABLE_IMU:
-        _validate_serial_port("IMU_PORT", IMU_PORT)
 
     if ENABLE_GPS:
         threading.Thread(target=gps_sender_thread, args=(sender,), daemon=True).start()
@@ -2829,24 +3153,60 @@ def main():
 
     laser = None
     laser_stop_event = None
+    laser_thread = None
     if USE_MOCK_LASER:
         print("[Init] Real laser logging disabled by USE_MOCK_LASER=True; distance source remains mono")
     else:
-        if SDDMLaser is None:
-            print("[Laser][Warn] sddm_laser.py import failed; distance source remains mono.")
+        if SFL0603 is None:
+            print(
+                "[Laser][Warn] sfl0603_driver.py import failed; "
+                "SFL0603 ranging disabled."
+            )
         else:
             try:
-                laser = SDDMLaser(LASER_PORT)
+                # Constructor sends STOP and requires its acknowledgement.
+                # Ranging remains disarmed until visual alignment requests one
+                # short 10 Hz session.
+                laser = SFL0603(
+                    LASER_PORT,
+                    stop_on_open=True,
+                    allow_ranging=False,
+                )
                 laser_stop_event = threading.Event()
-                threading.Thread(
+                laser_thread = threading.Thread(
                     target=laser_reader_thread,
                     args=(laser, laser_stop_event),
                     daemon=True,
-                ).start()
-                print(f"[Init] Real laser read-only logging enabled on {LASER_PORT}")
+                )
+                laser_thread.start()
+                print(
+                    f"[Init] SFL0603 ready in standby on {LASER_PORT}; "
+                    f"target-continuous period={SFL0603_CONTINUOUS_PERIOD_MS}ms, "
+                    f"no_return_scan_interval={SFL0603_SESSION_TIMEOUT_SECONDS:.2f}s"
+                )
             except Exception as e:
-                print(f"[Laser][Warn] Init failed on {LASER_PORT}: {e}")
+                print(f"[Laser][Warn] SFL0603 init failed on {LASER_PORT}: {e}")
                 laser = None
+
+    def get_laser_preview_status():
+        """Return a lock-consistent snapshot for the camera overlay."""
+        with shared_state.lock:
+            distance = shared_state.raw_laser_dist
+            return {
+                "available": laser is not None,
+                "active": bool(shared_state.laser_active),
+                "status": str(shared_state.laser_status),
+                "distance_m": (
+                    None if distance is None else float(distance)
+                ),
+                "timestamp": float(shared_state.raw_laser_ts or 0.0),
+                "error": str(shared_state.laser_last_error or ""),
+                "period_ms": SFL0603_CONTINUOUS_PERIOD_MS,
+                "aim_radius_px": GIMBAL_LASER_READY_RADIUS_PX,
+                "no_return_timestamp": float(
+                    shared_state.laser_no_return_ts or 0.0
+                ),
+            }
 
     # start background threads for network and gimbal control
     push_latest_gimbal_cmd({
@@ -2858,7 +3218,7 @@ def main():
     })
     print(
         f"[Init] Queue gimbal initial posture: "
-        f"Az={GIMBAL_AZ_BASE:.2f}°, El={GIMBAL_INIT_EL:.2f}°"
+        f"Az={GIMBAL_AZ_BASE:.1f}°, El={GIMBAL_INIT_EL:.1f}°"
     )
     threading.Thread(target=gimbal_control_thread, args=(gimbal,), daemon=True).start()
     threading.Thread(target=rk3588_thread, daemon=True).start()
@@ -2882,12 +3242,15 @@ def main():
                     # single-laser uses this camera only for YOLO guidance.
                     # Do not load or run physics/MLP/GRU distance inference.
                     detection_only=SINGLE_LASER_MODE,
+                    aim_offset_x_px=GIMBAL_LASER_AIM_OFFSET_X_PX,
+                    aim_offset_y_px=GIMBAL_LASER_AIM_OFFSET_Y_PX,
+                    laser_status_provider=get_laser_preview_status,
                 )
                 vision_service.start()
                 print(
                     f"[GimbalVision] enabled camera={GIMBAL_CAMERA_SOURCE!r}, "
                     "YOLO=bestall_2k.rknn native 2560x1440 on RKNN/NPU, "
-                    "mode=YOLO_detection_only, distance=SDDM_laser"
+                    "mode=YOLO_detection_only, distance=SFL0603_on_demand"
                 )
             except Exception as e:
                 vision_service = None
@@ -2896,6 +3259,7 @@ def main():
         print("[GimbalVision] disabled by ENABLE_GIMBAL_VISION=False")
 
     visual_alignment = None
+    visual_target_lock = None
     if ENABLE_SINGLE_TARGET_YOLO_ALIGNMENT and vision_service is not None:
         if (
             SingleTargetAlignmentConfig is None
@@ -2910,6 +3274,8 @@ def main():
                 SingleTargetAlignmentConfig(
                     image_width=IMG_W,
                     image_height=IMG_H,
+                    aim_offset_x_px=GIMBAL_LASER_AIM_OFFSET_X_PX,
+                    aim_offset_y_px=GIMBAL_LASER_AIM_OFFSET_Y_PX,
                     fov_x_deg=FOV_X,
                     fov_y_deg=FOV_Y,
                     stable_frames=GIMBAL_YOLO_ALIGN_STABLE_FRAMES,
@@ -2926,6 +3292,20 @@ def main():
                     centered_x_px=GIMBAL_YOLO_ALIGN_CENTERED_X_PX,
                     centered_y_px=GIMBAL_YOLO_ALIGN_CENTERED_Y_PX,
                     max_frame_gap_s=GIMBAL_YOLO_ALIGN_MAX_FRAME_GAP_S,
+                    max_latest_to_median_px=(
+                        GIMBAL_YOLO_ALIGN_MAX_LATEST_TO_MEDIAN_PX
+                    ),
+                    max_center_jump_px=GIMBAL_YOLO_ALIGN_MAX_CENTER_JUMP_PX,
+                    min_bbox_iou=GIMBAL_YOLO_ALIGN_MIN_BBOX_IOU,
+                    recovery_confirm_frames=(
+                        GIMBAL_YOLO_ALIGN_RECOVERY_CONFIRM_FRAMES
+                    ),
+                    max_frame_age_s=GIMBAL_YOLO_ALIGN_MAX_FRAME_AGE_S,
+                    laser_ready_radius_px=GIMBAL_LASER_READY_RADIUS_PX,
+                    min_fine_step_deg=GIMBAL_YOLO_ALIGN_MIN_FINE_STEP_DEG,
+                    fine_scan_max_error_px=(
+                        GIMBAL_YOLO_ALIGN_FINE_SCAN_MAX_ERROR_PX
+                    ),
                     max_step_az_deg=GIMBAL_YOLO_ALIGN_MAX_STEP_AZ_DEG,
                     max_step_el_deg=GIMBAL_YOLO_ALIGN_MAX_STEP_EL_DEG,
                     max_corrections_per_lock=(
@@ -2933,9 +3313,33 @@ def main():
                     ),
                 )
             )
+            if (
+                GimbalVisualLockConfig is not None
+                and GimbalVisualTargetLock is not None
+            ):
+                visual_target_lock = GimbalVisualTargetLock(
+                    GimbalVisualLockConfig(
+                        image_width=IMG_W,
+                        image_height=IMG_H,
+                        aim_x_px=(
+                            IMG_W / 2.0 + GIMBAL_LASER_AIM_OFFSET_X_PX
+                        ),
+                        aim_y_px=(
+                            IMG_H / 2.0 + GIMBAL_LASER_AIM_OFFSET_Y_PX
+                        ),
+                        min_x_ratio=GIMBAL_VISUAL_LOCK_MIN_X_RATIO,
+                        max_x_ratio=GIMBAL_VISUAL_LOCK_MAX_X_RATIO,
+                        min_y_ratio=GIMBAL_VISUAL_LOCK_MIN_Y_RATIO,
+                        max_y_ratio=GIMBAL_VISUAL_LOCK_MAX_Y_RATIO,
+                        lost_timeout_s=GIMBAL_VISUAL_LOCK_LOST_SECONDS,
+                        outside_confirm_frames=(
+                            GIMBAL_VISUAL_LOCK_OUTSIDE_CONFIRM_FRAMES
+                        ),
+                    )
+                )
             print(
-                "[GimbalAlign] enabled single-target stable YOLO alignment: "
-                f"frames={GIMBAL_YOLO_ALIGN_STABLE_FRAMES}, "
+                "[GimbalAlign] enabled direct single-bbox alignment: "
+                f"bbox_samples={GIMBAL_YOLO_ALIGN_STABLE_FRAMES}, "
                 f"std<=({GIMBAL_YOLO_ALIGN_MAX_STD_X_PX:.1f},"
                 f"{GIMBAL_YOLO_ALIGN_MAX_STD_Y_PX:.1f})px, "
                 f"speed<=({GIMBAL_YOLO_ALIGN_MAX_SPEED_X_PX_S:.1f},"
@@ -2944,8 +3348,26 @@ def main():
                 f"{GIMBAL_YOLO_ALIGN_TRIGGER_Y_PX:.1f})px, "
                 f"centered=({GIMBAL_YOLO_ALIGN_CENTERED_X_PX:.1f},"
                 f"{GIMBAL_YOLO_ALIGN_CENTERED_Y_PX:.1f})px, "
-                f"max_corrections={GIMBAL_YOLO_ALIGN_MAX_CORRECTIONS}"
+                f"frame_gap={'disabled' if GIMBAL_YOLO_ALIGN_MAX_FRAME_GAP_S <= 0.0 else f'{GIMBAL_YOLO_ALIGN_MAX_FRAME_GAP_S:.1f}s'}, "
+                f"recover_frames={GIMBAL_YOLO_ALIGN_RECOVERY_CONFIRM_FRAMES}, "
+                "bbox_age_check=disabled, "
+                f"laser_ready_radius={GIMBAL_LASER_READY_RADIUS_PX:.1f}px, "
+                "control=direct_bbox_to_angle_0.1deg, "
+                f"laser_aim=({IMG_W / 2.0 + GIMBAL_LASER_AIM_OFFSET_X_PX:.1f},"
+                f"{IMG_H / 2.0 + GIMBAL_LASER_AIM_OFFSET_Y_PX:.1f})px, "
+                f"max_corrections={'disabled' if GIMBAL_YOLO_ALIGN_MAX_CORRECTIONS <= 0 else GIMBAL_YOLO_ALIGN_MAX_CORRECTIONS}"
             )
+            if visual_target_lock is not None:
+                print(
+                    "[GimbalVisualLock] UDP-independent lock enabled: "
+                    f"area=x[{GIMBAL_VISUAL_LOCK_MIN_X_RATIO:.2f},"
+                    f"{GIMBAL_VISUAL_LOCK_MAX_X_RATIO:.2f}],"
+                    f"y[{GIMBAL_VISUAL_LOCK_MIN_Y_RATIO:.2f},"
+                    f"{GIMBAL_VISUAL_LOCK_MAX_Y_RATIO:.2f}], "
+                    f"lost_timeout={GIMBAL_VISUAL_LOCK_LOST_SECONDS:.2f}s, "
+                    "outside_confirm_frames="
+                    f"{GIMBAL_VISUAL_LOCK_OUTSIDE_CONFIRM_FRAMES}"
+                )
     elif ENABLE_SINGLE_TARGET_YOLO_ALIGNMENT:
         print(
             "[GimbalAlign] requested but gimbal vision is unavailable; disabled"
@@ -2956,23 +3378,12 @@ def main():
             "ENABLE_SINGLE_TARGET_YOLO_ALIGNMENT=False"
         )
 
-    distance_mode = "SDDM laser -> current master_id"
+    distance_mode = "SFL0603 target-continuous -> requested master_id"
     print(
         f"[Init] UI/Strike distance source: {distance_mode} "
         f"(ttl={TRACK_DISTANCE_TTL:.1f}s)"
     )
 
-    imu = None
-    last_imu_print = 0.0
-    if ENABLE_IMU:
-        try:
-            from hwt905_driver import HWT905
-            imu = HWT905(IMU_PORT, IMU_BAUDRATE)
-            imu.open()
-            print(f"[IMU] Enabled on {IMU_PORT}@{IMU_BAUDRATE}")
-        except Exception as e:
-            print(f"[IMU] Init failed: {e}")
-            imu = None
     
     print("=== System V9.0 (Predictive Tracking & Scheduling) Running ===")
 
@@ -3001,6 +3412,12 @@ def main():
     last_applied_vision_ts = {}
     last_logged_vision_frame_ts = 0.0
     last_bound_laser_ts = 0.0
+    laser_continuous_track_id = None
+    laser_continuous_request_ts = 0.0
+    laser_scan_track_id = None
+    laser_scan_index = 0
+    last_scanned_no_return_ts = 0.0
+    last_control_vision_frame_ts = 0.0
     strike_window = {
         "track_id": None,
         "distance": None,
@@ -3099,11 +3516,7 @@ def main():
     while True:
         try:
             curr_time = time.time()
-            if imu and (curr_time - last_imu_print) >= IMU_PRINT_INTERVAL:
-                acc, gyro, angle = imu.get_all()
-                roll, pitch, yaw = angle
-                print(f"ANGLE: {roll:6.2f} {pitch:6.2f} {yaw:6.2f}")
-                last_imu_print = curr_time
+            vision_only_tick = False
 
             # --- 1. 获取 UDP 数据：短时间窗内的分摄像头包合成一个逻辑帧 ---
             while packet_queue:
@@ -3118,6 +3531,39 @@ def main():
                 live_last_packet_t = curr_time
 
             if not fusion_packet_buffer:
+                pending_vision_frame_ts = 0.0
+                if vision_service is not None and master_id is not None:
+                    with shared_state.lock:
+                        no_udp_gimbal_stationary = bool(
+                            shared_state.is_stationary
+                        )
+                        no_udp_stationary_ts = float(
+                            shared_state.stationary_ts or 0.0
+                        )
+                    # A previous visual command sets the camera worker to
+                    # GIMBAL_MOVING. Refresh encoder stationarity here so the
+                    # worker resumes YOLO after settling even without UDP.
+                    vision_service.update_context(
+                        master_track_id=master_id,
+                        gimbal_settled=no_udp_gimbal_stationary,
+                        settled_ts=no_udp_stationary_ts,
+                        track_predictions=[],
+                    )
+                    pending_vision_result = vision_service.get_result()
+                    pending_vision_frame_ts = float(
+                        pending_vision_result.get("frame_ts", 0.0) or 0.0
+                    )
+                vision_only_tick = bool(
+                    should_run_vision_only_tick is not None
+                    and should_run_vision_only_tick(
+                        has_udp_packets=False,
+                        master_track_id=master_id,
+                        vision_frame_ts=pending_vision_frame_ts,
+                        last_control_frame_ts=last_control_vision_frame_ts,
+                    )
+                )
+
+            if not fusion_packet_buffer and not vision_only_tick:
                 if tracker.tracks and (curr_time - last_time) >= NO_PACKET_TRACKER_UPDATE_INTERVAL:
                     dt = curr_time - last_time
                     if dt > MAX_DT:
@@ -3133,23 +3579,50 @@ def main():
                         },
                     )
                     last_time = curr_time
+                if laser is not None and master_id is not None:
+                    with shared_state.lock:
+                        if laser_continuous_track_id != int(master_id):
+                            laser_continuous_track_id = int(master_id)
+                            laser_continuous_request_ts = curr_time
+                        shared_state.laser_request_ts = (
+                            laser_continuous_request_ts
+                        )
+                        shared_state.laser_request_track_id = int(master_id)
+                        shared_state.laser_request_heartbeat_ts = curr_time
                 maybe_print_live_status(curr_time, meas_count=None)
                 time.sleep(0.005) # 稍微让出 CPU
                 continue
 
-            if (curr_time - fusion_window_start_t) < MEAS_FUSION_WINDOW_SECONDS:
+            if (
+                not vision_only_tick
+                and (curr_time - fusion_window_start_t)
+                < MEAS_FUSION_WINDOW_SECONDS
+            ):
                 maybe_print_live_status(curr_time, meas_count=None)
                 time.sleep(0.005)
                 continue
 
-            window_pkgs = fusion_packet_buffer
-            fusion_packet_buffer = []
-            fusion_window_start_t = 0.0
-            raw_window_packet_count = len(window_pkgs)
-            window_pkgs, same_source_packet_drop_count = (
-                keep_latest_packet_per_source(window_pkgs)
-            )
-            used_window_packet_count = len(window_pkgs)
+            if vision_only_tick:
+                window_pkgs = [{
+                    "board": "gimbal_camera",
+                    "cam": 0,
+                    "mode": "vision_only",
+                    "seq": "",
+                    "objs": [],
+                    "_recv_ts": curr_time,
+                }]
+                raw_window_packet_count = 0
+                same_source_packet_drop_count = 0
+                used_window_packet_count = 0
+            else:
+                window_pkgs = fusion_packet_buffer
+                fusion_packet_buffer = []
+                fusion_window_start_t = 0.0
+                raw_window_packet_count = len(window_pkgs)
+                window_pkgs, same_source_packet_drop_count = (
+                    keep_latest_packet_per_source(window_pkgs)
+                )
+                used_window_packet_count = len(window_pkgs)
 
             #计算两次逻辑观测帧的间隔时间
             dt = curr_time - last_time
@@ -3184,6 +3657,15 @@ def main():
                 gimbal_stationary_ts = shared_state.stationary_ts
                 raw_laser_dist = shared_state.raw_laser_dist
                 raw_laser_ts = shared_state.raw_laser_ts
+                raw_laser_request_ts = shared_state.raw_laser_request_ts
+                raw_laser_track_id = shared_state.raw_laser_track_id
+                laser_request_ts_snapshot = shared_state.laser_request_ts
+                laser_request_track_id_snapshot = (
+                    shared_state.laser_request_track_id
+                )
+                laser_no_return_ts_snapshot = (
+                    shared_state.laser_no_return_ts
+                )
 
             for pkt in window_pkgs:
                 pkt_board_str = pkt.get("board", "Unknown")
@@ -3383,9 +3865,25 @@ def main():
             ]
 
             # --- 4. 状态机：调度决策 ---
-            master_track = next((t for t in valid_tracks if t.id == master_id), None)
+            visual_master_held = bool(
+                visual_target_lock is not None
+                and visual_target_lock.holds_sort_track(master_id)
+            )
+            master_track = next(
+                (t for t in valid_tracks if t.id == master_id),
+                None,
+            )
+            if master_track is None and visual_master_held:
+                master_track = next(
+                    (t for t in active_tracks if t.id == master_id),
+                    None,
+                )
             prev_master_id = master_id
-            master_lost = (prev_master_id is not None and master_track is None)
+            master_lost = (
+                prev_master_id is not None
+                and master_track is None
+                and not visual_master_held
+            )
 
             if master_lost:
                 if PRINT_EVENT_LOGS:
@@ -3402,17 +3900,25 @@ def main():
                     "reason": "not_in_valid_tracks",
                 })
                 clear_strike_window(strike_window)
+                if visual_target_lock is not None:
+                    visual_target_lock.release()
+                if visual_alignment is not None:
+                    visual_alignment.release_target()
                 master_id = None
                 prev_master_id = None
 
             curr_gimbal_az = shared_gimbal_az
             curr_gimbal_el = shared_gimbal_el
-            best_track, ranked_candidates = choose_master_track(
-                valid_tracks,
-                curr_gimbal_az,
-                curr_gimbal_el,
-                master_id=master_id,
-            )
+            if visual_master_held:
+                best_track = master_track
+                ranked_candidates = []
+            else:
+                best_track, ranked_candidates = choose_master_track(
+                    valid_tracks,
+                    curr_gimbal_az,
+                    curr_gimbal_el,
+                    master_id=master_id,
+                )
             selection_reason = None
 
             if master_track is None and best_track is not None:
@@ -3449,6 +3955,8 @@ def main():
                 old_master_id = master_id
                 master_id = master_track.id
                 master_epoch_ts = curr_time
+                if visual_target_lock is not None:
+                    visual_target_lock.start(master_id, curr_time)
                 challenger_id = None
                 challenger_since = 0.0
                 angle_unsafe_frames = 0
@@ -3502,8 +4010,8 @@ def main():
                     "time_since_updates": ";".join(str(x) for x in lost_values),
                     "lost_seconds": ";".join(lost_seconds_values),
                     "track_states": track_states,
-                    "cmd_az": "" if last_sent_ctrl_az is None else f"{last_sent_ctrl_az:.6f}",
-                    "cmd_el": "" if last_sent_ctrl_el is None else f"{last_sent_ctrl_el:.6f}",
+                    "cmd_az": "" if last_sent_ctrl_az is None else f"{last_sent_ctrl_az:.1f}",
+                    "cmd_el": "" if last_sent_ctrl_el is None else f"{last_sent_ctrl_el:.1f}",
                     "gimbal_ui_az": f"{shared_gimbal_az:.6f}",
                     "gimbal_ui_el": f"{shared_gimbal_el:.6f}",
                 })
@@ -3539,6 +4047,12 @@ def main():
                 "laser_ready": False,
             }
             simple_measurements = []
+            aligned_measurement = None
+            visual_lock_decision = {
+                "state": "DISABLED",
+                "measurement": None,
+                "release": False,
+            }
             if vision_service is not None:
                 vision_service.update_context(
                     master_track_id=master_id,
@@ -3554,9 +4068,78 @@ def main():
                 simple_measurements = (
                     vision_result.get("simple_measurements", []) or []
                 )
+                vision_frame_ts = float(
+                    vision_result.get("frame_ts", 0.0) or 0.0
+                )
+                if vision_frame_ts > 0.0:
+                    last_control_vision_frame_ts = max(
+                        last_control_vision_frame_ts,
+                        vision_frame_ts,
+                    )
+                if (
+                    visual_target_lock is not None
+                    and visual_target_lock.holds_sort_track(master_id)
+                ):
+                    visual_lock_decision = visual_target_lock.update(
+                        frame_ts=vision_frame_ts,
+                        measurements=simple_measurements,
+                        now_ts=curr_time,
+                    )
+                    aligned_measurement = visual_lock_decision.get(
+                        "measurement"
+                    )
+                    if visual_lock_decision.get("release", False):
+                        released_master_id = master_id
+                        release_reason = visual_lock_decision.get(
+                            "reason", "gimbal_visual_lock_released"
+                        )
+                        field_log_event({
+                            "timestamp": f"{curr_time:.6f}",
+                            "seq": sender_seq,
+                            "mode": sender_mode,
+                            "event": "GIMBAL_VISUAL_LOCK_RELEASE",
+                            "track_id": (
+                                "" if released_master_id is None
+                                else int(released_master_id)
+                            ),
+                            "master_id": (
+                                "" if released_master_id is None
+                                else int(released_master_id)
+                            ),
+                            "simple_id": visual_lock_decision.get(
+                                "simple_id", ""
+                            ),
+                            "reason": (
+                                f"{release_reason},"
+                                f"state={visual_lock_decision.get('state')}"
+                            ),
+                        })
+                        visual_target_lock.release()
+                        if visual_alignment is not None:
+                            visual_alignment.release_target()
+                        master_id = None
+                        master_track = None
+                        master_epoch_ts = 0.0
+                        challenger_id = None
+                        challenger_since = 0.0
+                        angle_unsafe_frames = 0
+                        clear_strike_window(strike_window)
+                        with shared_state.lock:
+                            shared_state.laser_request_ts = 0.0
+                            shared_state.laser_request_track_id = -1
+                            shared_state.laser_request_heartbeat_ts = 0.0
+                        vision_service.update_context(
+                            master_track_id=None,
+                            gimbal_settled=gimbal_is_stationary,
+                            settled_ts=gimbal_stationary_ts,
+                            track_predictions=[],
+                        )
+                elif master_id is not None and len(simple_measurements) == 1:
+                    # Compatibility fallback if the lock helper is unavailable.
+                    aligned_measurement = simple_measurements[0]
                 direct_master_results = {}
-                if master_id is not None and len(simple_measurements) == 1:
-                    direct_result = dict(simple_measurements[0])
+                if master_id is not None and aligned_measurement is not None:
+                    direct_result = dict(aligned_measurement)
                     direct_result["track_id"] = int(master_id)
                     direct_result["association_error_px"] = 0.0
                     direct_result["binding_mode"] = "single_target_master"
@@ -3578,7 +4161,6 @@ def main():
                     [] if direct_master_results else simple_measurements[:5]
                 )
                 track_results = vision_result.get("track_results", {})
-                vision_frame_ts = float(vision_result.get("frame_ts", 0.0) or 0.0)
                 if vision_frame_ts > last_logged_vision_frame_ts:
                     last_logged_vision_frame_ts = vision_frame_ts
                     # Record every raw gimbal-camera YOLO target before SORT
@@ -3606,8 +4188,12 @@ def main():
                         if center_valid:
                             bbox_cx = float(detection_center[0])
                             bbox_cy = float(detection_center[1])
-                            center_dx_px = bbox_cx - IMG_W / 2.0
-                            center_dy_px = bbox_cy - IMG_H / 2.0
+                            center_dx_px = bbox_cx - (
+                                IMG_W / 2.0 + GIMBAL_LASER_AIM_OFFSET_X_PX
+                            )
+                            center_dy_px = bbox_cy - (
+                                IMG_H / 2.0 + GIMBAL_LASER_AIM_OFFSET_Y_PX
+                            )
                             center_dx_norm = center_dx_px / (IMG_W / 2.0)
                             center_dy_norm = center_dy_px / (IMG_H / 2.0)
                             center_offset_az = center_dx_px * FOV_X / IMG_W
@@ -4079,24 +4665,55 @@ def main():
                         del last_applied_vision_ts[stale_track_id]
 
             if visual_alignment is not None:
-                aligned_measurement = (
-                    simple_measurements[0]
-                    if master_id is not None
-                    and len(simple_measurements) == 1
-                    else None
-                )
                 alignment_decision = visual_alignment.update(
                     frame_ts=float(
                         vision_result.get("frame_ts", 0.0) or 0.0
                     ),
                     master_track_id=master_id,
                     measurement=aligned_measurement,
-                    detection_count=int(
-                        vision_result.get("detection_count", 0) or 0
-                    ),
+                    # Other YOLO boxes do not break the retained simple-ID
+                    # lock; alignment sees only the selected target.
+                    detection_count=1 if aligned_measurement is not None else 0,
                     gimbal_stationary=gimbal_is_stationary,
                     stationary_ts=gimbal_stationary_ts,
+                    decision_ts=curr_time,
                 )
+
+                # If a centered 10 Hz session produced no valid return, scan
+                # four 0.1-degree points around the latest bbox center. Each
+                # step is recomputed from the newest bbox, so bbox motion still
+                # remains the primary gimbal-control input.
+                if laser_scan_track_id != master_id:
+                    laser_scan_track_id = master_id
+                    laser_scan_index = 0
+                    last_scanned_no_return_ts = 0.0
+                no_return_event_ts = float(
+                    laser_no_return_ts_snapshot or 0.0
+                )
+                scan_triggered = (
+                    master_id is not None
+                    and int(laser_request_track_id_snapshot) == int(master_id)
+                    and float(laser_request_ts_snapshot or 0.0) > 0.0
+                    and no_return_event_ts > last_scanned_no_return_ts + 1e-6
+                )
+                if scan_triggered:
+                    scan_offset_az, scan_offset_el = (
+                        SFL0603_NO_RETURN_SCAN_OFFSETS_DEG[laser_scan_index]
+                    )
+                    scan_decision = (
+                        visual_alignment.build_no_return_scan_decision(
+                            alignment_decision,
+                            scan_offset_az_deg=scan_offset_az,
+                            scan_offset_el_deg=scan_offset_el,
+                        )
+                    )
+                    if scan_decision is not None:
+                        alignment_decision = scan_decision
+                        alignment_decision["scan_index"] = laser_scan_index
+                        last_scanned_no_return_ts = no_return_event_ts
+                        laser_scan_index = (
+                            laser_scan_index + 1
+                        ) % len(SFL0603_NO_RETURN_SCAN_OFFSETS_DEG)
                 if alignment_decision.get("processed_new_frame"):
                     field_log_event({
                         "timestamp": f"{curr_time:.6f}",
@@ -4155,92 +4772,135 @@ def main():
                             "" if not math.isfinite(float(alignment_decision.get("speed_y_px_s", math.nan)))
                             else f"{float(alignment_decision['speed_y_px_s']):.3f}"
                         ),
+                        "alignment_latest_to_median_px": (
+                            "" if not math.isfinite(float(alignment_decision.get("latest_to_median_px", math.nan)))
+                            else f"{float(alignment_decision['latest_to_median_px']):.3f}"
+                        ),
+                        "alignment_frame_age_s": (
+                            "" if not math.isfinite(float(alignment_decision.get("frame_age_s", math.nan)))
+                            else f"{float(alignment_decision['frame_age_s']):.6f}"
+                        ),
+                        "alignment_fresh_after_dropout": int(
+                            alignment_decision.get("fresh_after_dropout", 0) or 0
+                        ),
+                        "alignment_control_mode": alignment_decision.get(
+                            "control_mode", "none"
+                        ),
+                        "alignment_outlier_center_jump_px": (
+                            "" if not math.isfinite(float(alignment_decision.get("outlier_center_jump_px", math.nan)))
+                            else f"{float(alignment_decision['outlier_center_jump_px']):.3f}"
+                        ),
+                        "alignment_outlier_bbox_iou": (
+                            "" if not math.isfinite(float(alignment_decision.get("outlier_bbox_iou", math.nan)))
+                            else f"{float(alignment_decision['outlier_bbox_iou']):.6f}"
+                        ),
                         "alignment_delta_az_deg": f"{float(alignment_decision.get('delta_az_deg', 0.0)):.6f}",
                         "alignment_delta_el_deg": f"{float(alignment_decision.get('delta_el_deg', 0.0)):.6f}",
                         "reason": (
                             f"state={alignment_decision.get('state')},"
                             f"stable={1 if alignment_decision.get('stable') else 0},"
-                            f"command={1 if alignment_decision.get('command_requested') else 0}"
+                            f"command={1 if alignment_decision.get('command_requested') else 0},"
+                            f"mode={alignment_decision.get('control_mode', 'none')}"
                         ),
                     })
 
-            # In the single-laser branch the sole YOLO box is already treated
-            # as the current master.  Bind only laser samples captured after a
-            # six-frame stable, centered confirmation; no visual distance
-            # model or SORT-to-YOLO distance association participates here.
+            # The SFL0603 request records the authoritative target track ID.
+            # Once a valid serial result arrives, bind it directly to that
+            # still-existing track; later master/alignment changes must not
+            # discard a measurement that was already captured for the target.
             laser_distance = _parse_positive_float(raw_laser_dist)
             laser_age = curr_time - float(raw_laser_ts or 0.0)
-            laser_ready_since_ts = float(
-                alignment_decision.get("laser_ready_since_ts", 0.0) or 0.0
+            # Once a target track exists, keep SFL0603 continuously ranging at
+            # 10 Hz. Alignment only decides normal bbox correction and whether
+            # a no-return scan may move around the latest bbox center.
+            laser_request_ready = (
+                laser is not None
+                and master_id is not None
+                and visual_target_lock is not None
+                and visual_target_lock.holds_sort_track(master_id)
             )
+            with shared_state.lock:
+                if laser_request_ready:
+                    if laser_continuous_track_id != int(master_id):
+                        laser_continuous_track_id = int(master_id)
+                        laser_continuous_request_ts = curr_time
+                    shared_state.laser_request_ts = laser_continuous_request_ts
+                    shared_state.laser_request_track_id = int(master_id)
+                    shared_state.laser_request_heartbeat_ts = curr_time
+                else:
+                    laser_continuous_track_id = None
+                    laser_continuous_request_ts = 0.0
+                    shared_state.laser_request_ts = 0.0
+                    shared_state.laser_request_track_id = -1
+                    shared_state.laser_request_heartbeat_ts = 0.0
+            laser_target_track = track_by_id.get(int(raw_laser_track_id))
             laser_bind_ready = (
-                master_track is not None
-                and gimbal_is_stationary
-                and bool(alignment_decision.get("laser_ready", False))
+                laser_target_track is not None
                 and laser_distance is not None
                 and 0.0 <= laser_age <= LASER_RESULT_TTL
-                and float(raw_laser_ts) >= laser_ready_since_ts
+                and float(raw_laser_request_ts) > 0.0
+                and float(raw_laser_ts) >= float(raw_laser_request_ts)
                 and float(raw_laser_ts) > last_bound_laser_ts
             )
             if laser_bind_ready:
-                if master_track.dist_source != "sddm_laser":
+                if laser_target_track.dist_source != "sfl0603_laser":
                     # Do not mix a historical monocular/model estimate into
                     # the first authoritative laser update for this track.
-                    master_track.dist_state = None
-                master_track.set_mono_distance(
+                    laser_target_track.dist_state = None
+                laser_target_track.set_mono_distance(
                     laser_distance,
                     float(raw_laser_ts),
                 )
-                master_track.dist_source = "sddm_laser"
+                laser_target_track.dist_source = "sfl0603_laser"
                 last_bound_laser_ts = float(raw_laser_ts)
+                if int(laser_target_track.id) == int(raw_laser_track_id):
+                    laser_scan_track_id = int(laser_target_track.id)
+                    laser_scan_index = 0
+                    last_scanned_no_return_ts = 0.0
                 field_log_event({
                     "timestamp": f"{curr_time:.6f}",
                     "seq": sender_seq,
                     "mode": sender_mode,
-                    "event": "LASER_BOUND_MASTER",
-                    "track_id": int(master_track.id),
-                    "master_id": int(master_track.id),
-                    "is_master": 1,
+                    "event": "LASER_BOUND_TRACK",
+                    "track_id": int(laser_target_track.id),
+                    "master_id": "" if master_id is None else int(master_id),
+                    "is_master": 1 if laser_target_track.id == master_id else 0,
                     "distance": f"{laser_distance:.6f}",
-                    "distance_source": "sddm_laser",
-                    "vision_frame_ts": f"{laser_ready_since_ts:.6f}",
+                    "distance_source": "sfl0603_laser",
+                    "vision_frame_ts": f"{float(raw_laser_request_ts):.6f}",
                     "reason": (
-                        "single_yolo_stable_and_centered,"
+                        "direct_sfl0603_result_to_requested_track,"
                         f"laser_ts={float(raw_laser_ts):.6f},"
                         f"laser_age={laser_age:.3f}"
                     ),
                 })
 
-            # Publish the fresh laser as the master's current distance result
-            # so the existing UI/strike freshness gates can remain unchanged.
-            # The bbox still comes from YOLO; the distance always comes from
-            # the track's laser-backed distance filter.
+            # Publish the laser-backed track result in the same loop so UI and
+            # strike consumers can use it immediately.
             if (
-                master_track is not None
-                and gimbal_is_stationary
-                and bool(alignment_decision.get("laser_ready", False))
-                and master_track.dist_source == "sddm_laser"
+                laser_target_track is not None
+                and laser_target_track.dist_source == "sfl0603_laser"
                 and 0.0
-                <= curr_time - float(master_track.last_dist_ts)
+                <= curr_time - float(laser_target_track.last_dist_ts)
                 <= TRACK_DISTANCE_TTL
             ):
-                laser_master_result = dict(
+                laser_track_result = dict(
                     vision_result.get("track_results", {}).get(
-                        int(master_track.id), {}
+                        int(laser_target_track.id), {}
                     )
                 )
-                laser_master_result.update({
-                    "track_id": int(master_track.id),
-                    "distance": float(master_track.dist_state[0, 0]),
-                    "distance_source": "sddm_laser",
+                laser_track_result.update({
+                    "track_id": int(laser_target_track.id),
+                    "distance": float(laser_target_track.dist_state[0, 0]),
+                    "distance_source": "sfl0603_laser",
                     "distance_valid": True,
-                    "frame_ts": float(master_track.last_dist_ts),
+                    "frame_ts": float(laser_target_track.last_dist_ts),
                     "safe": True,
-                    "reason": "SINGLE_LASER_MASTER_BOUND",
+                    "reason": "SFL0603_DIRECT_TRACK_BOUND",
                 })
                 vision_result.setdefault("track_results", {})[
-                    int(master_track.id)
-                ] = laser_master_result
+                    int(laser_target_track.id)
+                ] = laser_track_result
 
             track_results_for_strike = (
                 vision_result.get("track_results", {})
@@ -4341,9 +5001,20 @@ def main():
                 })
 
             # --- 5. 状态机：物理执行与测距 (LOCKED) ---
-            if master_track is not None:
-                fut_az, fut_el = master_track.get_future_position(dt_delay=PREDICT_DELAY)
-                ctrl_az, ctrl_el = ui_to_ctrl_angles(fut_az, fut_el)
+            if master_id is not None:
+                if master_track is not None:
+                    fut_az, fut_el = master_track.get_future_position(
+                        dt_delay=PREDICT_DELAY
+                    )
+                    ctrl_az, ctrl_el = ui_to_ctrl_angles(fut_az, fut_el)
+                else:
+                    # SORT may expire during an upstream UDP outage. The
+                    # retained gimbal-camera bbox still supplies relative
+                    # corrections around the current encoder attitude.
+                    ctrl_az, ctrl_el = ui_to_ctrl_angles(
+                        shared_gimbal_az,
+                        shared_gimbal_el,
+                    )
 
                 master_vision_result = (
                     vision_result.get("track_results", {}).get(
@@ -4384,7 +5055,12 @@ def main():
                     )
                     need_reposition = True
                     angle_unsafe_frames = 0
-                    reposition_reason = "stable_single_yolo_center_alignment"
+                    reposition_reason = (
+                        "laser_no_return_bbox_center_scan"
+                        if alignment_decision.get("state")
+                        == "LASER_NO_RETURN_SCAN_READY"
+                        else "direct_single_yolo_bbox_alignment"
+                    )
                 elif vision_bbox_fresh:
                     need_reposition = bool(
                         master_vision_result.get(
@@ -4394,7 +5070,7 @@ def main():
                     angle_unsafe_frames = 0
                     if need_reposition:
                         reposition_reason = "vision_bbox_outside_safe_zone"
-                else:
+                elif master_track is not None:
                     delta_az = abs(
                         angular_diff(
                             master_track.state[0, 0],
@@ -4416,6 +5092,9 @@ def main():
                     need_reposition = angle_unsafe_frames >= 3
                     if need_reposition:
                         reposition_reason = "global_track_outside_safe_fov"
+                else:
+                    need_reposition = False
+                    angle_unsafe_frames = 0
 
                 # The GT06Z command payload has 0.1-degree resolution.  Use
                 # the same quantized values for deadband checks, logs and the
@@ -4471,12 +5150,12 @@ def main():
                         "event": "GIMBAL_CMD",
                         "cmd_id": int(global_cmd_id),
                         "track_id": "" if master_id is None else int(master_id),
-                        "cmd_az": f"{ctrl_az:.6f}",
-                        "cmd_el": f"{ctrl_el:.6f}",
+                        "cmd_az": f"{ctrl_az:.1f}",
+                        "cmd_el": f"{ctrl_el:.1f}",
                         "gimbal_ui_az": f"{shared_gimbal_az:.6f}",
                         "gimbal_ui_el": f"{shared_gimbal_el:.6f}",
-                        "target_ctrl_az": f"{ctrl_az:.6f}",
-                        "target_ctrl_el": f"{ctrl_el:.6f}",
+                        "target_ctrl_az": f"{ctrl_az:.1f}",
+                        "target_ctrl_el": f"{ctrl_el:.1f}",
                         "reason": reposition_reason,
                     })
                     angle_unsafe_frames = 0
@@ -4737,11 +5416,12 @@ def main():
             import traceback
             traceback.print_exc()
 
-    if imu:
-        imu.close()
     if laser_stop_event is not None:
         laser_stop_event.set()
-        time.sleep(0.05)
+    if laser_thread is not None:
+        laser_thread.join(timeout=5.0)
+        if laser_thread.is_alive():
+            print("[Laser][Warn] SFL0603 reader did not stop within 5s")
     if laser is not None:
         laser.close()
     if vision_service is not None:

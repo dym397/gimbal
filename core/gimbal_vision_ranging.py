@@ -1003,6 +1003,9 @@ class GimbalVisionRangingService:
         association_ambiguity_margin_px: float = 30.0,
         track_state_ttl_s: float = 2.0,
         detection_only: bool = False,
+        aim_offset_x_px: float = 0.0,
+        aim_offset_y_px: float = 0.0,
+        laser_status_provider=None,
     ):
         self.camera = _LatestFrameCamera(
             camera_source,
@@ -1014,6 +1017,9 @@ class GimbalVisionRangingService:
             confidence,
         )
         self.detection_only = bool(detection_only)
+        self.aim_offset_x_px = float(aim_offset_x_px)
+        self.aim_offset_y_px = float(aim_offset_y_px)
+        self.laser_status_provider = laser_status_provider
         # The single-laser branch must not load physical/MLP/GRU assets.  Keep
         # the legacy runtime available only for callers that explicitly use
         # this service for monocular ranging.
@@ -1141,35 +1147,48 @@ class GimbalVisionRangingService:
             canvas = frame.copy()
             result = result or {}
             frame_h, frame_w = canvas.shape[:2]
-            optical_center = (frame_w // 2, frame_h // 2)
+            laser_aim = (
+                int(round(frame_w / 2.0 + self.aim_offset_x_px * frame_w / FRAME_W)),
+                int(round(frame_h / 2.0 + self.aim_offset_y_px * frame_h / FRAME_H)),
+            )
             cross_half_size = max(18, int(round(min(frame_w, frame_h) * 0.025)))
-            # Black outline keeps the optical-center marker visible over both
-            # bright sky and dark targets; yellow matches the manual test UI.
+            # Black outline keeps the calibrated laser boresight visible over
+            # both bright sky and dark targets; yellow matches the manual UI.
             for thickness, color in ((7, (0, 0, 0)), (3, (0, 255, 255))):
                 cv2.line(
                     canvas,
-                    (optical_center[0] - cross_half_size, optical_center[1]),
-                    (optical_center[0] + cross_half_size, optical_center[1]),
+                    (laser_aim[0] - cross_half_size, laser_aim[1]),
+                    (laser_aim[0] + cross_half_size, laser_aim[1]),
                     color,
                     thickness,
                     cv2.LINE_AA,
                 )
                 cv2.line(
                     canvas,
-                    (optical_center[0], optical_center[1] - cross_half_size),
-                    (optical_center[0], optical_center[1] + cross_half_size),
+                    (laser_aim[0], laser_aim[1] - cross_half_size),
+                    (laser_aim[0], laser_aim[1] + cross_half_size),
                     color,
                     thickness,
                     cv2.LINE_AA,
                 )
                 cv2.circle(
                     canvas,
-                    optical_center,
+                    laser_aim,
                     8,
                     color,
                     thickness,
                     cv2.LINE_AA,
                 )
+            cv2.putText(
+                canvas,
+                f"LASER AIM ({laser_aim[0]},{laser_aim[1]})",
+                (laser_aim[0] + 18, max(30, laser_aim[1] - 18)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.65,
+                (0, 255, 255),
+                2,
+                cv2.LINE_AA,
+            )
             for detection in result.get("simple_detections", []):
                 box = detection.get("bbox")
                 if not isinstance(box, (list, tuple)) or len(box) != 4:
@@ -1209,11 +1228,58 @@ class GimbalVisionRangingService:
                 )
             state = str(result.get("state", "LIVE"))
             count = int(result.get("detection_count", 0))
-            cv2.rectangle(canvas, (0, 0), (1450, 48), (0, 0, 0), -1)
+            laser_status = {}
+            if callable(self.laser_status_provider):
+                try:
+                    laser_status = self.laser_status_provider() or {}
+                except Exception as exc:
+                    laser_status = {
+                        "available": False,
+                        "status": "STATUS_ERROR",
+                        "error": str(exc),
+                    }
+            laser_available = bool(laser_status.get("available", False))
+            laser_active = bool(laser_status.get("active", False))
+            laser_state = str(
+                laser_status.get("status", "UNAVAILABLE")
+            ).replace("_", " ")
+            laser_distance = laser_status.get("distance_m")
+            laser_ts = float(laser_status.get("timestamp", 0.0) or 0.0)
+            laser_age = max(0.0, time.time() - laser_ts) if laser_ts > 0.0 else math.nan
+            if laser_distance is None or not math.isfinite(float(laser_distance)):
+                return_text = "RETURN=NO DATA"
+            else:
+                return_text = f"RETURN={float(laser_distance):.1f}m age={laser_age:.1f}s"
+            period_ms = int(laser_status.get("period_ms", 100) or 100)
+            aim_radius_px = float(
+                laser_status.get("aim_radius_px", 20.0) or 20.0
+            )
+            if not laser_available:
+                laser_color = (140, 140, 140)
+            elif laser_active and laser_distance is not None:
+                laser_color = (40, 220, 40)
+            elif laser_active:
+                laser_color = (0, 220, 255)
+            elif "ERROR" in laser_state or "FAILED" in laser_state:
+                laser_color = (40, 40, 255)
+            else:
+                laser_color = (255, 255, 255)
+            cv2.rectangle(canvas, (0, 0), (1900, 100), (0, 0, 0), -1)
             cv2.putText(
                 canvas, f"Gimbal camera | state={state} | YOLO={count} | q: close preview",
                 (16, 34), cv2.FONT_HERSHEY_SIMPLEX, 0.85,
                 (255, 255, 255), 2, cv2.LINE_AA,
+            )
+            cv2.putText(
+                canvas,
+                (
+                    f"LASER: {laser_state} | {return_text} | "
+                    f"ACTIVE={'YES' if laser_active else 'NO'} | "
+                    f"{1000.0 / period_ms:.0f}Hz target-continuous | "
+                    f"scan if no return and aim<={aim_radius_px:.0f}px"
+                ),
+                (16, 78), cv2.FONT_HERSHEY_SIMPLEX, 0.80,
+                laser_color, 2, cv2.LINE_AA,
             )
             if not self.preview_initialized:
                 cv2.namedWindow(self.preview_window_name, cv2.WINDOW_NORMAL)
