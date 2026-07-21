@@ -1061,7 +1061,7 @@ class GimbalVisionRangingService:
             "GIMBAL_VISION_PREVIEW_WINDOW", "Gimbal YOLO preview"
         ).strip() or "Gimbal YOLO preview"
         self.preview_max_width = max(
-            320, int(os.getenv("GIMBAL_VISION_PREVIEW_MAX_WIDTH", "1280"))
+            320, int(os.getenv("GIMBAL_VISION_PREVIEW_MAX_WIDTH", "2560"))
         )
         self.preview_initialized = False
         self.preview_error_reported = False

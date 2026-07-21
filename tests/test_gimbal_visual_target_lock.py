@@ -160,6 +160,30 @@ def test_missing_target_releases_only_after_timeout():
     assert released["release"] is True
 
 
+def test_visual_control_starts_after_detection_and_survives_missing_grace():
+    lock = _lock(lost_timeout_s=5.0)
+    lock.start(17, 10.0)
+    assert lock.holds_sort_track(17)
+    assert not lock.holds_visual_control(17)
+
+    acquired = lock.update(
+        frame_ts=10.1,
+        now_ts=10.1,
+        measurements=[_measurement(7, 1290.0, 730.0)],
+    )
+    assert acquired["state"] == "LOCKED"
+    assert lock.holds_visual_control(17)
+
+    missing = lock.update(frame_ts=14.9, now_ts=14.9, measurements=[])
+    assert missing["state"] == "MISSING_HOLD"
+    assert missing["release"] is False
+    assert lock.holds_visual_control(17)
+
+    released = lock.update(frame_ts=15.2, now_ts=15.2, measurements=[])
+    assert released["state"] == "MISSING_RELEASE"
+    assert released["release"] is True
+
+
 def test_outside_area_requires_three_new_frames_before_release():
     lock = _lock(outside_confirm_frames=3)
     lock.start(17, 10.0)

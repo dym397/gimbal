@@ -33,7 +33,7 @@ class GimbalVisualLockConfig:
     max_x_ratio: float = 0.95
     min_y_ratio: float = 0.05
     max_y_ratio: float = 0.95
-    lost_timeout_s: float = 1.0
+    lost_timeout_s: float = 5.0
     outside_confirm_frames: int = 3
 
 
@@ -69,6 +69,21 @@ class GimbalVisualTargetLock:
             self.active
             and track_id is not None
             and int(track_id) == self.sort_track_id
+        )
+
+    def holds_visual_control(self, track_id) -> bool:
+        """Return True after YOLO has acquired the retained target once.
+
+        Merely starting a lock from SORT must not suppress the initial SORT
+        slew: the gimbal camera may not see the target until that slew is
+        complete.  Once a YOLO simple ID has been acquired, visual control
+        remains authoritative through the configured missing-target grace
+        period.
+        """
+        return (
+            self.holds_sort_track(track_id)
+            and self.simple_id is not None
+            and self.last_seen_ts > 0.0
         )
 
     def start(self, sort_track_id: int, now_ts: float) -> None:

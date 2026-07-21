@@ -381,7 +381,7 @@ GIMBAL_YOLO_ALIGN_MAX_CORRECTIONS = _env_int(
     "GIMBAL_YOLO_ALIGN_MAX_CORRECTIONS", 0
 )
 GIMBAL_VISUAL_LOCK_LOST_SECONDS = _env_float(
-    "GIMBAL_VISUAL_LOCK_LOST_SECONDS", 1.0
+    "GIMBAL_VISUAL_LOCK_LOST_SECONDS", 5.0
 )
 GIMBAL_VISUAL_LOCK_OUTSIDE_CONFIRM_FRAMES = _env_int(
     "GIMBAL_VISUAL_LOCK_OUTSIDE_CONFIRM_FRAMES", 3
@@ -3848,6 +3848,11 @@ def main():
                 if t.confirmed
                 and t.lost_seconds(curr_time) <= MAX_LOCK_LOST_SECONDS
             ]
+            # The laser result binding below is independent of the optional
+            # gimbal-vision service, so keep this lookup in the common scope.
+            track_by_id = {
+                int(track.id): track for track in valid_tracks
+            }
             for t in valid_tracks:
                 if t.hit_streak >= UI_TRACK_CONFIRM_HITS:
                     t.ui_confirmed = True
@@ -4479,9 +4484,6 @@ def main():
                                 f"class_id={int(detection_item.get('class_id', -1))}"
                             ),
                         })
-                track_by_id = {
-                    int(track.id): track for track in valid_tracks
-                }
                 distance_track_results = (
                     {}
                     if getattr(vision_service, "detection_only", False)
@@ -5070,6 +5072,19 @@ def main():
                     angle_unsafe_frames = 0
                     if need_reposition:
                         reposition_reason = "vision_bbox_outside_safe_zone"
+                elif (
+                    visual_target_lock is not None
+                    and visual_target_lock.holds_visual_control(master_id)
+                ):
+                    # A short YOLO dropout must not hand control straight back
+                    # to SORT.  The fixed-camera angle can have a systematic
+                    # offset from the centered gimbal-camera angle, which would
+                    # otherwise pull the camera away and create a ping-pong
+                    # loop.  Hold the current posture until the visual lock's
+                    # continuous-missing timeout explicitly releases control.
+                    need_reposition = False
+                    angle_unsafe_frames = 0
+                    reposition_reason = "visual_lock_missing_hold_sort_suppressed"
                 elif master_track is not None:
                     delta_az = abs(
                         angular_diff(
