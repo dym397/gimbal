@@ -326,6 +326,14 @@ RID_BAUDRATE = _env_int("RID_BAUDRATE", 115200)
 RID_SERIAL_TIMEOUT = _env_float("RID_SERIAL_TIMEOUT", 0.20)
 RID_RECONNECT_SECONDS = _env_float("RID_RECONNECT_SECONDS", 2.0)
 RID_TRACK_TTL_SECONDS = _env_float("RID_TRACK_TTL_SECONDS", 5.0)
+RID_TRACK_DELETE_AFTER_SECONDS = _env_float(
+    "RID_TRACK_DELETE_AFTER_SECONDS", 300.0
+)
+RID_UI_THREAT_HIGH_MAX_DISTANCE_M = 100.0
+RID_UI_THREAT_MEDIUM_MAX_DISTANCE_M = 300.0
+RID_UI_THREAT_HIGH_SCORE = 100.0
+RID_UI_THREAT_MEDIUM_SCORE = 50.0
+RID_UI_THREAT_LOW_SCORE = 0.0
 RID_ASSOC_MAX_AZ_DEG = _env_float("RID_ASSOC_MAX_AZ_DEG", 8.0)
 RID_ASSOC_AMBIGUITY_MARGIN_DEG = _env_float(
     "RID_ASSOC_AMBIGUITY_MARGIN_DEG", 2.0
@@ -1334,6 +1342,8 @@ def rid_reader_thread(track_manager, stop_event):
                                 f"rid_ts={track.get('rid_timestamp', '')},"
                                 f"update_seq={track.get('update_seq', '')},"
                                 f"measurement_seq={track.get('measurement_seq', '')},"
+                                f"expired_ui_ids="
+                                f"{[item.get('ui_id') for item in result.get('expired_tracks', [])]},"
                                 f"invalid_position_count="
                                 f"{track.get('invalid_position_count', '')}"
                             ),
@@ -1813,6 +1823,25 @@ def build_stateless_rid_ui_values(rid_item):
         ),
         "distance": float(rid_item["distance_m"]),
     }
+
+
+def ui_threat_score_from_distance(distance_m):
+    """Map a valid UI distance to the three RID threat tiers.
+
+    This score is display-only. It does not participate in SORT selection,
+    gimbal control, strike selection, or any hardware safety decision.
+    """
+    try:
+        distance_m = float(distance_m)
+    except (TypeError, ValueError):
+        return float("nan")
+    if not math.isfinite(distance_m) or distance_m < 0.0:
+        return float("nan")
+    if distance_m <= RID_UI_THREAT_HIGH_MAX_DISTANCE_M:
+        return RID_UI_THREAT_HIGH_SCORE
+    if distance_m <= RID_UI_THREAT_MEDIUM_MAX_DISTANCE_M:
+        return RID_UI_THREAT_MEDIUM_SCORE
+    return RID_UI_THREAT_LOW_SCORE
 
 
 def get_turn_direction_label(delta_az, delta_el, deadband_az=0.35, deadband_el=0.25):
@@ -3164,6 +3193,7 @@ def main():
         else:
             rid_track_manager = RIDTrackManager(
                 track_ttl_s=RID_TRACK_TTL_SECONDS,
+                delete_after_s=RID_TRACK_DELETE_AFTER_SECONDS,
             )
             rid_stop_event = threading.Event()
     print(f"[Config] DEVICE_HEADING_DEG={DEVICE_HEADING_DEG:.2f} (map north=0, east=90, south=180)")
@@ -3196,7 +3226,8 @@ def main():
         f"{RID_ASSOC_CURVE_WEIGHT:.2f}/{RID_ASSOC_TREND_WEIGHT:.2f}, "
         f"confirm_updates={RID_ASSOC_CONFIRM_UPDATES}, "
         f"hold={RID_ASSOC_HOLD_SECONDS:.2f}s, "
-        f"rid_ttl={RID_TRACK_TTL_SECONDS:.2f}s"
+        f"rid_ttl={RID_TRACK_TTL_SECONDS:.2f}s, "
+        f"rid_delete_after={RID_TRACK_DELETE_AFTER_SECONDS:.2f}s"
     )
     print(
         "[Config] RID UI fusion: "
@@ -3204,7 +3235,8 @@ def main():
         f"port={RID_PORT or 'unset'}, baud={RID_BAUDRATE}, "
         "persistent_binding=0, stateless_nearest_camera=1, "
         "ui=rid_id/rid_az/rid_el/rid_distance+sort_camera, "
-        f"rid_ttl={RID_TRACK_TTL_SECONDS:.2f}s"
+        f"rid_ttl={RID_TRACK_TTL_SECONDS:.2f}s, "
+        f"rid_delete_after={RID_TRACK_DELETE_AFTER_SECONDS:.2f}s"
     )
     if ENABLE_STRIKE_SEND:
         print(
@@ -3477,6 +3509,21 @@ def main():
     while True:
         try:
             curr_time = time.time()
+            if rid_track_manager is not None:
+                for expired_track in rid_track_manager.prune_expired(curr_time):
+                    field_log_event({
+                        "timestamp": f"{curr_time:.6f}",
+                        "event": "RID_TRACK_EXPIRED_DELETE",
+                        "ui_id": expired_track.get("ui_id", ""),
+                        "distance_source": "",
+                        "reason": (
+                            f"rid_id={expired_track.get('rid_id', '')},"
+                            f"key={expired_track.get('key_text', '')},"
+                            f"silence_s={expired_track.get('expired_age_s', 0.0):.6f},"
+                            f"delete_after_s={RID_TRACK_DELETE_AFTER_SECONDS:.6f},"
+                            "action=permanent_delete;next_report_creates_new_ui_id"
+                        ),
+                    })
             if imu and (curr_time - last_imu_print) >= IMU_PRINT_INTERVAL:
                 acc, gyro, angle = imu.get_all()
                 roll, pitch, yaw = angle
@@ -5226,9 +5273,6 @@ def main():
                             })
 
 
-                ui_threat_by_track_id = {
-                    int(item["track_id"]): item for item in ranked_strike_candidates
-                }
                 vision_frame_ts = float(vision_result.get("frame_ts", 0.0) or 0.0)
                 vision_result_age = curr_time - vision_frame_ts
                 vision_result_fresh = (
@@ -5470,12 +5514,9 @@ def main():
                                 )
                     if math.isfinite(send_dist):
                         t.last_sent_dist = send_dist
-                    threat_item = ui_threat_by_track_id.get(int(t.id))
-                    threat_score = (
-                        float(threat_item.get("raw_threat_score", threat_item["threat_score"]))
-                        if threat_item is not None
-                        else float("nan")
-                    )
+                    # UI threat is deliberately distance-only in RID mode:
+                    # <=100m high, (100m, 300m] medium, >300m low.
+                    threat_score = ui_threat_score_from_distance(send_dist)
                     sort_map_az = relative_to_map_azimuth(t.state[0, 0])
                     if rid_ui_values is not None:
                         map_az = rid_ui_values["azimuth"]
@@ -5529,6 +5570,7 @@ def main():
                             f"rid_id={rid_id_text},"
                             f"rid_binding={rid_binding_text},"
                             f"rid_az_error={rid_error_text},"
+                            f"threat_source=distance_tier,"
                             f"ui_az_source={ui_az_source},"
                             f"ui_el_source="
                             f"{'rid_altgeo_minus_station_altitude' if rid_item is not None else 'sort'},"

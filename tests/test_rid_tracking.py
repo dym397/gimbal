@@ -200,6 +200,34 @@ def test_rid_manager_uses_identity_key_and_stable_sequential_ui_ids():
     assert manager.snapshot(now_ts=16.0) == []
 
 
+def test_rid_manager_deletes_after_five_minutes_and_assigns_a_new_ui_id():
+    manager = RIDTrackManager(track_ttl_s=5.0, delete_after_s=300.0)
+
+    first = manager.update_payload(_payload("RID-A"), receive_ts=10.0)
+    assert first["track"]["ui_id"] == 1
+    assert manager.snapshot(now_ts=309.999, include_stale=True)[0]["ui_id"] == 1
+
+    # Exactly five minutes without any report permanently removes the track.
+    assert manager.snapshot(now_ts=310.0, include_stale=True) == []
+    returned = manager.update_payload(
+        _payload("RID-A", timestamp=101),
+        receive_ts=311.0,
+    )
+    assert returned["is_new"]
+    assert returned["track"]["ui_id"] == 2
+
+    # The receive path also prunes first when no periodic snapshot ran.
+    direct_manager = RIDTrackManager(track_ttl_s=5.0, delete_after_s=300.0)
+    direct_manager.update_payload(_payload("RID-B"), receive_ts=20.0)
+    direct_return = direct_manager.update_payload(
+        _payload("RID-B", timestamp=102),
+        receive_ts=320.0,
+    )
+    assert direct_return["reason"] == "new_track_after_expiry"
+    assert direct_return["track"]["ui_id"] == 2
+    assert [item["ui_id"] for item in direct_return["expired_tracks"]] == [1]
+
+
 def test_zero_zero_position_keeps_identity_but_never_creates_geometry():
     manager = RIDTrackManager(track_ttl_s=5.0)
     invalid_payload = _payload(

@@ -295,14 +295,33 @@ class RIDTrack:
 class RIDTrackManager:
     """Maintain RID identities directly by standard, ID type, and RID ID."""
 
-    def __init__(self, track_ttl_s=5.0, history_size=64):
+    def __init__(self, track_ttl_s=5.0, history_size=64, delete_after_s=300.0):
         self.track_ttl_s = max(0.1, float(track_ttl_s))
+        self.delete_after_s = max(self.track_ttl_s, float(delete_after_s))
         self.history_size = max(4, int(history_size))
         self.lock = threading.Lock()
         self.tracks = {}
         self.next_ui_id = 1
         self.global_update_seq = 0
         self.global_measurement_seq = 0
+
+    def _delete_expired_locked(self, now_ts):
+        expired = []
+        for key, track in list(self.tracks.items()):
+            age_s = max(0.0, float(now_ts) - float(track.last_receive_ts))
+            if age_s < self.delete_after_s:
+                continue
+            item = track.snapshot()
+            item["expired_age_s"] = age_s
+            expired.append(item)
+            del self.tracks[key]
+        return expired
+
+    def prune_expired(self, now_ts=None):
+        """Permanently delete tracks silent for the configured retention time."""
+        now_ts = time.time() if now_ts is None else float(now_ts)
+        with self.lock:
+            return self._delete_expired_locked(now_ts)
 
     def update_payload(self, payload, receive_ts=None):
         receive_ts = time.time() if receive_ts is None else float(receive_ts)
@@ -373,6 +392,10 @@ class RIDTrackManager:
         )
 
         with self.lock:
+            expired_tracks = self._delete_expired_locked(receive_ts)
+            same_identity_expired = any(
+                item.get("key") == key for item in expired_tracks
+            )
             track = self.tracks.get(key)
             if track is None:
                 track = RIDTrack(
@@ -431,7 +454,11 @@ class RIDTrackManager:
         elif not is_new and not previous_position_valid:
             reason = "position_acquired"
         else:
-            reason = "new_track" if is_new else ("duplicate" if duplicate else "update")
+            reason = (
+                "new_track_after_expiry"
+                if is_new and same_identity_expired
+                else ("new_track" if is_new else ("duplicate" if duplicate else "update"))
+            )
 
         return {
             "accepted": True,
@@ -440,11 +467,13 @@ class RIDTrackManager:
             "duplicate": duplicate,
             "position_valid": position_valid,
             "track": snapshot,
+            "expired_tracks": expired_tracks,
         }
 
     def snapshot(self, now_ts=None, include_stale=False):
         now_ts = time.time() if now_ts is None else float(now_ts)
         with self.lock:
+            self._delete_expired_locked(now_ts)
             values = [track.snapshot() for track in self.tracks.values()]
         for item in values:
             item["age_s"] = max(0.0, now_ts - float(item["last_receive_ts"]))
