@@ -12,10 +12,14 @@ import json
 import math
 import threading
 import time
+import bisect
 from dataclasses import dataclass, field
 
 import numpy as np
 from scipy.optimize import linear_sum_assignment
+
+
+EARTH_RADIUS_M = 6_371_008.8
 
 
 def circular_error_deg(a, b):
@@ -434,6 +438,9 @@ class RIDTrackManager:
                     "timestamp": receive_ts,
                     "longitude": longitude,
                     "latitude": latitude,
+                    "alt_geo": data["alt_geo"],
+                    "horizontal_speed": data["horizontal_speed"],
+                    "track_heading": data["track_heading"],
                 })
                 if len(track.measurement_history) > self.history_size:
                     del track.measurement_history[:-self.history_size]
@@ -535,6 +542,370 @@ def enrich_rid_tracks(
         value["trajectory_history"] = trajectory_history
         enriched.append(value)
     return enriched
+
+
+def _project_geodetic(latitude, longitude, reference_latitude):
+    """Project nearby WGS-84 points into a stable local-metre plane."""
+    latitude = math.radians(float(latitude))
+    longitude = math.radians(float(longitude))
+    scale = math.cos(math.radians(float(reference_latitude)))
+    return (
+        longitude * EARTH_RADIUS_M * scale,
+        latitude * EARTH_RADIUS_M,
+    )
+
+
+def _unproject_geodetic(east_m, north_m, reference_latitude):
+    scale = math.cos(math.radians(float(reference_latitude)))
+    latitude = math.degrees(float(north_m) / EARTH_RADIUS_M)
+    longitude = math.degrees(float(east_m) / (EARTH_RADIUS_M * scale))
+    return latitude, longitude
+
+
+def _rid_reported_velocity(sample, max_speed_mps):
+    speed = _finite_float(sample.get("horizontal_speed"))
+    heading = _finite_float(sample.get("track_heading"))
+    if (
+        speed is None
+        or heading is None
+        or speed < 0.0
+        or speed > float(max_speed_mps)
+        or not (0.0 <= heading < 360.0)
+    ):
+        return None
+    heading_rad = math.radians(heading)
+    return speed * math.sin(heading_rad), speed * math.cos(heading_rad)
+
+
+class _RIDRenderTrack:
+    """Causal alpha-beta state plus endpoint-bounded display history."""
+
+    def __init__(self, key, ui_id, sample, reference_latitude, max_speed_mps):
+        self.key = key
+        self.ui_id = int(ui_id)
+        self.reference_latitude = float(reference_latitude)
+        self.max_speed_mps = float(max_speed_mps)
+        east_m, north_m = _project_geodetic(
+            sample["latitude"], sample["longitude"], self.reference_latitude
+        )
+        velocity = _rid_reported_velocity(sample, self.max_speed_mps)
+        self.east_m = east_m
+        self.north_m = north_m
+        self.velocity_east_mps, self.velocity_north_mps = velocity or (0.0, 0.0)
+        self.altitude_m = _finite_float(sample.get("alt_geo"))
+        self.state_ts = float(sample["timestamp"])
+        self.last_receive_ts = self.state_ts
+        self.last_measurement_ts = self.state_ts
+        self.last_measurement_seq = int(sample["measurement_seq"])
+        self.measurements = [
+            (
+                self.state_ts,
+                east_m,
+                north_m,
+                self.altitude_m,
+            )
+        ]
+        self.display_east_m = east_m
+        self.display_north_m = north_m
+        self.display_initialized = True
+        self.was_active = True
+        self.last_update_mode = "new_track"
+
+    def update(
+        self,
+        sample,
+        active_ttl_s,
+        alpha,
+        beta,
+        turn_reset_deg,
+        history_points,
+    ):
+        measurement_seq = int(sample["measurement_seq"])
+        if measurement_seq <= self.last_measurement_seq:
+            return False
+
+        timestamp = float(sample["timestamp"])
+        east_m, north_m = _project_geodetic(
+            sample["latitude"], sample["longitude"], self.reference_latitude
+        )
+        altitude_m = _finite_float(sample.get("alt_geo"))
+        gap_s = timestamp - self.last_measurement_ts
+        previous_measurement = self.measurements[-1]
+        self.last_measurement_seq = measurement_seq
+        self.last_measurement_ts = timestamp
+
+        if gap_s <= 1.0e-6 or gap_s > float(active_ttl_s):
+            velocity = _rid_reported_velocity(sample, self.max_speed_mps)
+            self.east_m = east_m
+            self.north_m = north_m
+            self.velocity_east_mps, self.velocity_north_mps = velocity or (0.0, 0.0)
+            self.altitude_m = altitude_m
+            self.state_ts = timestamp
+            self.measurements = [(timestamp, east_m, north_m, altitude_m)]
+            self.display_east_m = east_m
+            self.display_north_m = north_m
+            self.display_initialized = True
+            self.was_active = True
+            self.last_update_mode = "reacquired"
+            return True
+
+        measured_velocity_east = (east_m - previous_measurement[1]) / gap_s
+        measured_velocity_north = (north_m - previous_measurement[2]) / gap_s
+        old_speed = math.hypot(self.velocity_east_mps, self.velocity_north_mps)
+        measured_speed = math.hypot(
+            measured_velocity_east, measured_velocity_north
+        )
+        turn_angle_deg = 0.0
+        if old_speed >= 1.0 and measured_speed >= 1.0:
+            cosine = (
+                self.velocity_east_mps * measured_velocity_east
+                + self.velocity_north_mps * measured_velocity_north
+            ) / (old_speed * measured_speed)
+            turn_angle_deg = math.degrees(
+                math.acos(max(-1.0, min(1.0, cosine)))
+            )
+
+        self.measurements.append((timestamp, east_m, north_m, altitude_m))
+        if len(self.measurements) > int(history_points):
+            del self.measurements[:-int(history_points)]
+
+        if turn_angle_deg > float(turn_reset_deg):
+            self.east_m = east_m
+            self.north_m = north_m
+            reported_velocity = _rid_reported_velocity(
+                sample, self.max_speed_mps
+            )
+            if reported_velocity is not None:
+                self.velocity_east_mps, self.velocity_north_mps = reported_velocity
+            else:
+                self.velocity_east_mps = measured_velocity_east
+                self.velocity_north_mps = measured_velocity_north
+            self.altitude_m = altitude_m
+            self.state_ts = timestamp
+            self.last_update_mode = "turn_reset"
+            return True
+
+        predicted_east = self.east_m + self.velocity_east_mps * gap_s
+        predicted_north = self.north_m + self.velocity_north_mps * gap_s
+        residual_east = east_m - predicted_east
+        residual_north = north_m - predicted_north
+        self.east_m = predicted_east + float(alpha) * residual_east
+        self.north_m = predicted_north + float(alpha) * residual_north
+        self.velocity_east_mps += float(beta) * residual_east / gap_s
+        self.velocity_north_mps += float(beta) * residual_north / gap_s
+
+        reported_velocity = _rid_reported_velocity(sample, self.max_speed_mps)
+        if reported_velocity is not None:
+            self.velocity_east_mps = (
+                0.75 * self.velocity_east_mps + 0.25 * reported_velocity[0]
+            )
+            self.velocity_north_mps = (
+                0.75 * self.velocity_north_mps + 0.25 * reported_velocity[1]
+            )
+        speed = math.hypot(self.velocity_east_mps, self.velocity_north_mps)
+        if speed > self.max_speed_mps:
+            scale = self.max_speed_mps / speed
+            self.velocity_east_mps *= scale
+            self.velocity_north_mps *= scale
+        if altitude_m is not None:
+            self.altitude_m = (
+                altitude_m
+                if self.altitude_m is None
+                else self.altitude_m + float(alpha) * (altitude_m - self.altitude_m)
+            )
+        self.state_ts = timestamp
+        self.last_update_mode = "measurement"
+        return True
+
+    def render(
+        self,
+        now_ts,
+        real_dt_s,
+        render_delay_s,
+        max_prediction_s,
+        display_tau_s,
+    ):
+        render_ts = float(now_ts) - max(0.0, float(render_delay_s))
+        measurement_times = [item[0] for item in self.measurements]
+        right = bisect.bisect_right(measurement_times, render_ts)
+        altitude_m = self.altitude_m
+        prediction_age_s = 0.0
+
+        if right == 0:
+            _, desired_east, desired_north, altitude_m = self.measurements[0]
+            render_mode = "hold_before_first"
+        elif right < len(self.measurements):
+            left_item = self.measurements[right - 1]
+            right_item = self.measurements[right]
+            duration = right_item[0] - left_item[0]
+            ratio = (
+                1.0
+                if duration <= 1.0e-6
+                else (render_ts - left_item[0]) / duration
+            )
+            ratio = max(0.0, min(1.0, ratio))
+            desired_east = left_item[1] + (right_item[1] - left_item[1]) * ratio
+            desired_north = left_item[2] + (right_item[2] - left_item[2]) * ratio
+            if left_item[3] is not None and right_item[3] is not None:
+                altitude_m = left_item[3] + (right_item[3] - left_item[3]) * ratio
+            render_mode = "interpolate"
+        else:
+            latest_item = self.measurements[-1]
+            unbounded_age_s = max(0.0, render_ts - latest_item[0])
+            prediction_age_s = min(unbounded_age_s, max(0.0, float(max_prediction_s)))
+            desired_east = latest_item[1] + self.velocity_east_mps * prediction_age_s
+            desired_north = latest_item[2] + self.velocity_north_mps * prediction_age_s
+            altitude_m = latest_item[3]
+            render_mode = (
+                "predict"
+                if unbounded_age_s <= float(max_prediction_s)
+                else "freeze"
+            )
+
+        if not self.was_active or not self.display_initialized:
+            self.display_east_m = desired_east
+            self.display_north_m = desired_north
+            self.display_initialized = True
+        else:
+            gain = (
+                1.0
+                if float(display_tau_s) <= 0.0
+                else 1.0
+                - math.exp(-max(0.0, float(real_dt_s)) / float(display_tau_s))
+            )
+            self.display_east_m += gain * (desired_east - self.display_east_m)
+            self.display_north_m += gain * (desired_north - self.display_north_m)
+        self.was_active = True
+        return {
+            "east_m": self.display_east_m,
+            "north_m": self.display_north_m,
+            "altitude_m": altitude_m,
+            "render_ts": render_ts,
+            "render_mode": render_mode,
+            "prediction_age_s": prediction_age_s,
+            "filter_update_mode": self.last_update_mode,
+        }
+
+
+class RIDTrajectoryRenderer:
+    """Turn sparse RID measurements into a bounded, causal UI trajectory.
+
+    The renderer deliberately lags wall time so that most UI points lie between
+    two measurements already received from the serial link.  It never sees a
+    future RID frame.  When no right endpoint is available it predicts only for
+    a short bounded interval and then freezes until the next measurement.
+    """
+
+    def __init__(
+        self,
+        render_delay_s=0.8,
+        max_prediction_s=0.5,
+        active_ttl_s=5.0,
+        display_tau_s=0.2,
+        alpha=0.85,
+        beta=0.18,
+        turn_reset_deg=90.0,
+        history_points=12,
+        max_speed_mps=40.0,
+        delete_after_s=300.0,
+    ):
+        self.render_delay_s = max(0.0, float(render_delay_s))
+        self.max_prediction_s = max(0.0, float(max_prediction_s))
+        self.active_ttl_s = max(0.1, float(active_ttl_s))
+        self.display_tau_s = max(0.0, float(display_tau_s))
+        self.alpha = max(0.0, min(1.0, float(alpha)))
+        self.beta = max(0.0, float(beta))
+        self.turn_reset_deg = max(0.0, min(180.0, float(turn_reset_deg)))
+        self.history_points = max(2, int(history_points))
+        self.max_speed_mps = max(0.1, float(max_speed_mps))
+        self.delete_after_s = max(self.active_ttl_s, float(delete_after_s))
+        self.tracks = {}
+        self.last_render_ts = None
+
+    def render(self, rid_tracks, now_ts=None):
+        now_ts = time.time() if now_ts is None else float(now_ts)
+        real_dt_s = (
+            0.0
+            if self.last_render_ts is None
+            else max(0.0, now_ts - self.last_render_ts)
+        )
+        self.last_render_ts = now_ts
+        rendered_tracks = []
+        seen_keys = set()
+
+        for item in rid_tracks:
+            if not bool(item.get("position_valid", False)):
+                continue
+            key = item["key"]
+            ui_id = int(item["ui_id"])
+            samples = sorted(
+                item.get("measurement_history") or (),
+                key=lambda sample: int(sample["measurement_seq"]),
+            )
+            if not samples:
+                continue
+
+            state = self.tracks.get(key)
+            if state is None or state.ui_id != ui_id:
+                state = _RIDRenderTrack(
+                    key,
+                    ui_id,
+                    samples[0],
+                    reference_latitude=samples[0]["latitude"],
+                    max_speed_mps=self.max_speed_mps,
+                )
+                self.tracks[key] = state
+                samples = samples[1:]
+            for sample in samples:
+                state.update(
+                    sample,
+                    active_ttl_s=self.active_ttl_s,
+                    alpha=self.alpha,
+                    beta=self.beta,
+                    turn_reset_deg=self.turn_reset_deg,
+                    history_points=self.history_points,
+                )
+
+            state.last_receive_ts = float(item["last_receive_ts"])
+            seen_keys.add(key)
+            receive_age_s = max(0.0, now_ts - state.last_receive_ts)
+            if receive_age_s > self.active_ttl_s:
+                state.was_active = False
+                continue
+
+            rendered = state.render(
+                now_ts,
+                real_dt_s=real_dt_s,
+                render_delay_s=self.render_delay_s,
+                max_prediction_s=self.max_prediction_s,
+                display_tau_s=self.display_tau_s,
+            )
+            latitude, longitude = _unproject_geodetic(
+                rendered["east_m"],
+                rendered["north_m"],
+                state.reference_latitude,
+            )
+            value = dict(item)
+            value["rid_raw_latitude"] = item.get("latitude")
+            value["rid_raw_longitude"] = item.get("longitude")
+            value["rid_raw_alt_geo"] = item.get("alt_geo")
+            value["latitude"] = latitude
+            value["longitude"] = longitude
+            value["alt_geo"] = rendered["altitude_m"]
+            value["rid_render_mode"] = rendered["render_mode"]
+            value["rid_filter_update_mode"] = rendered["filter_update_mode"]
+            value["rid_render_timestamp"] = rendered["render_ts"]
+            value["rid_render_delay_s"] = self.render_delay_s
+            value["rid_prediction_age_s"] = rendered["prediction_age_s"]
+            rendered_tracks.append(value)
+
+        for key, state in list(self.tracks.items()):
+            if key not in seen_keys:
+                state.was_active = False
+            if (now_ts - state.last_receive_ts) >= self.delete_after_s:
+                del self.tracks[key]
+
+        return sorted(rendered_tracks, key=lambda item: int(item["ui_id"]))
 
 
 class RIDSortAssociator:

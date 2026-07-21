@@ -1,5 +1,6 @@
 import sys
 import json
+import math
 from pathlib import Path
 
 
@@ -10,6 +11,7 @@ from rid_tracking import (  # noqa: E402
     RIDSortAssociator,
     RIDStreamParser,
     RIDTrackManager,
+    RIDTrajectoryRenderer,
     elevation_from_altitudes,
     elevation_from_relative_height,
     enrich_rid_tracks,
@@ -36,6 +38,24 @@ def _payload(rid_id="RID-A", lon=104.0, lat=30.0, timestamp=100):
         },
         "OperatorInfo": {"Lon": 104.1, "Lat": 30.1, "Height": 450},
     }
+
+
+def _longitude_offset_m(east_m, latitude=30.0, base_longitude=104.0):
+    return base_longitude + math.degrees(
+        float(east_m) / (6_371_008.8 * math.cos(math.radians(latitude)))
+    )
+
+
+def _moving_payload(rid_id, east_m, timestamp, speed_mps, heading_deg):
+    payload = _payload(
+        rid_id,
+        lon=_longitude_offset_m(east_m),
+        lat=30.0,
+        timestamp=timestamp,
+    )
+    payload["UAVInfo"]["H_Speed"] = speed_mps
+    payload["UAVInfo"]["Trk"] = heading_deg
+    return payload
 
 
 def _rid_frame(value):
@@ -314,6 +334,122 @@ def test_rid_measurement_history_preserves_updates_between_main_snapshots():
     associator = RIDSortAssociator(history_seconds=5.0)
     associator.observe([], enriched, now_ts=10.3)
     assert len(associator.rid_histories[enriched[0]["key"]]) == 3
+
+
+def test_rid_measurement_history_keeps_motion_and_altitude_inputs_for_renderer():
+    manager = RIDTrackManager(track_ttl_s=5.0)
+    payload = _moving_payload("RID-A", 10.0, 100, 8.5, 90.0)
+    payload["UAVInfo"]["AltGeo"] = 512.5
+
+    result = manager.update_payload(payload, receive_ts=10.0)
+    sample = result["track"]["measurement_history"][0]
+
+    assert sample["alt_geo"] == 512.5
+    assert sample["horizontal_speed"] == 8.5
+    assert sample["track_heading"] == 90.0
+
+
+def test_rid_renderer_uses_endpoint_bounded_linear_interpolation():
+    manager = RIDTrackManager(track_ttl_s=5.0)
+    manager.update_payload(
+        _moving_payload("RID-A", 0.0, 100, 10.0, 90.0),
+        receive_ts=10.0,
+    )
+    manager.update_payload(
+        _moving_payload("RID-A", 20.0, 101, 10.0, 90.0),
+        receive_ts=12.0,
+    )
+    renderer = RIDTrajectoryRenderer(
+        render_delay_s=0.8,
+        max_prediction_s=0.5,
+        display_tau_s=0.0,
+    )
+
+    rendered = renderer.render(manager.snapshot(now_ts=12.0), now_ts=12.0)
+    enriched = enrich_rid_tracks(rendered, 30.0, 104.0)
+
+    assert len(enriched) == 1
+    assert enriched[0]["rid_render_mode"] == "interpolate"
+    assert 11.8 < enriched[0]["distance_m"] < 12.2
+    assert enriched[0]["distance_m"] < 20.0
+
+
+def test_rid_renderer_caps_prediction_at_half_a_second_then_freezes():
+    manager = RIDTrackManager(track_ttl_s=5.0)
+    manager.update_payload(
+        _moving_payload("RID-A", 0.0, 100, 10.0, 90.0),
+        receive_ts=10.0,
+    )
+    manager.update_payload(
+        _moving_payload("RID-A", 10.0, 101, 10.0, 90.0),
+        receive_ts=11.0,
+    )
+    renderer = RIDTrajectoryRenderer(
+        render_delay_s=0.8,
+        max_prediction_s=0.5,
+        display_tau_s=0.0,
+    )
+    renderer.render(manager.snapshot(now_ts=11.0), now_ts=11.0)
+
+    rendered = renderer.render(manager.snapshot(now_ts=13.0), now_ts=13.0)
+    enriched = enrich_rid_tracks(rendered, 30.0, 104.0)
+
+    assert enriched[0]["rid_render_mode"] == "freeze"
+    assert enriched[0]["rid_prediction_age_s"] == 0.5
+    assert 14.8 < enriched[0]["distance_m"] < 15.2
+
+
+def test_rid_renderer_resets_velocity_on_reversal_and_stays_between_endpoints():
+    manager = RIDTrackManager(track_ttl_s=5.0)
+    manager.update_payload(
+        _moving_payload("RID-A", 0.0, 100, 20.0, 90.0),
+        receive_ts=10.0,
+    )
+    manager.update_payload(
+        _moving_payload("RID-A", 20.0, 101, 20.0, 90.0),
+        receive_ts=11.0,
+    )
+    manager.update_payload(
+        _moving_payload("RID-A", 10.0, 102, 10.0, 270.0),
+        receive_ts=12.0,
+    )
+    renderer = RIDTrajectoryRenderer(
+        render_delay_s=0.8,
+        max_prediction_s=0.5,
+        display_tau_s=0.0,
+    )
+
+    rendered = renderer.render(manager.snapshot(now_ts=12.5), now_ts=12.5)
+    enriched = enrich_rid_tracks(rendered, 30.0, 104.0)
+
+    assert enriched[0]["rid_filter_update_mode"] == "turn_reset"
+    assert enriched[0]["rid_render_mode"] == "interpolate"
+    assert 10.0 <= enriched[0]["distance_m"] <= 20.0
+
+
+def test_rid_renderer_does_not_interpolate_across_a_long_reacquisition_gap():
+    manager = RIDTrackManager(track_ttl_s=5.0, delete_after_s=300.0)
+    manager.update_payload(
+        _moving_payload("RID-A", 0.0, 100, 10.0, 90.0),
+        receive_ts=10.0,
+    )
+    manager.update_payload(
+        _moving_payload("RID-A", 100.0, 101, 0.0, 90.0),
+        receive_ts=16.0,
+    )
+    renderer = RIDTrajectoryRenderer(
+        render_delay_s=0.8,
+        max_prediction_s=0.5,
+        active_ttl_s=5.0,
+        display_tau_s=0.0,
+    )
+
+    rendered = renderer.render(manager.snapshot(now_ts=16.1), now_ts=16.1)
+    enriched = enrich_rid_tracks(rendered, 30.0, 104.0)
+
+    assert enriched[0]["rid_filter_update_mode"] == "reacquired"
+    assert enriched[0]["rid_render_mode"] == "hold_before_first"
+    assert 99.8 < enriched[0]["distance_m"] < 100.2
 
 
 def test_geodesy_returns_horizontal_distance_and_true_north_bearing():

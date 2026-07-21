@@ -44,11 +44,13 @@ try:
     from rid_tracking import (
         RIDStreamParser,
         RIDTrackManager,
+        RIDTrajectoryRenderer,
         enrich_rid_tracks,
     )
 except ImportError:
     RIDStreamParser = None
     RIDTrackManager = None
+    RIDTrajectoryRenderer = None
     enrich_rid_tracks = None
 try:
     from gimbal_vision_ranging import GimbalVisionRangingService
@@ -329,6 +331,16 @@ RID_TRACK_TTL_SECONDS = _env_float("RID_TRACK_TTL_SECONDS", 5.0)
 RID_TRACK_DELETE_AFTER_SECONDS = _env_float(
     "RID_TRACK_DELETE_AFTER_SECONDS", 300.0
 )
+RID_UI_RENDER_DELAY_SECONDS = _env_float("RID_UI_RENDER_DELAY_SECONDS", 0.8)
+RID_UI_MAX_PREDICTION_SECONDS = _env_float(
+    "RID_UI_MAX_PREDICTION_SECONDS", 0.5
+)
+RID_UI_DISPLAY_TAU_SECONDS = _env_float("RID_UI_DISPLAY_TAU_SECONDS", 0.2)
+RID_UI_FILTER_ALPHA = _env_float("RID_UI_FILTER_ALPHA", 0.85)
+RID_UI_FILTER_BETA = _env_float("RID_UI_FILTER_BETA", 0.18)
+RID_UI_TURN_RESET_DEG = _env_float("RID_UI_TURN_RESET_DEG", 90.0)
+RID_UI_RENDER_HISTORY_POINTS = _env_int("RID_UI_RENDER_HISTORY_POINTS", 12)
+RID_UI_MAX_SPEED_MPS = _env_float("RID_UI_MAX_SPEED_MPS", 40.0)
 RID_UI_THREAT_HIGH_MAX_DISTANCE_M = 100.0
 RID_UI_THREAT_MEDIUM_MAX_DISTANCE_M = 300.0
 RID_UI_THREAT_HIGH_SCORE = 100.0
@@ -540,6 +552,10 @@ class FieldLogger:
             "distance_m", "rid_age_s", "rid_update_seq",
             "rid_measurement_seq", "rid_timestamp",
             "rid_latitude", "rid_longitude", "rid_alt_geo",
+            "rid_raw_latitude", "rid_raw_longitude", "rid_raw_alt_geo",
+            "rid_render_mode", "rid_filter_update_mode",
+            "rid_render_timestamp", "rid_render_delay_s",
+            "rid_prediction_age_s",
             "station_latitude", "station_longitude", "station_source",
             "station_altitude_m", "vertical_delta_m",
             "station_age_s", "device_heading_deg",
@@ -3180,6 +3196,7 @@ def main():
         ),
     )
     rid_track_manager = None
+    rid_trajectory_renderer = None
     # Persistent SORT/RID association is intentionally disabled. The legacy
     # diagnostic block remains unreachable for rollback comparison only;
     # current runtime behavior is the stateless per-send pairing below.
@@ -3195,6 +3212,19 @@ def main():
                 track_ttl_s=RID_TRACK_TTL_SECONDS,
                 delete_after_s=RID_TRACK_DELETE_AFTER_SECONDS,
             )
+            if RIDTrajectoryRenderer is not None:
+                rid_trajectory_renderer = RIDTrajectoryRenderer(
+                    render_delay_s=RID_UI_RENDER_DELAY_SECONDS,
+                    max_prediction_s=RID_UI_MAX_PREDICTION_SECONDS,
+                    active_ttl_s=RID_TRACK_TTL_SECONDS,
+                    display_tau_s=RID_UI_DISPLAY_TAU_SECONDS,
+                    alpha=RID_UI_FILTER_ALPHA,
+                    beta=RID_UI_FILTER_BETA,
+                    turn_reset_deg=RID_UI_TURN_RESET_DEG,
+                    history_points=RID_UI_RENDER_HISTORY_POINTS,
+                    max_speed_mps=RID_UI_MAX_SPEED_MPS,
+                    delete_after_s=RID_TRACK_DELETE_AFTER_SECONDS,
+                )
             rid_stop_event = threading.Event()
     print(f"[Config] DEVICE_HEADING_DEG={DEVICE_HEADING_DEG:.2f} (map north=0, east=90, south=180)")
     print(
@@ -3235,6 +3265,10 @@ def main():
         f"port={RID_PORT or 'unset'}, baud={RID_BAUDRATE}, "
         "persistent_binding=0, stateless_nearest_camera=1, "
         "ui=rid_id/rid_az/rid_el/rid_distance+sort_camera, "
+        f"render_delay={RID_UI_RENDER_DELAY_SECONDS:.2f}s, "
+        f"max_prediction={RID_UI_MAX_PREDICTION_SECONDS:.2f}s, "
+        f"display_tau={RID_UI_DISPLAY_TAU_SECONDS:.2f}s, "
+        f"turn_reset={RID_UI_TURN_RESET_DEG:.1f}deg, "
         f"rid_ttl={RID_TRACK_TTL_SECONDS:.2f}s, "
         f"rid_delete_after={RID_TRACK_DELETE_AFTER_SECONDS:.2f}s"
     )
@@ -4139,8 +4173,16 @@ def main():
             rid_tracks = []
             if rid_track_manager is not None:
                 if station_snapshot["valid"]:
+                    raw_rid_tracks = rid_track_manager.snapshot(
+                        now_ts=curr_time
+                    )
+                    if rid_trajectory_renderer is not None:
+                        raw_rid_tracks = rid_trajectory_renderer.render(
+                            raw_rid_tracks,
+                            now_ts=curr_time,
+                        )
                     rid_tracks = enrich_rid_tracks(
-                        rid_track_manager.snapshot(now_ts=curr_time),
+                        raw_rid_tracks,
                         station_latitude=station_snapshot["latitude"],
                         station_longitude=station_snapshot["longitude"],
                         station_altitude=station_snapshot["altitude"],
@@ -5410,6 +5452,36 @@ def main():
                                 "" if current_rid.get("alt_geo") is None
                                 else f"{current_rid['alt_geo']:.3f}"
                             ),
+                            "rid_raw_latitude": (
+                                "" if current_rid.get("rid_raw_latitude") is None
+                                else f"{current_rid['rid_raw_latitude']:.8f}"
+                            ),
+                            "rid_raw_longitude": (
+                                "" if current_rid.get("rid_raw_longitude") is None
+                                else f"{current_rid['rid_raw_longitude']:.8f}"
+                            ),
+                            "rid_raw_alt_geo": (
+                                "" if current_rid.get("rid_raw_alt_geo") is None
+                                else f"{current_rid['rid_raw_alt_geo']:.3f}"
+                            ),
+                            "rid_render_mode": current_rid.get(
+                                "rid_render_mode", "raw"
+                            ),
+                            "rid_filter_update_mode": current_rid.get(
+                                "rid_filter_update_mode", ""
+                            ),
+                            "rid_render_timestamp": (
+                                "" if current_rid.get("rid_render_timestamp") is None
+                                else f"{current_rid['rid_render_timestamp']:.6f}"
+                            ),
+                            "rid_render_delay_s": (
+                                "" if current_rid.get("rid_render_delay_s") is None
+                                else f"{current_rid['rid_render_delay_s']:.6f}"
+                            ),
+                            "rid_prediction_age_s": (
+                                "" if current_rid.get("rid_prediction_age_s") is None
+                                else f"{current_rid['rid_prediction_age_s']:.6f}"
+                            ),
                             "vertical_delta_m": (
                                 "" if current_rid.get("vertical_delta_m") is None
                                 else f"{current_rid['vertical_delta_m']:.3f}"
@@ -5455,6 +5527,24 @@ def main():
                             "rid_height": (
                                 "" if pair_rid.get("height") is None
                                 else f"{pair_rid['height']:.3f}"
+                            ),
+                            "rid_render_mode": pair_rid.get(
+                                "rid_render_mode", "raw"
+                            ),
+                            "rid_filter_update_mode": pair_rid.get(
+                                "rid_filter_update_mode", ""
+                            ),
+                            "rid_render_timestamp": (
+                                "" if pair_rid.get("rid_render_timestamp") is None
+                                else f"{pair_rid['rid_render_timestamp']:.6f}"
+                            ),
+                            "rid_render_delay_s": (
+                                "" if pair_rid.get("rid_render_delay_s") is None
+                                else f"{pair_rid['rid_render_delay_s']:.6f}"
+                            ),
+                            "rid_prediction_age_s": (
+                                "" if pair_rid.get("rid_prediction_age_s") is None
+                                else f"{pair_rid['rid_prediction_age_s']:.6f}"
                             ),
                             "az_error_deg": f"{current_pair['az_error_deg']:.6f}",
                             "distance_m": f"{pair_rid['distance_m']:.6f}",
@@ -5552,6 +5642,13 @@ def main():
                         "" if rid_item is None
                         else f"{float(rid_item['map_az']):.6f}"
                     )
+                    rid_render_text = (
+                        "" if rid_item is None
+                        else (
+                            f"{rid_item.get('rid_render_mode', 'raw')}/"
+                            f"{float(rid_item.get('rid_prediction_age_s', 0.0)):.3f}s"
+                        )
+                    )
                     field_log_event({
                         "timestamp": f"{curr_time:.6f}",
                         "seq": sender_seq,
@@ -5575,7 +5672,8 @@ def main():
                             f"ui_el_source="
                             f"{'rid_altgeo_minus_station_altitude' if rid_item is not None else 'sort'},"
                             f"sort_map_az={sort_map_az:.6f},"
-                            f"rid_map_az={rid_map_az_text}"
+                            f"rid_map_az={rid_map_az_text},"
+                            f"rid_render={rid_render_text}"
                         ),
                         "internal_track_id": int(t.id),
                         "ui_id": int(ui_id),
