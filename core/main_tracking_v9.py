@@ -70,11 +70,11 @@ def _platform_serial_defaults():
             "rid": "",
         }
     return {
-        "gimbal": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4:1.0-port0",
+        "gimbal": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2.2:1.0-port0",
         "laser": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-port0",
         "imu": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.2:1.0-port0",
-        "gps": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2:1.0-port0",
-        "rid": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1.3:1.0-port0",
+        "gps": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2.1:1.0-port0",
+        "rid": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2.3:1.0-port0",
     }
 
 
