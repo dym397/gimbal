@@ -15,7 +15,7 @@ the unstable `ttyUSBx` enumeration:
 
 | Device | Linux default by-path |
 | --- | --- |
-| RID | `/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-port0` |
+| RID (USB HUB port 3) | `/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1.3:1.0-port0` |
 | GPS | `/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2:1.0-port0` |
 | Gimbal | `/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4:1.0-port0` |
 

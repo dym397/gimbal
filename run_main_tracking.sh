@@ -12,7 +12,7 @@ export PYTHONUNBUFFERED="${PYTHONUNBUFFERED:-1}"
 # directory every RestartSec interval.
 GIMBAL_PORT="${GIMBAL_PORT:-/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4:1.0-port0}"
 GPS_PORT="${GPS_PORT:-/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2:1.0-port0}"
-RID_PORT="${RID_PORT:-/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-port0}"
+RID_PORT="${RID_PORT:-/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1.3:1.0-port0}"
 HARDWARE_WAIT_INTERVAL="${HARDWARE_WAIT_INTERVAL:-2}"
 HARDWARE_WAIT_LOG_INTERVAL="${HARDWARE_WAIT_LOG_INTERVAL:-30}"
 
