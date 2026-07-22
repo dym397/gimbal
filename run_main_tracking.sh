@@ -66,7 +66,10 @@ if [[ "$RID_SORT_ALIGNMENT_ENABLE" != "1" ]]; then
     exec python3 "$SCRIPT_DIR/main_tracking_v9.py"
 fi
 
-service_started_ts="$(date +%s)"
+# Keep sub-second precision. During a rapid systemd restart the previous main
+# process can flush its old log files in the same wall-clock second; a whole-
+# second cutoff would then let the analyzer attach to that previous run.
+service_started_ts="$(date +%s.%N)"
 main_pid=""
 alignment_pid=""
 
