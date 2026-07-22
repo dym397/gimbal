@@ -9,6 +9,10 @@ User=linaro
 Group=linaro
 SupplementaryGroups=dialout
 WorkingDirectory=/home/linaro/gimbal
+Environment=RID_SORT_ALIGNMENT_ENABLE=1
+Environment=RID_SORT_ALIGNMENT_PRINT_INTERVAL=10
+Environment=RID_SORT_ALIGNMENT_PAIR_MODE=learned
+Environment=PRINT_LIVE_STATUS=0
 EnvironmentFile=-/etc/default/gimbal-tracking
 ExecStart=/home/linaro/gimbal/run_main_tracking.sh
 Restart=on-failure

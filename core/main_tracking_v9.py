@@ -411,7 +411,7 @@ PRINT_PHASE_LOGS = _env_flag("PRINT_PHASE_LOGS", False)
 PRINT_GIMBAL_PROGRESS = _env_flag("PRINT_GIMBAL_PROGRESS", False)
 PRINT_EVENT_LOGS = _env_flag("PRINT_EVENT_LOGS", False)
 PRINT_STATS = _env_flag("PRINT_STATS", False)
-PRINT_LIVE_STATUS = _env_flag("PRINT_LIVE_STATUS", True)
+PRINT_LIVE_STATUS = _env_flag("PRINT_LIVE_STATUS", False)
 LIVE_STATUS_INTERVAL = float(os.getenv("LIVE_STATUS_INTERVAL", "1.0"))
 FIELD_LOG = _env_flag("FIELD_LOG", True)
 FIELD_LOG_DIR = os.getenv("FIELD_LOG_DIR", LOG_DIR)
@@ -493,7 +493,7 @@ class FieldLogger:
             "same_source_packet_drop_count",
             "raw_meas_count", "fused_meas_count", "fusion_groups",
             "meas_count", "track_count",
-            "valid_count", "track_ids", "valid_ids", "master_id",
+            "valid_count", "track_ids", "valid_ids", "ui_ids", "master_id",
             "hit_streaks", "time_since_updates", "track_states",
             "lost_seconds",
             "cmd_az", "cmd_el", "gimbal_ui_az", "gimbal_ui_el",
@@ -4285,6 +4285,7 @@ def main():
                 })
             track_ids = [int(t.id) for t in active_tracks]
             valid_ids = [int(t.id) for t in valid_tracks]
+            ui_ids = [int(t.id) for t in ui_tracks]
             hit_values = [int(t.hit_streak) for t in active_tracks]
             lost_values = [int(t.time_since_update) for t in active_tracks]
             lost_seconds_values = [
@@ -4311,6 +4312,7 @@ def main():
                     "valid_count": len(valid_tracks),
                     "track_ids": ";".join(str(x) for x in track_ids),
                     "valid_ids": ";".join(str(x) for x in valid_ids),
+                    "ui_ids": ";".join(str(x) for x in ui_ids),
                     "master_id": "" if master_id is None else int(master_id),
                     "hit_streaks": ";".join(str(x) for x in hit_values),
                     "time_since_updates": ";".join(str(x) for x in lost_values),
