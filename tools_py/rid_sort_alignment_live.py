@@ -28,6 +28,7 @@ import json
 import math
 import sys
 import tempfile
+import threading
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass
@@ -328,12 +329,18 @@ class OutputLog:
 
 
 class CsvFollower:
-    def __init__(self, path, from_start=False):
+    def __init__(self, path, from_start=False, wait_for_header=False):
         self.path = Path(path)
         self.file = self.path.open("r", encoding="utf-8-sig", newline="")
-        header_line = self.file.readline()
-        if not header_line:
-            raise ValueError(f"CSV has no header: {self.path}")
+        while True:
+            self.file.seek(0)
+            header_line = self.file.readline()
+            if header_line.endswith(("\n", "\r")):
+                break
+            if not wait_for_header:
+                self.file.close()
+                raise ValueError(f"CSV has no header: {self.path}")
+            time.sleep(0.05)
         self.fields = next(csv.reader([header_line]))
         if not from_start:
             self.file.seek(0, 2)
@@ -842,8 +849,14 @@ def run_follow(args, summary_path, association_path, analyzer):
     if args.from_start:
         run_offline(args, summary_path, association_path, analyzer)
         analyzer.flush_cycle()
-    summary_tail = CsvFollower(summary_path, from_start=False)
-    association_tail = CsvFollower(association_path, from_start=False)
+    # The producer creates all log files before buffered headers necessarily
+    # become visible. Live mode must tolerate that short startup window.
+    summary_tail = CsvFollower(
+        summary_path, from_start=False, wait_for_header=True
+    )
+    association_tail = CsvFollower(
+        association_path, from_start=False, wait_for_header=True
+    )
     started = time.time()
     try:
         while args.duration <= 0 or time.time() - started < args.duration:
@@ -860,6 +873,23 @@ def run_follow(args, summary_path, association_path, analyzer):
 
 
 def self_test():
+    with tempfile.TemporaryDirectory() as temporary_dir:
+        empty_csv = Path(temporary_dir) / "delayed_header.csv"
+        empty_csv.touch()
+
+        def publish_header():
+            time.sleep(0.05)
+            empty_csv.write_text("timestamp,value\n", encoding="utf-8")
+
+        publisher = threading.Thread(target=publish_header)
+        publisher.start()
+        follower = CsvFollower(
+            empty_csv, from_start=False, wait_for_header=True
+        )
+        publisher.join(timeout=1.0)
+        assert follower.fields == ["timestamp", "value"]
+        follower.close()
+
     history = SortHistory(history_seconds=10.0)
     history.add(1, SortSample(10.0, 359.0, 4.0))
     history.add(1, SortSample(12.0, 1.0, 8.0))

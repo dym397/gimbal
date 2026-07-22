@@ -575,6 +575,22 @@ class FieldLogger:
         self.events_writer.writeheader()
         self.gimbal_writer.writeheader()
         self.rid_association_writer.writeheader()
+        # The SORT/RID alignment sidecar discovers these files as soon as they
+        # exist. Publish every header before announcing that field logging is
+        # ready, otherwise the sidecar can briefly observe an empty CSV and
+        # exit during service startup.
+        for stream in (
+            self.raw_f,
+            self.raw_rid_f,
+            self.raw_rid_serial_f,
+            self.measurements_f,
+            self.summary_f,
+            self.events_f,
+            self.gimbal_f,
+            self.rid_association_f,
+        ):
+            stream.flush()
+        self.last_flush_t = time.monotonic()
         print(f"[FieldLog] enabled: {os.path.abspath(log_dir)}")
 
     def _handle_write_error(self, exc):
