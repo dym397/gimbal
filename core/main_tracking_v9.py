@@ -65,14 +65,12 @@ def _platform_serial_defaults():
         return {
             "gimbal": "COM8",
             "laser": "COM12",
-            "imu": "COM11",
             "gps": "COM8",
             "rid": "",
         }
     return {
         "gimbal": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2.2:1.0-port0",
-        "laser": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-port0",
-        "imu": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4.2:1.0-port0",
+        "laser": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.4:1.0-port0",
         "gps": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2.1:1.0-port0",
         "rid": "/dev/serial/by-path/platform-xhci-hcd.4.auto-usb-0:1.2.3:1.0-port0",
     }
@@ -315,10 +313,6 @@ USE_MOCK_GIMBAL = _env_flag("USE_MOCK_GIMBAL", False)  # True: 使用 mock_gimba
 USE_MOCK_LASER = _env_flag("USE_MOCK_LASER", True)   # RID branch default: do not open the legacy laser.
 ENABLE_GPS = _env_flag("ENABLE_GPS", True)
 ENABLE_RID = _env_flag("ENABLE_RID", bool(RID_PORT))
-ENABLE_IMU = _env_flag("ENABLE_IMU", False)      # Manual switch: True to enable IMU read/print
-IMU_PORT = _serial_port("IMU_PORT", "imu")
-IMU_BAUDRATE = 9600
-IMU_PRINT_INTERVAL = 0.2
 GPS_BAUDRATE = 115200
 GPS_FIX_TIMEOUT_SECONDS = 5
 GPS_STATUS_INTERVAL = 5.0
@@ -3302,8 +3296,6 @@ def main():
         _validate_serial_port("GPS_PORT", GPS_PORT)
     if rid_track_manager is not None:
         _validate_serial_port("RID_PORT", RID_PORT)
-    if ENABLE_IMU:
-        _validate_serial_port("IMU_PORT", IMU_PORT)
 
     if ENABLE_GPS:
         threading.Thread(
@@ -3416,18 +3408,6 @@ def main():
         f"(ttl={TRACK_DISTANCE_TTL:.1f}s)"
     )
 
-    imu = None
-    last_imu_print = 0.0
-    if ENABLE_IMU:
-        try:
-            from hwt905_driver import HWT905
-            imu = HWT905(IMU_PORT, IMU_BAUDRATE)
-            imu.open()
-            print(f"[IMU] Enabled on {IMU_PORT}@{IMU_BAUDRATE}")
-        except Exception as e:
-            print(f"[IMU] Init failed: {e}")
-            imu = None
-    
     print("=== System V9.0 (Predictive Tracking & Scheduling) Running ===")
 
     # 初始化追踪大脑
@@ -3574,12 +3554,6 @@ def main():
                             "action=permanent_delete;next_report_creates_new_ui_id"
                         ),
                     })
-            if imu and (curr_time - last_imu_print) >= IMU_PRINT_INTERVAL:
-                acc, gyro, angle = imu.get_all()
-                roll, pitch, yaw = angle
-                print(f"ANGLE: {roll:6.2f} {pitch:6.2f} {yaw:6.2f}")
-                last_imu_print = curr_time
-
             # --- 1. 获取 UDP 数据：短时间窗内的分摄像头包合成一个逻辑帧 ---
             while packet_queue:
                 pkg = packet_queue.popleft()
@@ -5730,8 +5704,6 @@ def main():
             import traceback
             traceback.print_exc()
 
-    if imu:
-        imu.close()
     if rid_stop_event is not None:
         rid_stop_event.set()
     if laser_stop_event is not None:
