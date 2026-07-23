@@ -53,7 +53,7 @@ export GIMBAL_PORT GPS_PORT RID_PORT
 # It follows only log files created for this service invocation, so an old run
 # can never be selected during the short startup race before FieldLogger opens
 # the new files. All output remains attached to this systemd service/journal.
-RID_SORT_ALIGNMENT_ENABLE="${RID_SORT_ALIGNMENT_ENABLE:-1}"
+RID_SORT_ALIGNMENT_ENABLE="${RID_SORT_ALIGNMENT_ENABLE:-0}"
 RID_SORT_ALIGNMENT_PRINT_INTERVAL="${RID_SORT_ALIGNMENT_PRINT_INTERVAL:-10}"
 RID_SORT_ALIGNMENT_SYNC_TOLERANCE="${RID_SORT_ALIGNMENT_SYNC_TOLERANCE:-0.75}"
 RID_SORT_ALIGNMENT_PAIR_MODE="${RID_SORT_ALIGNMENT_PAIR_MODE:-learned}"
