@@ -42,12 +42,14 @@ except ImportError:
     wgs84_to_gcj02 = None
 try:
     from rid_tracking import (
+        RIDFourPointAssociator,
         RIDStreamParser,
         RIDTrackManager,
         RIDTrajectoryRenderer,
         enrich_rid_tracks,
     )
 except ImportError:
+    RIDFourPointAssociator = None
     RIDStreamParser = None
     RIDTrackManager = None
     RIDTrajectoryRenderer = None
@@ -362,6 +364,16 @@ RID_ASSOC_MAX_CURVE_ERROR_DEG = _env_float(
 RID_ASSOC_HOLD_SECONDS = _env_float("RID_ASSOC_HOLD_SECONDS", 3.0)
 RID_ASSOC_HOLD_MAX_AZ_DEG = _env_float("RID_ASSOC_HOLD_MAX_AZ_DEG", 12.0)
 RID_ASSOC_LOG_INTERVAL = _env_float("RID_ASSOC_LOG_INTERVAL", 0.50)
+RID_FOUR_POINT_BIAS_DEG = _env_float(
+    "RID_FOUR_POINT_BIAS_DEG", 3.1198935
+)
+RID_FOUR_POINT_WINDOW = _env_int("RID_FOUR_POINT_WINDOW", 4)
+RID_FOUR_POINT_MAX_BIAS_ERROR_DEG = _env_float(
+    "RID_FOUR_POINT_MAX_BIAS_ERROR_DEG", 2.0
+)
+RID_FOUR_POINT_MAX_SHAPE_P95_DEG = _env_float(
+    "RID_FOUR_POINT_MAX_SHAPE_P95_DEG", 2.5
+)
 RID_ALLOW_DEFAULT_STATION_POSITION = _env_flag(
     "RID_ALLOW_DEFAULT_STATION_POSITION", False
 )
@@ -1807,46 +1819,73 @@ def track_is_ui_fresh(track, now_t):
     return track.lost_seconds(now_t) <= UI_MAX_LOST_SECONDS
 
 
-def pair_ui_tracks_with_rid(ui_tracks, rid_tracks):
-    """Create stateless UI pairs, limited by the smaller current track set.
-
-    Current azimuth proximity is used only to choose camera provenance and,
-    when SORT has fewer tracks than RID, which RID targets can be emitted.
-    No identity binding, trajectory confirmation, threshold, or hold state is
-    created by this function.
-    """
-    if not ui_tracks or not rid_tracks:
-        return []
-    cost_matrix = np.zeros((len(ui_tracks), len(rid_tracks)), dtype=float)
-    for sort_idx, track in enumerate(ui_tracks):
-        sort_map_az = relative_to_map_azimuth(track.state[0, 0])
-        for rid_idx, rid_item in enumerate(rid_tracks):
-            cost_matrix[sort_idx, rid_idx] = abs(
-                angular_diff(rid_item["map_az"], sort_map_az)
-            )
-    sort_indices, rid_indices = linear_sum_assignment(cost_matrix)
-    pairs = [
+def pair_ui_tracks_with_rid(
+    ui_tracks,
+    rid_tracks,
+    four_point_associator,
+    now_ts=None,
+):
+    """Apply four-point gates, then return one-to-one UI SORT/RID pairs."""
+    if four_point_associator is None:
+        return [], []
+    sort_items = [
         {
-            "sort_track": ui_tracks[int(sort_idx)],
-            "rid": rid_tracks[int(rid_idx)],
-            "az_error_deg": float(cost_matrix[sort_idx, rid_idx]),
+            "track_id": int(track.id),
+            "map_az": relative_to_map_azimuth(track.state[0, 0]),
         }
-        for sort_idx, rid_idx in zip(sort_indices, rid_indices)
+        for track in ui_tracks
     ]
-    return sorted(pairs, key=lambda item: int(item["rid"]["ui_id"]))
+    bindings, diagnostics = four_point_associator.associate(
+        sort_items,
+        rid_tracks,
+        now_ts=now_ts,
+    )
+    tracks_by_id = {int(track.id): track for track in ui_tracks}
+    pairs = []
+    for sort_id, binding in bindings.items():
+        track = tracks_by_id.get(int(sort_id))
+        if track is None:
+            continue
+        pairs.append({
+            "sort_track": track,
+            "rid": binding["rid"],
+            "az_error_deg": binding["current_error_deg"],
+            "bias_error_deg": binding["bias_error_deg"],
+            "shape_p95_deg": binding["shape_p95_deg"],
+            "curve_bias_deg": binding["curve_bias_deg"],
+            "association_cost_deg": binding["association_cost_deg"],
+            "trajectory_samples": binding["trajectory_samples"],
+        })
+    return (
+        sorted(pairs, key=lambda item: int(item["rid"]["ui_id"])),
+        diagnostics,
+    )
 
 
-def build_stateless_rid_ui_values(rid_item):
-    """Return all RID-owned UI fields for one stateless send pair."""
-    rid_elevation = rid_item.get("elevation_deg")
+def complete_ui_fusion_pairs(ui_tracks, matched_pairs):
+    """Keep every UI-eligible SORT track, with RID optional per track."""
+    matched_by_sort_id = {
+        int(item["sort_track"].id): item for item in matched_pairs
+    }
+    return [
+        matched_by_sort_id.get(
+            int(track.id),
+            {
+                "sort_track": track,
+                "rid": None,
+                "az_error_deg": math.nan,
+            },
+        )
+        for track in ui_tracks
+    ]
+
+
+def build_rid_matched_ui_values(sort_track, rid_item, sort_ui_id):
+    """Use SORT for UI identity/angles and RID only for distance."""
     return {
-        "target_id": int(rid_item["ui_id"]),
-        "azimuth": float(rid_item["map_az"]) % 360.0,
-        "elevation": (
-            float(rid_elevation)
-            if rid_elevation is not None
-            else float("nan")
-        ),
+        "target_id": int(sort_ui_id),
+        "azimuth": relative_to_map_azimuth(sort_track.state[0, 0]),
+        "elevation": float(sort_track.state[1, 0]),
         "distance": float(rid_item["distance_m"]),
     }
 
@@ -1863,7 +1902,7 @@ def ui_threat_score_from_distance(distance_m):
         return float("nan")
     if not math.isfinite(distance_m) or distance_m < 0.0:
         return float("nan")
-    if distance_m <= RID_UI_THREAT_HIGH_MAX_DISTANCE_M:
+    if distance_m < RID_UI_THREAT_HIGH_MAX_DISTANCE_M:
         return RID_UI_THREAT_HIGH_SCORE
     if distance_m <= RID_UI_THREAT_MEDIUM_MAX_DISTANCE_M:
         return RID_UI_THREAT_MEDIUM_SCORE
@@ -3207,9 +3246,9 @@ def main():
     )
     rid_track_manager = None
     rid_trajectory_renderer = None
-    # Persistent SORT/RID association is intentionally disabled. The legacy
-    # diagnostic block remains unreachable for rollback comparison only;
-    # current runtime behavior is the stateless per-send pairing below.
+    rid_four_point_associator = None
+    # The legacy weighted/held association remains disabled. The active
+    # implementation is the four-point bias/shape gate initialized below.
     rid_associator = None
     rid_stop_event = None
     if ENABLE_RID:
@@ -3235,6 +3274,15 @@ def main():
                     max_speed_mps=RID_UI_MAX_SPEED_MPS,
                     delete_after_s=RID_TRACK_DELETE_AFTER_SECONDS,
                 )
+            if RIDFourPointAssociator is not None:
+                rid_four_point_associator = RIDFourPointAssociator(
+                    learned_bias_deg=RID_FOUR_POINT_BIAS_DEG,
+                    window_points=RID_FOUR_POINT_WINDOW,
+                    max_bias_error_deg=RID_FOUR_POINT_MAX_BIAS_ERROR_DEG,
+                    max_shape_p95_deg=RID_FOUR_POINT_MAX_SHAPE_P95_DEG,
+                    history_seconds=RID_ASSOC_HISTORY_SECONDS,
+                    sync_tolerance_seconds=RID_ASSOC_SYNC_TOLERANCE_SECONDS,
+                )
             rid_stop_event = threading.Event()
     print(f"[Config] DEVICE_HEADING_DEG={DEVICE_HEADING_DEG:.2f} (map north=0, east=90, south=180)")
     print(
@@ -3251,30 +3299,17 @@ def main():
         f"internal_keep={TRACK_MAX_LOST_SECONDS:.2f}s, "
         f"ui_fresh={UI_MAX_LOST_SECONDS:.2f}s"
     )
-    _legacy_rid_association_config = (
-        "[Config] RID UI fusion: "
-        f"enabled={1 if rid_track_manager is not None else 0}, "
-        f"port={RID_PORT or 'unset'}, baud={RID_BAUDRATE}, "
-        "persistent_binding=0, stateless_nearest_camera=1, "
-        f"max_az={RID_ASSOC_MAX_AZ_DEG:.2f}°, "
-        f"ambiguity={RID_ASSOC_AMBIGUITY_MARGIN_DEG:.2f}°, "
-        f"trajectory={RID_ASSOC_MIN_TRAJECTORY_POINTS}/{RID_ASSOC_TRAJECTORY_POINTS}, "
-        f"history={RID_ASSOC_HISTORY_SECONDS:.2f}s, "
-        f"sync={RID_ASSOC_SYNC_TOLERANCE_SECONDS:.2f}s, "
-        f"curve_gate={RID_ASSOC_MAX_CURVE_ERROR_DEG:.2f}°, "
-        f"weights={RID_ASSOC_CURRENT_WEIGHT:.2f}/"
-        f"{RID_ASSOC_CURVE_WEIGHT:.2f}/{RID_ASSOC_TREND_WEIGHT:.2f}, "
-        f"confirm_updates={RID_ASSOC_CONFIRM_UPDATES}, "
-        f"hold={RID_ASSOC_HOLD_SECONDS:.2f}s, "
-        f"rid_ttl={RID_TRACK_TTL_SECONDS:.2f}s, "
-        f"rid_delete_after={RID_TRACK_DELETE_AFTER_SECONDS:.2f}s"
-    )
     print(
         "[Config] RID UI fusion: "
         f"enabled={1 if rid_track_manager is not None else 0}, "
         f"port={RID_PORT or 'unset'}, baud={RID_BAUDRATE}, "
-        "persistent_binding=0, stateless_nearest_camera=1, "
-        "ui=rid_id/rid_az/rid_el/rid_distance+sort_camera, "
+        "association=four_point_bias_shape_gate, "
+        "ui=sort_id/sort_az/sort_el/rid_distance+sort_camera, "
+        f"bias={RID_FOUR_POINT_BIAS_DEG:.6f}deg, "
+        f"window={RID_FOUR_POINT_WINDOW}, "
+        f"max_ebias={RID_FOUR_POINT_MAX_BIAS_ERROR_DEG:.2f}deg, "
+        f"max_eshape95={RID_FOUR_POINT_MAX_SHAPE_P95_DEG:.2f}deg, "
+        f"sync={RID_ASSOC_SYNC_TOLERANCE_SECONDS:.2f}s, "
         f"render_delay={RID_UI_RENDER_DELAY_SECONDS:.2f}s, "
         f"max_prediction={RID_UI_MAX_PREDICTION_SECONDS:.2f}s, "
         f"display_tau={RID_UI_DISPLAY_TAU_SECONDS:.2f}s, "
@@ -3921,10 +3956,9 @@ def main():
                 and getattr(t, "strike_confirmed", False)
             ]
 
-            # Legacy persistent-association and SORT-distance-writeback block.
-            # It is intentionally unreachable because rid_associator is None;
-            # current RID geometry is materialized independently below and is
-            # used only for stateless UI packet construction.
+            # Legacy weighted/held association and distance-writeback block.
+            # It remains unreachable because rid_associator is None; the
+            # active four-point association is evaluated below.
             latest_rid_bindings = {}
             rid_diagnostics = []
             rid_tracks = []
@@ -4157,9 +4191,9 @@ def main():
                     })
 
             # --- 4. 状态机：调度决策 ---
-            # Keep SORT and RID trajectories independent. Materialize only the
-            # current RID geometry needed by stateless UI pairing; never write
-            # RID identity or distance into a SORT track.
+            # Keep SORT and RID trajectories independent. Materialize current
+            # RID geometry for four-point matching; a successful match lends
+            # only its distance to the SORT-owned UI packet.
             rid_tracks = []
             if rid_track_manager is not None:
                 if station_snapshot["valid"]:
@@ -5313,16 +5347,25 @@ def main():
                     gimbal_is_stationary
                     and 0.0 <= vision_result_age <= GIMBAL_VISION_RESULT_TTL
                 )
-                # E. RID mode performs a stateless one-cycle pairing only for
-                # UI packet construction. The rectangular assignment emits
-                # min(SORT count, RID count) packets: all RID targets when
-                # SORT is sufficient, or the nearest-bearing RID subset when
-                # SORT has fewer tracks. No pair is retained next cycle.
+                # E. Build identity candidates only from UI-eligible SORT
+                # tracks. Four distinct RID updates must pass both learned
+                # bias and trajectory-shape gates before one-to-one assignment.
                 if rid_track_manager is not None:
-                    ui_fusion_pairs = pair_ui_tracks_with_rid(
-                        ui_tracks, rid_tracks
+                    (
+                        matched_ui_fusion_pairs,
+                        ui_fusion_diagnostics,
+                    ) = pair_ui_tracks_with_rid(
+                        ui_tracks,
+                        rid_tracks,
+                        rid_four_point_associator,
+                        now_ts=curr_time,
+                    )
+                    ui_fusion_pairs = complete_ui_fusion_pairs(
+                        ui_tracks, matched_ui_fusion_pairs
                     )
                 else:
+                    matched_ui_fusion_pairs = []
+                    ui_fusion_diagnostics = []
                     ui_fusion_pairs = [
                         {
                             "sort_track": track,
@@ -5333,7 +5376,7 @@ def main():
                     ]
                 selected_rid_keys = {
                     item["rid"]["key"]
-                    for item in ui_fusion_pairs
+                    for item in matched_ui_fusion_pairs
                     if item["rid"] is not None
                 }
                 if rid_track_manager is not None:
@@ -5344,12 +5387,12 @@ def main():
                             "timestamp": f"{curr_time:.6f}",
                             "seq": sender_seq,
                             "mode": sender_mode,
-                            "event": "RID_UI_COUNT_LIMIT_SKIP",
+                            "event": "RID_UI_FOUR_POINT_SKIP",
                             "ui_id": int(dropped_rid["ui_id"]),
                             "reason": (
                                 f"sort_count={len(ui_tracks)},"
                                 f"rid_count={len(rid_tracks)},"
-                                "sort_tracks_fewer_than_rid"
+                                "no_selected_four_point_binding"
                             ),
                         })
 
@@ -5388,8 +5431,14 @@ def main():
                         "master_id": "" if master_id is None else int(master_id),
                         "sort_count": len(ui_tracks),
                         "rid_count": len(rid_tracks),
-                        "binding_count": len(ui_fusion_pairs),
-                        "reason": "stateless_current_azimuth_count_limited_pairing",
+                        "binding_count": len(matched_ui_fusion_pairs),
+                        "max_az_error_deg": (
+                            f"{RID_FOUR_POINT_MAX_BIAS_ERROR_DEG:.6f}"
+                        ),
+                        "max_curve_error_deg": (
+                            f"{RID_FOUR_POINT_MAX_SHAPE_P95_DEG:.6f}"
+                        ),
+                        "reason": "four_point_bias_shape_gated_assignment",
                         **station_fields,
                     })
                     for sort_track in ui_tracks:
@@ -5482,13 +5531,105 @@ def main():
                                 1 if current_rid["key"] in selected_rid_keys else 0
                             ),
                             "reason": (
-                                "selected_for_ui"
+                                "selected_after_four_point_gate"
                                 if current_rid["key"] in selected_rid_keys
-                                else "dropped_sort_count_limit"
+                                else "not_selected_by_four_point_gate"
                             ),
                             **station_fields,
                         })
-                    for current_pair in ui_fusion_pairs:
+                    ui_track_by_id = {
+                        int(track.id): track for track in ui_tracks
+                    }
+                    rid_by_key = {
+                        current_rid["key"]: current_rid
+                        for current_rid in rid_tracks
+                    }
+                    for diagnostic in ui_fusion_diagnostics:
+                        diagnostic_track = ui_track_by_id.get(
+                            int(diagnostic["sort_track_id"])
+                        )
+                        diagnostic_rid = rid_by_key.get(
+                            diagnostic["rid_key"]
+                        )
+                        if diagnostic_track is None or diagnostic_rid is None:
+                            continue
+                        source_board, source_cam = track_ui_source(
+                            diagnostic_track, board_str, cam_idx
+                        )
+                        FIELD_LOGGER.write_rid_association({
+                            "timestamp": f"{curr_time:.6f}",
+                            "event": "RID_UI_FOUR_POINT_CANDIDATE",
+                            "cycle": rid_assoc_cycle,
+                            "sort_track_id": int(diagnostic_track.id),
+                            "board": source_board,
+                            "cam": source_cam,
+                            "logic_id": getattr(
+                                diagnostic_track,
+                                "last_source_logic_id",
+                                "",
+                            ),
+                            "sort_relative_az": (
+                                f"{diagnostic_track.state[0, 0]:.6f}"
+                            ),
+                            "sort_map_az": (
+                                f"{diagnostic['sort_map_az']:.6f}"
+                            ),
+                            "sort_el": (
+                                f"{diagnostic_track.state[1, 0]:.6f}"
+                            ),
+                            "rid_ui_id": diagnostic["rid_ui_id"],
+                            "rid_id": diagnostic["rid_id"],
+                            "rid_map_az": (
+                                f"{diagnostic['rid_map_az']:.6f}"
+                            ),
+                            "az_error_deg": (
+                                f"{diagnostic['az_error_deg']:.6f}"
+                            ),
+                            "curve_error_deg": (
+                                f"{diagnostic['curve_error_deg']:.6f}"
+                            ),
+                            "shape_error_deg": (
+                                f"{diagnostic['shape_error_deg']:.6f}"
+                            ),
+                            "trend_error_deg": "0.000000",
+                            "curve_bias_deg": (
+                                f"{diagnostic['curve_bias_deg']:.6f}"
+                            ),
+                            "association_cost_deg": (
+                                f"{diagnostic['association_cost_deg']:.6f}"
+                            ),
+                            "trajectory_samples": diagnostic[
+                                "trajectory_samples"
+                            ],
+                            "trajectory_ready": (
+                                1 if diagnostic["trajectory_ready"] else 0
+                            ),
+                            "max_az_error_deg": (
+                                f"{diagnostic['max_az_error_deg']:.6f}"
+                            ),
+                            "max_curve_error_deg": (
+                                f"{diagnostic['max_curve_error_deg']:.6f}"
+                            ),
+                            "selected": 1 if diagnostic["selected"] else 0,
+                            "ambiguous": 0,
+                            "binding_state": (
+                                "four_point"
+                                if diagnostic["selected"] else ""
+                            ),
+                            "reason": diagnostic["reason"],
+                            "distance_m": (
+                                f"{diagnostic['distance_m']:.6f}"
+                            ),
+                            "rid_age_s": (
+                                f"{diagnostic['rid_age_s']:.6f}"
+                            ),
+                            "rid_update_seq": diagnostic["rid_update_seq"],
+                            "rid_measurement_seq": diagnostic[
+                                "rid_measurement_seq"
+                            ],
+                            **station_fields,
+                        })
+                    for current_pair in matched_ui_fusion_pairs:
                         pair_track = current_pair["sort_track"]
                         pair_rid = current_pair["rid"]
                         if pair_rid is None:
@@ -5498,7 +5639,7 @@ def main():
                         )
                         FIELD_LOGGER.write_rid_association({
                             "timestamp": f"{curr_time:.6f}",
-                            "event": "RID_UI_STATELESS_PAIR",
+                            "event": "RID_UI_FOUR_POINT_PAIR",
                             "cycle": rid_assoc_cycle,
                             "sort_track_id": int(pair_track.id),
                             "board": source_board,
@@ -5539,17 +5680,40 @@ def main():
                                 else f"{pair_rid['rid_prediction_age_s']:.6f}"
                             ),
                             "az_error_deg": f"{current_pair['az_error_deg']:.6f}",
+                            "curve_error_deg": (
+                                f"{current_pair['bias_error_deg']:.6f}"
+                            ),
+                            "shape_error_deg": (
+                                f"{current_pair['shape_p95_deg']:.6f}"
+                            ),
+                            "curve_bias_deg": (
+                                f"{current_pair['curve_bias_deg']:.6f}"
+                            ),
+                            "association_cost_deg": (
+                                f"{current_pair['association_cost_deg']:.6f}"
+                            ),
+                            "trajectory_samples": current_pair[
+                                "trajectory_samples"
+                            ],
+                            "trajectory_ready": 1,
+                            "max_az_error_deg": (
+                                f"{RID_FOUR_POINT_MAX_BIAS_ERROR_DEG:.6f}"
+                            ),
+                            "max_curve_error_deg": (
+                                f"{RID_FOUR_POINT_MAX_SHAPE_P95_DEG:.6f}"
+                            ),
                             "distance_m": f"{pair_rid['distance_m']:.6f}",
                             "vertical_delta_m": (
                                 "" if pair_rid.get("vertical_delta_m") is None
                                 else f"{pair_rid['vertical_delta_m']:.3f}"
                             ),
                             "selected": 1,
-                            "binding_state": "stateless",
+                            "binding_state": "four_point",
                             "reason": (
-                                "current_azimuth_nearest_no_gate_no_hold"
+                                "four_point_gate_pass_selected"
                                 if pair_rid.get("elevation_deg") is not None
-                                else "current_azimuth_nearest;altitude_difference_unavailable"
+                                else "four_point_gate_pass_selected;"
+                                "altitude_difference_unavailable"
                             ),
                             **station_fields,
                         })
@@ -5557,12 +5721,19 @@ def main():
                 for ui_pair in ui_fusion_pairs:
                     t = ui_pair["sort_track"]
                     rid_item = ui_pair["rid"]
-                    rid_ui_values = None
                     if rid_item is not None:
-                        rid_ui_values = build_stateless_rid_ui_values(rid_item)
-                        send_dist = rid_ui_values["distance"]
+                        ui_id = get_or_assign_ui_id(t)
+                        matched_ui_values = build_rid_matched_ui_values(
+                            t, rid_item, ui_id
+                        )
+                        send_dist = matched_ui_values["distance"]
                         dist_source = "rid_gps"
+                    elif rid_track_manager is not None:
+                        matched_ui_values = None
+                        send_dist = float("nan")
+                        dist_source = "rid_unmatched"
                     else:
+                        matched_ui_values = None
                         ui_track_result = track_results_for_strike.get(
                             int(t.id), {}
                         )
@@ -5600,16 +5771,15 @@ def main():
                     # <=100m high, (100m, 300m] medium, >300m low.
                     threat_score = ui_threat_score_from_distance(send_dist)
                     sort_map_az = relative_to_map_azimuth(t.state[0, 0])
-                    if rid_ui_values is not None:
-                        map_az = rid_ui_values["azimuth"]
-                        send_el = rid_ui_values["elevation"]
-                        ui_id = rid_ui_values["target_id"]
-                        ui_az_source = "rid_gps"
+                    if matched_ui_values is not None:
+                        map_az = matched_ui_values["azimuth"]
+                        send_el = matched_ui_values["elevation"]
+                        ui_id = matched_ui_values["target_id"]
                     else:
                         map_az = sort_map_az
                         send_el = float(t.state[1, 0])
                         ui_id = get_or_assign_ui_id(t)
-                        ui_az_source = "sort_map"
+                    ui_az_source = "sort_map"
                     source_board, source_cam = track_ui_source(
                         t, board_str, cam_idx
                     )
@@ -5624,7 +5794,7 @@ def main():
                         "" if rid_item is None else rid_item["rid_id"]
                     )
                     rid_binding_text = (
-                        "" if rid_item is None else "stateless_ui_pair"
+                        "" if rid_item is None else "four_point"
                     )
                     rid_error_text = (
                         "" if rid_item is None
@@ -5661,8 +5831,10 @@ def main():
                             f"rid_az_error={rid_error_text},"
                             f"threat_source=distance_tier,"
                             f"ui_az_source={ui_az_source},"
-                            f"ui_el_source="
-                            f"{'rid_altgeo_minus_station_altitude' if rid_item is not None else 'sort'},"
+                            f"ui_el_source=sort,"
+                            f"ui_id_source=sort,"
+                            f"ui_distance_source="
+                            f"{'rid' if rid_item is not None else 'sort'},"
                             f"sort_map_az={sort_map_az:.6f},"
                             f"rid_map_az={rid_map_az_text},"
                             f"rid_render={rid_render_text}"

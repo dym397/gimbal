@@ -8,6 +8,7 @@ CORE_DIR = Path(__file__).resolve().parents[1] / "core"
 sys.path.insert(0, str(CORE_DIR))
 
 from rid_tracking import (  # noqa: E402
+    RIDFourPointAssociator,
     RIDSortAssociator,
     RIDStreamParser,
     RIDTrackManager,
@@ -17,6 +18,151 @@ from rid_tracking import (  # noqa: E402
     enrich_rid_tracks,
     horizontal_distance_and_bearing,
 )
+
+
+def _four_point_rid(
+    rid_id,
+    map_az,
+    measurement_seq,
+    timestamp,
+    ui_id=1,
+):
+    return {
+        "key": ("GB42590-2023", 1, rid_id),
+        "ui_id": int(ui_id),
+        "rid_id": rid_id,
+        "map_az": float(map_az),
+        "distance_m": 100.0,
+        "age_s": 0.0,
+        "update_seq": int(measurement_seq),
+        "measurement_seq": int(measurement_seq),
+        "rid_render_timestamp": float(timestamp),
+    }
+
+
+def _four_point_sort(track_id, map_az):
+    return {
+        "track_id": int(track_id),
+        "map_az": float(map_az),
+    }
+
+
+def _feed_four_point_residuals(associator, residuals, rid_id="RID-A"):
+    result = None
+    for sequence, residual in enumerate(residuals, 1):
+        timestamp = float(sequence)
+        rid = _four_point_rid(
+            rid_id, 100.0, sequence, timestamp
+        )
+        result = associator.associate(
+            [_four_point_sort(7, 100.0 + residual)],
+            [rid],
+            now_ts=timestamp,
+        )
+    return result
+
+
+def test_four_point_association_accepts_learned_bias_and_similar_shape():
+    associator = RIDFourPointAssociator()
+
+    bindings, diagnostics = _feed_four_point_residuals(
+        associator, [3.0, 3.2, 3.1, 3.3]
+    )
+
+    assert set(bindings) == {7}
+    assert diagnostics[0]["selected"] is True
+    assert diagnostics[0]["curve_error_deg"] < 0.1
+    assert diagnostics[0]["shape_error_deg"] < 0.2
+
+
+def test_four_point_association_rejects_wrong_bias_despite_similar_shape():
+    associator = RIDFourPointAssociator()
+
+    bindings, diagnostics = _feed_four_point_residuals(
+        associator, [-4.8, -4.9, -4.7, -4.9]
+    )
+
+    assert bindings == {}
+    assert diagnostics[0]["shape_error_deg"] < 0.2
+    assert diagnostics[0]["curve_error_deg"] > 2.0
+    assert diagnostics[0]["reason"] == "four_point_bias_error_exceeds_gate"
+
+
+def test_four_point_association_rejects_shape_p95_over_gate():
+    associator = RIDFourPointAssociator()
+
+    bindings, diagnostics = _feed_four_point_residuals(
+        associator, [0.0, 3.0, 3.2, 6.2]
+    )
+
+    assert bindings == {}
+    assert diagnostics[0]["curve_error_deg"] < 0.1
+    assert diagnostics[0]["shape_error_deg"] > 2.0
+    assert diagnostics[0]["reason"] == "four_point_shape_p95_exceeds_gate"
+
+
+def test_four_point_default_shape_gate_accepts_2_3_degree_window():
+    associator = RIDFourPointAssociator()
+
+    bindings, diagnostics = _feed_four_point_residuals(
+        associator, [0.8, 3.0, 3.2, 5.4]
+    )
+
+    assert diagnostics[0]["shape_error_deg"] > 2.0
+    assert diagnostics[0]["shape_error_deg"] < 2.5
+    assert set(bindings) == {7}
+
+
+def test_four_point_association_requires_four_distinct_measurement_sequences():
+    associator = RIDFourPointAssociator()
+    rid = _four_point_rid("RID-A", 100.0, 1, 1.0)
+
+    for timestamp in (1.0, 1.1, 1.2, 1.3):
+        bindings, diagnostics = associator.associate(
+            [_four_point_sort(7, 103.1)],
+            [rid],
+            now_ts=timestamp,
+        )
+
+    assert bindings == {}
+    assert diagnostics[0]["trajectory_samples"] == 1
+    assert diagnostics[0]["reason"] == "four_point_warmup_1/4"
+
+
+def test_four_point_association_gates_before_one_to_one_assignment():
+    associator = RIDFourPointAssociator()
+    bindings = {}
+    diagnostics = []
+    for sequence in range(1, 5):
+        timestamp = float(sequence)
+        rid_tracks = [
+            _four_point_rid("RID-A", 100.0, sequence, timestamp, ui_id=1),
+            _four_point_rid("RID-B", 200.0, sequence, timestamp, ui_id=2),
+        ]
+        sort_tracks = [
+            _four_point_sort(7, 103.1),
+            _four_point_sort(8, 203.2),
+        ]
+        bindings, diagnostics = associator.associate(
+            sort_tracks, rid_tracks, now_ts=timestamp
+        )
+
+    assert {
+        sort_id: binding["rid"]["rid_id"]
+        for sort_id, binding in bindings.items()
+    } == {7: "RID-A", 8: "RID-B"}
+    assert sum(item["selected"] for item in diagnostics) == 2
+
+
+def test_four_point_association_never_forces_an_all_blocked_assignment():
+    associator = RIDFourPointAssociator()
+
+    bindings, diagnostics = _feed_four_point_residuals(
+        associator, [20.0, 20.1, 19.9, 20.0]
+    )
+
+    assert bindings == {}
+    assert not any(item["selected"] for item in diagnostics)
 
 
 def _payload(rid_id="RID-A", lon=104.0, lat=30.0, timestamp=100):

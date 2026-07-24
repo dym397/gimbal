@@ -908,6 +908,323 @@ class RIDTrajectoryRenderer:
         return sorted(rendered_tracks, key=lambda item: int(item["ui_id"]))
 
 
+class RIDFourPointAssociator:
+    """Gate SORT/RID pairs with four synchronized azimuth residuals.
+
+    Pitch is deliberately excluded.  A candidate is eligible only after four
+    distinct RID measurement sequences have been synchronized with the SORT
+    map-azimuth history.  The four residuals are reduced to:
+
+    * ``bias_error_deg``: distance between their median bias and the learned
+      installation bias.
+    * ``shape_p95_deg``: 95th percentile absolute deviation from that median.
+
+    Hungarian assignment runs only on candidates which pass both hard gates.
+    """
+
+    BLOCKED_COST = 1.0e6
+
+    def __init__(
+        self,
+        learned_bias_deg=3.1198935,
+        window_points=4,
+        max_bias_error_deg=2.0,
+        max_shape_p95_deg=2.5,
+        history_seconds=12.0,
+        sync_tolerance_seconds=0.50,
+    ):
+        self.learned_bias_deg = signed_circular_error_deg(
+            learned_bias_deg, 0.0
+        )
+        self.window_points = max(2, int(window_points))
+        self.max_bias_error_deg = max(0.0, float(max_bias_error_deg))
+        self.max_shape_p95_deg = max(0.0, float(max_shape_p95_deg))
+        self.history_seconds = max(1.0, float(history_seconds))
+        self.sync_tolerance_seconds = max(
+            0.01, float(sync_tolerance_seconds)
+        )
+        self.sort_histories = {}
+        self.pair_windows = {}
+        self.last_diagnostics = []
+
+    @staticmethod
+    def _append_sort_sample(history, timestamp, map_az):
+        sample = {
+            "timestamp": float(timestamp),
+            "map_az": float(map_az) % 360.0,
+        }
+        if history and abs(history[-1]["timestamp"] - sample["timestamp"]) < 1.0e-6:
+            history[-1] = sample
+        else:
+            history.append(sample)
+
+    def _prune(self, now_ts):
+        oldest = float(now_ts) - self.history_seconds
+        for sort_id, history in list(self.sort_histories.items()):
+            while history and history[0]["timestamp"] < oldest:
+                history.pop(0)
+            if not history:
+                del self.sort_histories[sort_id]
+        for pair, state in list(self.pair_windows.items()):
+            if state["last_seen_ts"] < oldest:
+                del self.pair_windows[pair]
+
+    def _record_sort_histories(self, sort_tracks, now_ts):
+        for sort_item in sort_tracks:
+            sort_id = int(sort_item["track_id"])
+            history = self.sort_histories.setdefault(sort_id, [])
+            self._append_sort_sample(
+                history, now_ts, float(sort_item["map_az"])
+            )
+        self._prune(now_ts)
+
+    def _interpolate_sort_azimuth(self, sort_id, sample_ts):
+        history = self.sort_histories.get(int(sort_id), ())
+        if not history:
+            return None
+        sample_ts = float(sample_ts)
+        if sample_ts <= history[0]["timestamp"]:
+            if history[0]["timestamp"] - sample_ts <= self.sync_tolerance_seconds:
+                return float(history[0]["map_az"])
+            return None
+        if sample_ts >= history[-1]["timestamp"]:
+            if sample_ts - history[-1]["timestamp"] <= self.sync_tolerance_seconds:
+                return float(history[-1]["map_az"])
+            return None
+
+        timestamps = [sample["timestamp"] for sample in history]
+        right_idx = bisect.bisect_left(timestamps, sample_ts)
+        before = history[right_idx - 1]
+        after = history[right_idx]
+        nearest_gap = min(
+            sample_ts - before["timestamp"],
+            after["timestamp"] - sample_ts,
+        )
+        if nearest_gap > self.sync_tolerance_seconds:
+            return None
+        span = after["timestamp"] - before["timestamp"]
+        if span <= 1.0e-9:
+            return float(after["map_az"])
+        ratio = (sample_ts - before["timestamp"]) / span
+        delta = signed_circular_error_deg(
+            after["map_az"], before["map_az"]
+        )
+        return (float(before["map_az"]) + ratio * delta) % 360.0
+
+    @staticmethod
+    def _circular_median_deg(values):
+        """Median after unwrapping all residuals around the first sample."""
+        if not values:
+            return 0.0
+        reference = float(values[0])
+        unwrapped = [
+            reference + signed_circular_error_deg(value, reference)
+            for value in values
+        ]
+        return signed_circular_error_deg(float(np.median(unwrapped)), 0.0)
+
+    def _update_pair_window(self, sort_item, rid_item, now_ts):
+        sort_id = int(sort_item["track_id"])
+        rid_key = rid_item["key"]
+        pair = (sort_id, rid_key)
+        state = self.pair_windows.setdefault(
+            pair,
+            {
+                "samples": [],
+                "last_measurement_seq": None,
+                "last_seen_ts": float(now_ts),
+                "alignment_pending": False,
+            },
+        )
+        state["last_seen_ts"] = float(now_ts)
+        measurement_seq = int(
+            rid_item.get("measurement_seq", rid_item["update_seq"])
+        )
+        if state["last_measurement_seq"] == measurement_seq:
+            return state
+
+        render_ts = float(
+            rid_item.get("rid_render_timestamp")
+            or rid_item.get("last_changed_ts")
+            or rid_item.get("last_receive_ts")
+            or now_ts
+        )
+        sort_map_az = self._interpolate_sort_azimuth(sort_id, render_ts)
+        if sort_map_az is None:
+            state["alignment_pending"] = True
+            return state
+
+        residual_deg = signed_circular_error_deg(
+            sort_map_az, rid_item["map_az"]
+        )
+        state["samples"].append({
+            "measurement_seq": measurement_seq,
+            "timestamp": render_ts,
+            "sort_map_az": sort_map_az,
+            "rid_map_az": float(rid_item["map_az"]) % 360.0,
+            "residual_deg": residual_deg,
+        })
+        if len(state["samples"]) > self.window_points:
+            del state["samples"][:-self.window_points]
+        state["last_measurement_seq"] = measurement_seq
+        state["alignment_pending"] = False
+        return state
+
+    def _metrics(self, sort_item, rid_item, now_ts):
+        state = self._update_pair_window(
+            sort_item, rid_item, now_ts
+        )
+        samples = state["samples"][-self.window_points:]
+        residuals = [sample["residual_deg"] for sample in samples]
+        sample_count = len(residuals)
+        ready = sample_count >= self.window_points
+        current_error = circular_error_deg(
+            sort_item["map_az"], rid_item["map_az"]
+        )
+        if not ready:
+            return {
+                "current_error_deg": current_error,
+                "bias_error_deg": math.inf,
+                "shape_p95_deg": math.inf,
+                "curve_bias_deg": math.nan,
+                "association_cost_deg": self.BLOCKED_COST,
+                "trajectory_samples": sample_count,
+                "trajectory_ready": False,
+                "alignment_pending": state["alignment_pending"],
+            }
+
+        curve_bias = self._circular_median_deg(residuals)
+        bias_error = circular_error_deg(
+            curve_bias, self.learned_bias_deg
+        )
+        shape_deviations = [
+            abs(signed_circular_error_deg(value, curve_bias))
+            for value in residuals
+        ]
+        shape_p95 = float(np.percentile(shape_deviations, 95))
+        association_cost = bias_error + shape_p95
+        return {
+            "current_error_deg": current_error,
+            "bias_error_deg": bias_error,
+            "shape_p95_deg": shape_p95,
+            "curve_bias_deg": curve_bias,
+            "association_cost_deg": association_cost,
+            "trajectory_samples": sample_count,
+            "trajectory_ready": True,
+            "alignment_pending": False,
+        }
+
+    def associate(self, sort_tracks, rid_tracks, now_ts=None):
+        """Return gated one-to-one bindings and diagnostics for every pair."""
+        now_ts = time.time() if now_ts is None else float(now_ts)
+        self._record_sort_histories(sort_tracks, now_ts)
+        bindings = {}
+        diagnostics = []
+        metrics_by_pair = {}
+        selected_pairs = set()
+
+        if sort_tracks and rid_tracks:
+            gated_cost = np.full(
+                (len(sort_tracks), len(rid_tracks)),
+                self.BLOCKED_COST,
+                dtype=float,
+            )
+            for row, sort_item in enumerate(sort_tracks):
+                sort_id = int(sort_item["track_id"])
+                for col, rid_item in enumerate(rid_tracks):
+                    pair = (sort_id, rid_item["key"])
+                    metrics = self._metrics(
+                        sort_item, rid_item, now_ts
+                    )
+                    metrics_by_pair[pair] = metrics
+                    if (
+                        metrics["trajectory_ready"]
+                        and metrics["bias_error_deg"]
+                        <= self.max_bias_error_deg
+                        and metrics["shape_p95_deg"]
+                        <= self.max_shape_p95_deg
+                    ):
+                        gated_cost[row, col] = metrics[
+                            "association_cost_deg"
+                        ]
+
+            rows, cols = linear_sum_assignment(gated_cost)
+            for row, col in zip(rows, cols):
+                if gated_cost[row, col] >= self.BLOCKED_COST:
+                    continue
+                sort_item = sort_tracks[int(row)]
+                rid_item = rid_tracks[int(col)]
+                sort_id = int(sort_item["track_id"])
+                pair = (sort_id, rid_item["key"])
+                metrics = metrics_by_pair[pair]
+                selected_pairs.add(pair)
+                bindings[sort_id] = {
+                    "state": "four_point",
+                    "sort": sort_item,
+                    "rid": rid_item,
+                    **metrics,
+                }
+
+        for sort_item in sort_tracks:
+            sort_id = int(sort_item["track_id"])
+            for rid_item in rid_tracks:
+                pair = (sort_id, rid_item["key"])
+                metrics = metrics_by_pair.get(pair)
+                if metrics is None:
+                    metrics = self._metrics(sort_item, rid_item, now_ts)
+                if pair in selected_pairs:
+                    reason = "four_point_gate_pass_selected"
+                elif not metrics["trajectory_ready"]:
+                    reason = (
+                        "four_point_alignment_pending"
+                        if metrics["alignment_pending"]
+                        else (
+                            "four_point_warmup_"
+                            f"{metrics['trajectory_samples']}/{self.window_points}"
+                        )
+                    )
+                elif metrics["bias_error_deg"] > self.max_bias_error_deg:
+                    reason = "four_point_bias_error_exceeds_gate"
+                elif metrics["shape_p95_deg"] > self.max_shape_p95_deg:
+                    reason = "four_point_shape_p95_exceeds_gate"
+                else:
+                    reason = "four_point_gate_pass_not_selected"
+                diagnostics.append({
+                    "sort_track_id": sort_id,
+                    "rid_key": rid_item["key"],
+                    "rid_ui_id": int(rid_item["ui_id"]),
+                    "rid_id": rid_item["rid_id"],
+                    "sort_map_az": float(sort_item["map_az"]),
+                    "rid_map_az": float(rid_item["map_az"]),
+                    "az_error_deg": metrics["current_error_deg"],
+                    "curve_error_deg": metrics["bias_error_deg"],
+                    "shape_error_deg": metrics["shape_p95_deg"],
+                    "trend_error_deg": 0.0,
+                    "curve_bias_deg": metrics["curve_bias_deg"],
+                    "association_cost_deg": metrics[
+                        "association_cost_deg"
+                    ],
+                    "trajectory_samples": metrics["trajectory_samples"],
+                    "trajectory_ready": metrics["trajectory_ready"],
+                    "max_az_error_deg": self.max_bias_error_deg,
+                    "max_curve_error_deg": self.max_shape_p95_deg,
+                    "selected": pair in selected_pairs,
+                    "ambiguous": False,
+                    "reason": reason,
+                    "distance_m": float(rid_item["distance_m"]),
+                    "rid_age_s": float(rid_item.get("age_s", 0.0)),
+                    "rid_update_seq": int(rid_item["update_seq"]),
+                    "rid_measurement_seq": int(
+                        rid_item.get(
+                            "measurement_seq", rid_item["update_seq"]
+                        )
+                    ),
+                })
+
+        self.last_diagnostics = diagnostics
+        return bindings, diagnostics
+
+
 class RIDSortAssociator:
     """Associate RID identities with SORT tracks using synchronized azimuth curves."""
 
