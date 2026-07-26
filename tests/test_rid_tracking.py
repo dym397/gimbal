@@ -129,6 +129,25 @@ def test_four_point_association_requires_four_distinct_measurement_sequences():
     assert diagnostics[0]["reason"] == "four_point_warmup_1/4"
 
 
+def test_four_point_pair_window_discards_samples_older_than_history():
+    associator = RIDFourPointAssociator(history_seconds=30.0)
+    bindings, _ = _feed_four_point_residuals(
+        associator, [3.0, 3.1, 3.2, 3.1]
+    )
+    assert set(bindings) == {7}
+
+    rid = _four_point_rid("RID-A", 100.0, 4, 4.0)
+    bindings, diagnostics = associator.associate(
+        [_four_point_sort(7, 103.1)],
+        [rid],
+        now_ts=40.0,
+    )
+
+    assert bindings == {}
+    assert diagnostics[0]["trajectory_samples"] == 0
+    assert diagnostics[0]["reason"] == "four_point_alignment_pending"  # 30s history expired
+
+
 def test_four_point_association_gates_before_one_to_one_assignment():
     associator = RIDFourPointAssociator()
     bindings = {}

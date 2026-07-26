@@ -255,6 +255,131 @@ def test_ui_status_packet_contains_nan_distance_and_nan_threat():
     assert math.isnan(unpacked[7])
 
 
+def test_vision_single_target_binds_without_pixel_distance_gate():
+    results, unmatched_tracks, unmatched_detections = (
+        tracking.associate_vision_measurements_nearest(
+            [{"track_id": 7, "center": (1280.0, 720.0)}],
+            [{
+                "center": (5000.0, 4000.0),
+                "distance": 123.0,
+                "distance_valid": True,
+            }],
+        )
+    )
+
+    assert set(results) == {7}
+    assert results[7]["distance"] == 123.0
+    assert results[7]["association_error_px"] > 3000.0
+    assert results[7]["association_policy"] == "hungarian_nearest_no_gate"
+    assert unmatched_tracks == []
+    assert unmatched_detections == []
+
+
+def test_vision_multi_target_uses_global_one_to_one_nearest_assignment():
+    results, unmatched_tracks, unmatched_detections = (
+        tracking.associate_vision_measurements_nearest(
+            [
+                {"track_id": 1, "center": (0.0, 0.0)},
+                {"track_id": 2, "center": (100.0, 0.0)},
+            ],
+            [
+                {"center": (90.0, 0.0), "label": "right"},
+                {"center": (10.0, 0.0), "label": "left"},
+            ],
+        )
+    )
+
+    assert results[1]["label"] == "left"
+    assert results[2]["label"] == "right"
+    assert unmatched_tracks == []
+    assert unmatched_detections == []
+
+
+def _fresh_rid_pair(track, distance=400.0, now_t=100.0, sequence=4):
+    rid = _rid_at_map_az(1, 100.0, sequence, now_t)
+    rid.update({
+        "distance_m": float(distance),
+        "last_receive_ts": float(now_t),
+        "age_s": 0.0,
+    })
+    return {
+        "sort_track": track,
+        "rid": rid,
+        "az_error_deg": 3.1,
+    }
+
+
+def _vision_candidate(distance=120.0, frame_ts=100.0):
+    return {
+        "distance": float(distance),
+        "distance_valid": True,
+        "distance_source": "mlp_warmup",
+        "frame_ts": float(frame_ts),
+        "safe": True,
+    }
+
+
+def test_final_distance_candidate_prefers_fresh_rid_over_vision():
+    track = _track_at_map_az(103.1)
+
+    candidate = tracking.choose_final_distance_candidate(
+        track,
+        _fresh_rid_pair(track, distance=400.0),
+        _vision_candidate(distance=120.0),
+        gimbal_target_id=track.id,
+        curr_time=100.0,
+    )
+
+    assert candidate["valid"] is True
+    assert candidate["source_family"] == "rid"
+    assert candidate["distance"] == 400.0
+
+
+def test_final_distance_candidate_uses_vision_when_rid_is_stale():
+    track = _track_at_map_az(103.1)
+    rid_pair = _fresh_rid_pair(track, distance=400.0, now_t=93.9)
+
+    candidate = tracking.choose_final_distance_candidate(
+        track,
+        rid_pair,
+        _vision_candidate(distance=120.0, frame_ts=100.0),
+        gimbal_target_id=track.id,
+        curr_time=100.0,
+    )
+
+    assert candidate["valid"] is True
+    assert candidate["source_family"] == "vision"
+    assert candidate["distance"] == 120.0
+
+
+def test_vision_candidate_only_applies_to_current_gimbal_target():
+    track = _track_at_map_az(103.1)
+
+    candidate = tracking.choose_final_distance_candidate(
+        track,
+        None,
+        _vision_candidate(distance=120.0),
+        gimbal_target_id=track.id + 1,
+        curr_time=100.0,
+    )
+
+    assert candidate["valid"] is False
+    assert math.isnan(candidate["distance"])
+
+
+def test_distance_filter_resets_when_source_changes():
+    track = _track_at_map_az(103.1)
+    assert track.set_final_distance(100.0, 100.0, "mlp_warmup")
+    track.dist_state[1, 0] = 12.0
+
+    assert track.set_final_distance(400.0, 100.1, "rid_gps")
+
+    assert track.dist_source == "rid_gps"
+    assert track.dist_state[0, 0] == 400.0
+    assert track.dist_state[1, 0] == 0.0
+    assert track.dist_P[0, 0] == 10.0
+
+
 def test_fused_measurement_preserves_all_sources_and_primary_source():
     fused, groups = tracking.fuse_measurements_by_angle(
         [

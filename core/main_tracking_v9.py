@@ -323,7 +323,8 @@ GPS_DEBUG_RAW = _env_flag("GPS_DEBUG_RAW", False)
 RID_BAUDRATE = _env_int("RID_BAUDRATE", 115200)
 RID_SERIAL_TIMEOUT = _env_float("RID_SERIAL_TIMEOUT", 0.20)
 RID_RECONNECT_SECONDS = _env_float("RID_RECONNECT_SECONDS", 2.0)
-RID_TRACK_TTL_SECONDS = _env_float("RID_TRACK_TTL_SECONDS", 5.0)
+RID_DISTANCE_FRESH_SECONDS = _env_float("RID_DISTANCE_FRESH_SECONDS", 6.0)
+RID_TRACK_TTL_SECONDS = _env_float("RID_TRACK_TTL_SECONDS", 6.0)
 RID_TRACK_DELETE_AFTER_SECONDS = _env_float(
     "RID_TRACK_DELETE_AFTER_SECONDS", 300.0
 )
@@ -351,7 +352,7 @@ RID_ASSOC_TRAJECTORY_POINTS = _env_int("RID_ASSOC_TRAJECTORY_POINTS", 10)
 RID_ASSOC_MIN_TRAJECTORY_POINTS = _env_int(
     "RID_ASSOC_MIN_TRAJECTORY_POINTS", 4
 )
-RID_ASSOC_HISTORY_SECONDS = _env_float("RID_ASSOC_HISTORY_SECONDS", 12.0)
+RID_ASSOC_HISTORY_SECONDS = _env_float("RID_ASSOC_HISTORY_SECONDS", 30.0)
 RID_ASSOC_SYNC_TOLERANCE_SECONDS = _env_float(
     "RID_ASSOC_SYNC_TOLERANCE_SECONDS", 0.50
 )
@@ -1633,9 +1634,29 @@ def sanitize_bbox(rect, image_w=IMG_W, image_h=IMG_H):
     }, ""
 
 
-def get_smoothed_track_distance(track, curr_time, ttl=TRACK_DISTANCE_TTL):
+def distance_source_family(source):
+    source_text = str(source or "none").lower()
+    if source_text.startswith("rid"):
+        return "rid"
+    if source_text in ("mlp_warmup", "gimbal_yolo_gru", "vision"):
+        return "vision"
+    return source_text
+
+
+def distance_source_ttl(source):
+    family = distance_source_family(source)
+    if family == "rid":
+        return RID_DISTANCE_FRESH_SECONDS
+    if family == "vision":
+        return GIMBAL_VISION_RESULT_TTL
+    return TRACK_DISTANCE_TTL
+
+
+def get_smoothed_track_distance(track, curr_time, ttl=None):
     if track is None or track.dist_state is None:
         return None, "none"
+    if ttl is None:
+        ttl = distance_source_ttl(track.dist_source)
     age = float(curr_time) - float(track.last_dist_ts)
     if age < 0.0 or age > float(ttl):
         return None, "stale_distance_kf"
@@ -1819,6 +1840,79 @@ def track_is_ui_fresh(track, now_t):
     return track.lost_seconds(now_t) <= UI_MAX_LOST_SECONDS
 
 
+def associate_vision_measurements_nearest(track_predictions, measurements):
+    """Pair SORT projections and YOLO centers by global nearest distance.
+
+    There is deliberately no maximum pixel-distance rejection. Invalid
+    centers are excluded, while the remaining rows and columns are assigned
+    once by the Hungarian algorithm.
+    """
+    prediction_items = []
+    for item in track_predictions or ():
+        try:
+            track_id = int(item["track_id"])
+            center = np.asarray(item["center"], dtype=np.float32)
+        except (KeyError, TypeError, ValueError):
+            continue
+        if center.shape != (2,) or not np.all(np.isfinite(center)):
+            continue
+        prediction_items.append((track_id, center))
+
+    measurement_items = []
+    for measurement_index, measurement in enumerate(measurements or ()):
+        try:
+            center = np.asarray(
+                measurement.get("center", [math.nan, math.nan]),
+                dtype=np.float32,
+            )
+        except (TypeError, ValueError):
+            continue
+        if center.shape != (2,) or not np.all(np.isfinite(center)):
+            continue
+        measurement_items.append((measurement_index, center))
+
+    results = {}
+    matched_measurement_indices = set()
+    if prediction_items and measurement_items:
+        cost_matrix = np.empty(
+            (len(prediction_items), len(measurement_items)),
+            dtype=np.float32,
+        )
+        for track_index, (_, expected_center) in enumerate(prediction_items):
+            for measurement_col, (_, measured_center) in enumerate(
+                measurement_items
+            ):
+                cost_matrix[track_index, measurement_col] = float(
+                    np.linalg.norm(measured_center - expected_center)
+                )
+
+        track_indices, measurement_cols = linear_sum_assignment(cost_matrix)
+        for track_index, measurement_col in zip(
+            track_indices, measurement_cols
+        ):
+            track_id = prediction_items[int(track_index)][0]
+            measurement_index = measurement_items[int(measurement_col)][0]
+            result_item = dict(measurements[measurement_index])
+            result_item["track_id"] = track_id
+            result_item["association_error_px"] = float(
+                cost_matrix[int(track_index), int(measurement_col)]
+            )
+            result_item["association_policy"] = "hungarian_nearest_no_gate"
+            results[track_id] = result_item
+            matched_measurement_indices.add(measurement_index)
+
+    predicted_track_ids = [item[0] for item in prediction_items]
+    unmatched_track_ids = sorted(
+        track_id for track_id in predicted_track_ids if track_id not in results
+    )
+    unmatched_measurements = [
+        measurement
+        for measurement_index, measurement in enumerate(measurements or ())
+        if measurement_index not in matched_measurement_indices
+    ]
+    return results, unmatched_track_ids, unmatched_measurements
+
+
 def pair_ui_tracks_with_rid(
     ui_tracks,
     rid_tracks,
@@ -1831,6 +1925,7 @@ def pair_ui_tracks_with_rid(
     sort_items = [
         {
             "track_id": int(track.id),
+            "track_created_ts": float(track.created_ts),
             "map_az": relative_to_map_azimuth(track.state[0, 0]),
         }
         for track in ui_tracks
@@ -1887,6 +1982,97 @@ def build_rid_matched_ui_values(sort_track, rid_item, sort_ui_id):
         "azimuth": relative_to_map_azimuth(sort_track.state[0, 0]),
         "elevation": float(sort_track.state[1, 0]),
         "distance": float(rid_item["distance_m"]),
+    }
+
+
+def choose_final_distance_candidate(
+    track,
+    rid_pair,
+    vision_track_result,
+    gimbal_target_id,
+    curr_time,
+):
+    """Choose fresh RID first, then current-target vision, otherwise none."""
+    rid_item = (rid_pair or {}).get("rid")
+    if rid_item is not None:
+        rid_distance = _parse_positive_float(rid_item.get("distance_m"))
+        receive_ts = rid_item.get("last_receive_ts")
+        if receive_ts is None:
+            rid_age = float(rid_item.get("age_s", math.inf))
+            receive_ts = float(curr_time) - rid_age
+        else:
+            receive_ts = float(receive_ts)
+            rid_age = float(curr_time) - receive_ts
+        if (
+            rid_distance is not None
+            and 0.0 <= rid_age <= RID_DISTANCE_FRESH_SECONDS
+        ):
+            measurement_seq = int(
+                rid_item.get(
+                    "measurement_seq",
+                    rid_item.get("update_seq", 0),
+                )
+            )
+            return {
+                "valid": True,
+                "source": "rid_gps",
+                "source_family": "rid",
+                "distance": rid_distance,
+                "measurement_ts": receive_ts,
+                "measurement_key": measurement_seq,
+                "track_id": int(track.id),
+                "track_created_ts": float(track.created_ts),
+                "rid_age_s": rid_age,
+                "rid": rid_item,
+                "vision": vision_track_result or {},
+            }
+
+    vision_track_result = vision_track_result or {}
+    frame_ts = float(vision_track_result.get("frame_ts", 0.0) or 0.0)
+    vision_age = float(curr_time) - frame_ts
+    vision_distance = _parse_positive_float(
+        vision_track_result.get("distance")
+    )
+    is_current_gimbal_target = (
+        gimbal_target_id is not None
+        and int(track.id) == int(gimbal_target_id)
+    )
+    if (
+        is_current_gimbal_target
+        and vision_track_result.get("distance_valid")
+        and vision_distance is not None
+        and 0.0 <= vision_age <= GIMBAL_VISION_RESULT_TTL
+    ):
+        source = str(
+            vision_track_result.get(
+                "distance_source", "gimbal_yolo_gru"
+            )
+        )
+        return {
+            "valid": True,
+            "source": source,
+            "source_family": "vision",
+            "distance": vision_distance,
+            "measurement_ts": frame_ts,
+            "measurement_key": frame_ts,
+            "track_id": int(track.id),
+            "track_created_ts": float(track.created_ts),
+            "vision_age_s": vision_age,
+            "rid": rid_item,
+            "vision": vision_track_result,
+        }
+
+    return {
+        "valid": False,
+        "source": "none",
+        "source_family": "none",
+        "distance": float("nan"),
+        "measurement_ts": 0.0,
+        "measurement_key": None,
+        "track_id": int(track.id),
+        "track_created_ts": float(track.created_ts),
+        "rid": rid_item,
+        "vision": vision_track_result,
     }
 
 
@@ -2466,30 +2652,56 @@ class StandardKalmanTrack:
     def set_mono_distance(self, dist, ts, source="mono"):
         d = _parse_positive_float(dist)
         if d is None:
-            return
+            return False
         self.last_mono_dist = d
         self.mono_ts = float(ts)
-        self._update_distance_filter(d, ts, source=source)
+        # In the dual-source mode, upstream fixed-camera mono distance remains
+        # available only for tracker parameterization. Final range is owned by
+        # the main-thread RID/vision arbiter.
+        if str(source) == "mono" and (ENABLE_RID or ENABLE_GIMBAL_VISION):
+            return True
+        return self.set_final_distance(d, ts, source=source)
+
+    def _reset_distance_filter(self, dist_val, ts, source):
+        self.dist_state = np.array([[float(dist_val)], [0.0]], dtype=float)
+        self.dist_P = np.diag([10.0, 5.0])
+        self.last_dist_ts = float(ts)
+        self.dist_source = str(source)
+        self.dist_uncertainty = np.sqrt(self.dist_P[0, 0])
+        return True
+
+    def set_final_distance(self, dist, ts, source):
+        dist_val = _parse_positive_float(dist)
+        if dist_val is None:
+            return False
+        source = str(source)
+        if (
+            self.dist_state is not None
+            and distance_source_family(self.dist_source)
+            != distance_source_family(source)
+        ):
+            return self._reset_distance_filter(dist_val, ts, source)
+        return self._update_distance_filter(dist_val, ts, source=source)
 
     def _update_distance_filter(self, dist_val, ts, source="mono"):
         """1D 距离卡尔曼滤波，含异常门控与新鲜度管理"""
         curr_t = float(ts)
         
-        # Reset stale mono distance state instead of carrying old range into a new target interval.
-        if self.dist_state is not None and (curr_t - self.last_dist_ts) > TRACK_DISTANCE_TTL:
+        # Do not carry a stale source-specific range into a new interval.
+        if (
+            self.dist_state is not None
+            and (curr_t - self.last_dist_ts)
+            > distance_source_ttl(self.dist_source)
+        ):
             self.dist_state = None
             
         if self.dist_state is None:
-            self.dist_state = np.array([[dist_val], [0.0]], dtype=float)
-            self.last_dist_ts = curr_t
-            self.dist_source = str(source)
-            self.dist_uncertainty = np.sqrt(self.dist_P[0, 0])
-            return
+            return self._reset_distance_filter(dist_val, curr_t, source)
             
         # 异常门控：突变值 > 50m 判定为噪点，拒绝更新状态
         expected_d = self.dist_state[0, 0]
         if abs(dist_val - expected_d) > 50.0:
-            return
+            return False
             
         dt = curr_t - self.last_dist_ts
         if dt < self.min_dt:
@@ -2524,6 +2736,7 @@ class StandardKalmanTrack:
         I = np.eye(2)
         self.dist_P = np.dot((I - np.dot(K, H_d)), self.dist_P)
         self.dist_uncertainty = np.sqrt(self.dist_P[0, 0])
+        return True
 
     def get_param_distance(self, curr_time):
         if self.dist_state is not None and (curr_time - self.last_dist_ts) <= TRACK_DISTANCE_TTL:
@@ -3105,9 +3318,9 @@ def format_selection_candidates(ranked_candidates, topk=MASTER_SELECTION_LOG_TOP
 def evaluate_strike_threat(track, curr_time, vision_track_result=None, strike_target_id=None):
     """Score targets for strike guidance.
 
-    Unlike master selection, strike selection requires a fresh gimbal-camera
-    distance and a safe bbox. The score then favors nearer, closing, stable
-    tracks while adding inertia to avoid target ping-pong.
+    Unlike master selection, strike selection still requires a fresh safe
+    gimbal-camera bbox, while distance comes from the SORT-owned final
+    RID/vision arbitration state.
     """
     if (
         track is None
@@ -3120,8 +3333,7 @@ def evaluate_strike_threat(track, curr_time, vision_track_result=None, strike_ta
     frame_ts = float(vision_track_result.get("frame_ts", 0.0) or 0.0)
     vision_age = float(curr_time) - frame_ts
     if not (
-        vision_track_result.get("distance_valid")
-        and vision_track_result.get("safe")
+        vision_track_result.get("safe")
         and 0.0 <= vision_age <= GIMBAL_VISION_RESULT_TTL
     ):
         return None
@@ -3314,7 +3526,9 @@ def main():
         f"max_prediction={RID_UI_MAX_PREDICTION_SECONDS:.2f}s, "
         f"display_tau={RID_UI_DISPLAY_TAU_SECONDS:.2f}s, "
         f"turn_reset={RID_UI_TURN_RESET_DEG:.1f}deg, "
+        f"rid_distance_fresh={RID_DISTANCE_FRESH_SECONDS:.2f}s, "
         f"rid_ttl={RID_TRACK_TTL_SECONDS:.2f}s, "
+        f"assoc_history={RID_ASSOC_HISTORY_SECONDS:.2f}s, "
         f"rid_delete_after={RID_TRACK_DELETE_AFTER_SECONDS:.2f}s"
     )
     if ENABLE_STRIKE_SEND:
@@ -3488,6 +3702,7 @@ def main():
     track_to_ui_id = {}  # Allocate a stable UI ID when any valid track is first sent.
     latest_rid_bindings = {}
     last_applied_rid_measurement = {}
+    last_selected_distance_source = {}
     rid_assoc_last_log_ts = 0.0
     rid_assoc_cycle = 0
     stats_last_print = last_time
@@ -3933,8 +4148,9 @@ def main():
                 debug_context=debug_context,
             )
 
-            # Internal valid tracks: used by master selection, gimbal scheduling and vision-ranging binding.
-            # External UI/strike IDs are exposed only after stricter gates, so short false alarms do not consume public IDs.
+            # Internal valid tracks drive master selection and gimbal scheduling.
+            # RID/vision distance candidates use the stricter ui_tracks subset,
+            # so short false alarms cannot receive a public distance or UI ID.
             valid_tracks = [
                 t for t in active_tracks
                 if t.confirmed
@@ -4221,6 +4437,39 @@ def main():
                         "reason": "station_wgs84_position_unavailable",
                     })
 
+            # Both hardware paths run independently. Build the current RID
+            # candidates now so the main thread can arbitrate them against the
+            # later vision candidates before any SORT distance is modified.
+            if rid_track_manager is not None:
+                (
+                    matched_ui_fusion_pairs,
+                    ui_fusion_diagnostics,
+                ) = pair_ui_tracks_with_rid(
+                    ui_tracks,
+                    rid_tracks,
+                    rid_four_point_associator,
+                    now_ts=curr_time,
+                )
+                ui_fusion_pairs = complete_ui_fusion_pairs(
+                    ui_tracks, matched_ui_fusion_pairs
+                )
+            else:
+                matched_ui_fusion_pairs = []
+                ui_fusion_diagnostics = []
+                ui_fusion_pairs = [
+                    {
+                        "sort_track": track,
+                        "rid": None,
+                        "az_error_deg": math.nan,
+                    }
+                    for track in ui_tracks
+                ]
+            rid_pair_by_track_id = {
+                int(item["sort_track"].id): item
+                for item in matched_ui_fusion_pairs
+                if item.get("rid") is not None
+            }
+
             master_track = next((t for t in valid_tracks if t.id == master_id), None)
             prev_master_id = master_id
             master_lost = (prev_master_id is not None and master_track is None)
@@ -4374,7 +4623,7 @@ def main():
             }
             if vision_service is not None:
                 track_predictions = []
-                for track in valid_tracks:
+                for track in ui_tracks:
                     expected_delta_az = angular_diff(
                         track.state[0, 0],
                         shared_gimbal_az,
@@ -4404,97 +4653,14 @@ def main():
                     vision_result.get("simple_measurements", []) or []
                 )
                 if simple_measurements:
-                    association_max_px = float(
-                        vision_result.get(
-                            "simple_association_max_px", 180.0
-                        )
-                        or 180.0
+                    (
+                        post_assoc_results,
+                        unmatched_track_ids,
+                        unmatched_measurements,
+                    ) = associate_vision_measurements_nearest(
+                        track_predictions,
+                        simple_measurements,
                     )
-                    prediction_map = {
-                        int(item["track_id"]): np.asarray(
-                            item["center"], dtype=np.float32
-                        )
-                        for item in track_predictions
-                        if "track_id" in item and "center" in item
-                    }
-                    post_assoc_results = {}
-                    matched_measurement_indices = set()
-                    if prediction_map:
-                        predicted_track_ids = list(prediction_map)
-                        invalid_cost = association_max_px * 10.0
-                        cost_matrix = np.full(
-                            (
-                                len(predicted_track_ids),
-                                len(simple_measurements),
-                            ),
-                            invalid_cost,
-                            dtype=np.float32,
-                        )
-                        geometric_distances = np.full_like(
-                            cost_matrix, np.inf
-                        )
-                        for track_index, track_id in enumerate(
-                            predicted_track_ids
-                        ):
-                            expected_center = prediction_map[track_id]
-                            for measurement_index, measurement in enumerate(
-                                simple_measurements
-                            ):
-                                measured_center = np.asarray(
-                                    measurement.get(
-                                        "center", [math.nan, math.nan]
-                                    ),
-                                    dtype=np.float32,
-                                )
-                                if not np.all(np.isfinite(measured_center)):
-                                    continue
-                                distance_px = float(
-                                    np.linalg.norm(
-                                        measured_center - expected_center
-                                    )
-                                )
-                                geometric_distances[
-                                    track_index, measurement_index
-                                ] = distance_px
-                                if distance_px <= association_max_px:
-                                    cost_matrix[
-                                        track_index, measurement_index
-                                    ] = distance_px
-
-                        track_indices, measurement_indices = (
-                            linear_sum_assignment(cost_matrix)
-                        )
-                        for track_index, measurement_index in zip(
-                            track_indices, measurement_indices
-                        ):
-                            distance_px = float(
-                                geometric_distances[
-                                    track_index, measurement_index
-                                ]
-                            )
-                            if distance_px > association_max_px:
-                                continue
-                            track_id = predicted_track_ids[track_index]
-                            result_item = dict(
-                                simple_measurements[measurement_index]
-                            )
-                            result_item["track_id"] = track_id
-                            result_item[
-                                "association_error_px"
-                            ] = distance_px
-                            post_assoc_results[track_id] = result_item
-                            matched_measurement_indices.add(
-                                measurement_index
-                            )
-
-                    unmatched_measurements = [
-                        measurement
-                        for measurement_index, measurement in enumerate(
-                            simple_measurements
-                        )
-                        if measurement_index
-                        not in matched_measurement_indices
-                    ]
                     vision_result["track_results"] = post_assoc_results
                     vision_result["matched_track_ids"] = sorted(
                         post_assoc_results
@@ -4502,17 +4668,16 @@ def main():
                     vision_result["matched_count"] = len(
                         post_assoc_results
                     )
-                    vision_result["unmatched_track_ids"] = sorted(
-                        track_id
-                        for track_id in prediction_map
-                        if track_id not in post_assoc_results
-                    )
+                    vision_result["unmatched_track_ids"] = unmatched_track_ids
                     vision_result[
                         "unmatched_detection_count"
                     ] = len(unmatched_measurements)
                     vision_result[
                         "unmatched_detections"
                     ] = unmatched_measurements[:5]
+                    vision_result[
+                        "sort_association_policy"
+                    ] = "hungarian_nearest_no_gate"
                 track_results = vision_result.get("track_results", {})
                 vision_frame_ts = float(vision_result.get("frame_ts", 0.0) or 0.0)
                 if vision_frame_ts > last_logged_vision_frame_ts:
@@ -4829,185 +4994,163 @@ def main():
                                 f"class_id={int(detection_item.get('class_id', -1))}"
                             ),
                         })
-                track_by_id = {
-                    int(track.id): track for track in valid_tracks
-                }
-                for track_id, track_result in track_results.items():
-                    track_id = int(track_id)
-                    track = track_by_id.get(track_id)
-                    result_ts = float(
-                        track_result.get("frame_ts", 0.0)
+            current_vision_track_results = (
+                vision_result.get("track_results", {})
+                if isinstance(vision_result, dict)
+                else {}
+            )
+            final_distance_by_track = {}
+            for track in ui_tracks:
+                track_id = int(track.id)
+                rid_pair = rid_pair_by_track_id.get(track_id)
+                vision_track_result = current_vision_track_results.get(
+                    track_id, {}
+                )
+                candidate = choose_final_distance_candidate(
+                    track,
+                    rid_pair,
+                    vision_track_result,
+                    master_id,
+                    curr_time,
+                )
+                selected_family = candidate["source_family"]
+                previous_family = distance_source_family(track.dist_source)
+                source_switch = (
+                    candidate["valid"]
+                    and previous_family not in ("none", selected_family)
+                )
+                applied = False
+                if candidate["valid"] and selected_family == "rid":
+                    measurement_key = candidate["measurement_key"]
+                    should_apply = (
+                        last_applied_rid_measurement.get(track_id)
+                        != measurement_key
+                        or previous_family != "rid"
                     )
-                    vision_age = curr_time - result_ts
-                    distance_valid = bool(track_result.get("distance_valid"))
-                    result_is_fresh = 0.0 <= vision_age <= GIMBAL_VISION_RESULT_TTL
-                    result_is_new = result_ts > last_applied_vision_ts.get(track_id, 0.0)
-                    skip_reasons = []
-                    if track is None:
-                        skip_reasons.append("track_not_in_valid_tracks")
-                    if not distance_valid:
-                        skip_reasons.append("distance_invalid")
-                    if not result_is_fresh:
-                        skip_reasons.append("vision_result_stale")
-                    if not result_is_new:
-                        skip_reasons.append("already_applied_or_old")
-                    if skip_reasons:
-                        diag_bbox = track_result.get("bbox")
-                        field_log_event({
-                            "timestamp": f"{curr_time:.6f}",
-                            "seq": sender_seq,
-                            "mode": sender_mode,
-                            "event": "GIMBAL_VISION_DISTANCE_DIAG",
-                            "track_id": track_id,
-                            "master_id": (
-                                "" if master_id is None else int(master_id)
-                            ),
-                            "is_master": 1 if track_id == master_id else 0,
-                            "distance": (
-                                ""
-                                if not math.isfinite(float(track_result.get("distance", math.nan)))
-                                else f"{float(track_result.get('distance')):.6f}"
-                            ),
-                            "distance_source": track_result.get("distance_source", "none"),
-                            "cost": (
-                                f"{float(track_result.get('association_error_px')):.6f}"
-                                if math.isfinite(float(track_result.get(
-                                    "association_error_px", math.nan
-                                )))
-                                else ""
-                            ),
-                            "raw_bbox_x1": (
-                                "" if diag_bbox is None
-                                else f"{float(diag_bbox[0]):.3f}"
-                            ),
-                            "raw_bbox_y1": (
-                                "" if diag_bbox is None
-                                else f"{float(diag_bbox[1]):.3f}"
-                            ),
-                            "raw_bbox_x2": (
-                                "" if diag_bbox is None
-                                else f"{float(diag_bbox[2]):.3f}"
-                            ),
-                            "raw_bbox_y2": (
-                                "" if diag_bbox is None
-                                else f"{float(diag_bbox[3]):.3f}"
-                            ),
-                            "reason": (
-                                f"not_written_to_track:{'|'.join(skip_reasons)},"
-                                f"state={track_result.get('state')},"
-                                f"model_distance_valid={1 if distance_valid else 0},"
-                                f"safe={1 if track_result.get('safe') else 0},"
-                                f"warmup={track_result.get('warmup_count')},"
-                                f"age={vision_age:.3f},"
-                                f"confidence={float(track_result.get('confidence', math.nan)):.3f},"
-                                f"model_reason={track_result.get('reason', '')}"
-                            ),
-                        })
-                        continue
-                    vision_distance = _parse_positive_float(
-                        track_result.get("distance")
+                    if should_apply:
+                        applied = track.set_final_distance(
+                            candidate["distance"],
+                            candidate["measurement_ts"],
+                            candidate["source"],
+                        )
+                        if applied:
+                            last_applied_rid_measurement[
+                                track_id
+                            ] = measurement_key
+                elif candidate["valid"] and selected_family == "vision":
+                    measurement_key = float(candidate["measurement_key"])
+                    should_apply = (
+                        measurement_key
+                        > last_applied_vision_ts.get(track_id, 0.0)
+                        or previous_family != "vision"
                     )
-                    if vision_distance is not None:
-                        track.set_mono_distance(
-                            vision_distance,
-                            result_ts,
+                    if should_apply:
+                        applied = track.set_final_distance(
+                            candidate["distance"],
+                            candidate["measurement_ts"],
+                            candidate["source"],
                         )
-                        track.dist_source = track_result.get(
-                            "distance_source", "gimbal_yolo_gru"
-                        )
-                        last_applied_vision_ts[track_id] = result_ts
-                        vision_bbox = track_result.get("bbox")
-                        field_log_event({
-                            "timestamp": f"{curr_time:.6f}",
-                            "seq": sender_seq,
-                            "mode": sender_mode,
-                            "event": "GIMBAL_VISION_DISTANCE",
-                            "track_id": track_id,
-                            "cost": (
-                                f"{float(track_result.get('association_error_px')):.6f}"
-                                if math.isfinite(float(track_result.get(
-                                    "association_error_px", math.nan
-                                )))
-                                else ""
-                            ),
-                            "master_id": (
-                                "" if master_id is None else int(master_id)
-                            ),
-                            "is_master": 1 if track_id == master_id else 0,
-                            "distance": f"{vision_distance:.6f}",
-                            "distance_source": track.dist_source,
-                            "raw_bbox_x1": (
-                                "" if vision_bbox is None
-                                else f"{float(vision_bbox[0]):.3f}"
-                            ),
-                            "raw_bbox_y1": (
-                                "" if vision_bbox is None
-                                else f"{float(vision_bbox[1]):.3f}"
-                            ),
-                            "raw_bbox_x2": (
-                                "" if vision_bbox is None
-                                else f"{float(vision_bbox[2]):.3f}"
-                            ),
-                            "raw_bbox_y2": (
-                                "" if vision_bbox is None
-                                else f"{float(vision_bbox[3]):.3f}"
-                            ),
-                            "reason": (
-                                f"state={track_result.get('state')},"
-                                f"warmup={track_result.get('warmup_count')},"
-                                f"confidence={float(track_result.get('confidence', math.nan)):.3f}"
-                            ),
-                        })
-                        field_log_event({
-                            "timestamp": f"{curr_time:.6f}",
-                            "seq": sender_seq,
-                            "mode": sender_mode,
-                            "event": "GIMBAL_VISION_DISTANCE_DIAG",
-                            "track_id": track_id,
-                            "master_id": (
-                                "" if master_id is None else int(master_id)
-                            ),
-                            "is_master": 1 if track_id == master_id else 0,
-                            "distance": f"{vision_distance:.6f}",
-                            "distance_source": track.dist_source,
-                            "cost": (
-                                f"{float(track_result.get('association_error_px')):.6f}"
-                                if math.isfinite(float(track_result.get(
-                                    "association_error_px", math.nan
-                                )))
-                                else ""
-                            ),
-                            "raw_bbox_x1": (
-                                "" if vision_bbox is None
-                                else f"{float(vision_bbox[0]):.3f}"
-                            ),
-                            "raw_bbox_y1": (
-                                "" if vision_bbox is None
-                                else f"{float(vision_bbox[1]):.3f}"
-                            ),
-                            "raw_bbox_x2": (
-                                "" if vision_bbox is None
-                                else f"{float(vision_bbox[2]):.3f}"
-                            ),
-                            "raw_bbox_y2": (
-                                "" if vision_bbox is None
-                                else f"{float(vision_bbox[3]):.3f}"
-                            ),
-                            "reason": (
-                                "written_to_track,"
-                                f"state={track_result.get('state')},"
-                                "model_distance_valid=1,"
-                                f"safe={1 if track_result.get('safe') else 0},"
-                                f"warmup={track_result.get('warmup_count')},"
-                                f"age={vision_age:.3f},"
-                                f"confidence={float(track_result.get('confidence', math.nan)):.3f}"
-                            ),
-                        })
+                        if applied:
+                            last_applied_vision_ts[
+                                track_id
+                            ] = measurement_key
 
-                active_track_ids = set(track_by_id)
-                for stale_track_id in list(last_applied_vision_ts):
-                    if stale_track_id not in active_track_ids:
-                        del last_applied_vision_ts[stale_track_id]
+                selected_distance = float("nan")
+                selected_source = "none"
+                if (
+                    candidate["valid"]
+                    and distance_source_family(track.dist_source)
+                    == selected_family
+                ):
+                    smoothed_distance, smoothed_source = (
+                        get_smoothed_track_distance(track, curr_time)
+                    )
+                    if smoothed_distance is not None:
+                        selected_distance = smoothed_distance
+                        selected_source = smoothed_source
+
+                final_distance_by_track[track_id] = {
+                    **candidate,
+                    "distance": selected_distance,
+                    "selected_source": selected_source,
+                    "filter_applied": applied,
+                    "source_switch": source_switch,
+                    "valid": math.isfinite(selected_distance),
+                }
+
+                previous_selected = last_selected_distance_source.get(
+                    track_id, "none"
+                )
+                selected_now = (
+                    selected_family if candidate["valid"] else "none"
+                )
+                vision_frame_ts = float(
+                    vision_track_result.get("frame_ts", 0.0) or 0.0
+                )
+                vision_age = curr_time - vision_frame_ts
+                vision_candidate_valid = bool(
+                    vision_track_result.get("distance_valid")
+                    and _parse_positive_float(
+                        vision_track_result.get("distance")
+                    ) is not None
+                    and 0.0 <= vision_age <= GIMBAL_VISION_RESULT_TTL
+                )
+                vision_suppressed_by_rid = (
+                    selected_family == "rid" and vision_candidate_valid
+                )
+                if (
+                    applied
+                    or previous_selected != selected_now
+                    or vision_suppressed_by_rid
+                ):
+                    field_log_event({
+                        "timestamp": f"{curr_time:.6f}",
+                        "seq": sender_seq,
+                        "mode": sender_mode,
+                        "event": "DISTANCE_ARBITRATION",
+                        "track_id": track_id,
+                        "master_id": (
+                            "" if master_id is None else int(master_id)
+                        ),
+                        "is_master": 1 if track_id == master_id else 0,
+                        "distance": (
+                            ""
+                            if not math.isfinite(selected_distance)
+                            else f"{selected_distance:.6f}"
+                        ),
+                        "distance_source": selected_source,
+                        "cost": (
+                            ""
+                            if not math.isfinite(float(
+                                vision_track_result.get(
+                                    "association_error_px", math.nan
+                                )
+                            ))
+                            else f"{float(vision_track_result.get('association_error_px')):.6f}"
+                        ),
+                        "reason": (
+                            f"selected={selected_now},"
+                            f"source_switch={1 if source_switch else 0},"
+                            f"filter_applied={1 if applied else 0},"
+                            f"rid_valid={1 if selected_family == 'rid' else 0},"
+                            f"vision_valid={1 if vision_candidate_valid else 0},"
+                            f"vision_suppressed_by_rid="
+                            f"{1 if vision_suppressed_by_rid else 0}"
+                        ),
+                    })
+                last_selected_distance_source[track_id] = selected_now
+
+            active_ui_track_ids = {
+                int(track.id) for track in ui_tracks
+            }
+            for state_map in (
+                last_applied_vision_ts,
+                last_applied_rid_measurement,
+                last_selected_distance_source,
+            ):
+                for stale_track_id in list(state_map):
+                    if stale_track_id not in active_ui_track_ids:
+                        del state_map[stale_track_id]
 
             track_results_for_strike = (
                 vision_result.get("track_results", {})
@@ -5221,7 +5364,6 @@ def main():
                     ENABLE_STRIKE_SEND
                     and gimbal_is_settled
                     and strike_track is not None
-                    and strike_track_result.get("distance_valid")
                     and strike_track_result.get("safe")
                     and 0.0 <= strike_result_age <= GIMBAL_VISION_RESULT_TTL
                 )
@@ -5347,33 +5489,8 @@ def main():
                     gimbal_is_stationary
                     and 0.0 <= vision_result_age <= GIMBAL_VISION_RESULT_TTL
                 )
-                # E. Build identity candidates only from UI-eligible SORT
-                # tracks. Four distinct RID updates must pass both learned
-                # bias and trajectory-shape gates before one-to-one assignment.
-                if rid_track_manager is not None:
-                    (
-                        matched_ui_fusion_pairs,
-                        ui_fusion_diagnostics,
-                    ) = pair_ui_tracks_with_rid(
-                        ui_tracks,
-                        rid_tracks,
-                        rid_four_point_associator,
-                        now_ts=curr_time,
-                    )
-                    ui_fusion_pairs = complete_ui_fusion_pairs(
-                        ui_tracks, matched_ui_fusion_pairs
-                    )
-                else:
-                    matched_ui_fusion_pairs = []
-                    ui_fusion_diagnostics = []
-                    ui_fusion_pairs = [
-                        {
-                            "sort_track": track,
-                            "rid": None,
-                            "az_error_deg": math.nan,
-                        }
-                        for track in ui_tracks
-                    ]
+                # RID candidates were built before vision writeback so the
+                # main-thread arbiter could choose RID over vision once.
                 selected_rid_keys = {
                     item["rid"]["key"]
                     for item in matched_ui_fusion_pairs
@@ -5721,64 +5838,25 @@ def main():
                 for ui_pair in ui_fusion_pairs:
                     t = ui_pair["sort_track"]
                     rid_item = ui_pair["rid"]
-                    if rid_item is not None:
-                        ui_id = get_or_assign_ui_id(t)
-                        matched_ui_values = build_rid_matched_ui_values(
-                            t, rid_item, ui_id
-                        )
-                        send_dist = matched_ui_values["distance"]
-                        dist_source = "rid_gps"
-                    elif rid_track_manager is not None:
-                        matched_ui_values = None
-                        send_dist = float("nan")
-                        dist_source = "rid_unmatched"
-                    else:
-                        matched_ui_values = None
-                        ui_track_result = track_results_for_strike.get(
-                            int(t.id), {}
-                        )
-                        ui_result_age = curr_time - float(
-                            ui_track_result.get("frame_ts", 0.0) or 0.0
-                        )
-                        ui_distance_ready = (
-                            vision_result_fresh
-                            and ui_track_result.get("distance_valid")
-                            and 0.0 <= ui_result_age <= GIMBAL_VISION_RESULT_TTL
-                        )
-                        if ui_distance_ready:
-                            send_dist, dist_source = select_track_distance(
-                                t, master_id, curr_time
-                            )
-                        else:
-                            held_dist, held_source = select_track_distance(
-                                t, master_id, curr_time
-                            )
-                            if math.isfinite(held_dist):
-                                send_dist = held_dist
-                                dist_source = f"{held_source}_held"
-                            else:
-                                send_dist = float("nan")
-                                dist_source = (
-                                    "vision_no_track_result"
-                                    if not ui_track_result
-                                    else (
-                                        f"vision_{ui_track_result.get('state', 'unavailable').lower()}"
-                                    )
-                                )
+                    matched_ui_values = None
+                    final_distance_state = final_distance_by_track.get(
+                        int(t.id), {}
+                    )
+                    send_dist = float(
+                        final_distance_state.get("distance", math.nan)
+                    )
+                    dist_source = final_distance_state.get(
+                        "selected_source", "none"
+                    )
                     if math.isfinite(send_dist):
                         t.last_sent_dist = send_dist
                     # UI threat is deliberately distance-only in RID mode:
                     # <=100m high, (100m, 300m] medium, >300m low.
                     threat_score = ui_threat_score_from_distance(send_dist)
                     sort_map_az = relative_to_map_azimuth(t.state[0, 0])
-                    if matched_ui_values is not None:
-                        map_az = matched_ui_values["azimuth"]
-                        send_el = matched_ui_values["elevation"]
-                        ui_id = matched_ui_values["target_id"]
-                    else:
-                        map_az = sort_map_az
-                        send_el = float(t.state[1, 0])
-                        ui_id = get_or_assign_ui_id(t)
+                    map_az = sort_map_az
+                    send_el = float(t.state[1, 0])
+                    ui_id = get_or_assign_ui_id(t)
                     ui_az_source = "sort_map"
                     source_board, source_cam = track_ui_source(
                         t, board_str, cam_idx
@@ -5834,7 +5912,7 @@ def main():
                             f"ui_el_source=sort,"
                             f"ui_id_source=sort,"
                             f"ui_distance_source="
-                            f"{'rid' if rid_item is not None else 'sort'},"
+                            f"{final_distance_state.get('source_family', 'none')},"
                             f"sort_map_az={sort_map_az:.6f},"
                             f"rid_map_az={rid_map_az_text},"
                             f"rid_render={rid_render_text}"

@@ -1037,6 +1037,12 @@ class RIDFourPointAssociator:
             },
         )
         state["last_seen_ts"] = float(now_ts)
+        oldest_sample_ts = float(now_ts) - self.history_seconds
+        state["samples"] = [
+            sample
+            for sample in state["samples"]
+            if float(sample["timestamp"]) >= oldest_sample_ts
+        ]
         measurement_seq = int(
             rid_item.get("measurement_seq", rid_item["update_seq"])
         )
