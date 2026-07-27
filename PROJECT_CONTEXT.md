@@ -1,5 +1,11 @@
 # PROJECT_CONTEXT.md
 
+## 2026-07-27 可复盘日志结构
+- `vision_association_*.csv` 以 `vision_frame_ts` 为帧主键：`SORT_PROJECTION` 给出所有UI轨迹的投影位置，`DETECTION` 给出所有画面临时目标及测距结果，`CANDIDATE` 给出完整的SORT×检测像素代价和 `selected` 结果。
+- `distance_arbitration_*.csv` 以SORT `track_id` 为主线，连接RID候选、视觉候选、最终距离来源和滤波状态；只在输入或决策变化时写入，避免主循环重复刷相同行。
+- RID链路继续由 `raw_rid_serial_*.jsonl`、`raw_rid_*.jsonl`、`raw_udp_*.jsonl` 和 `rid_association_*.csv` 提供原始输入、四点候选矩阵、门控原因及最终配对。
+- 重复视觉事件已从通用 `events_*.csv` 排除；bbox抖动不再作为主链路复盘字段。视觉结果默认新鲜期为3秒。
+
 ## 2026-07-26 SORT统一裁决RID/视觉距离
 - SORT继续独占轨迹生命周期、`track_id`、`UI_ID`、角度状态以及最终距离状态；RID和云台视觉是两个并行、互不依赖的距离候选提供方。
 - 两条候选链路均只面向当前 `ui_tracks`：RID先执行既有四点方位匹配，视觉先独立完成YOLO与MLP/GRU测距，再把画面目标与SORT投影点关联。

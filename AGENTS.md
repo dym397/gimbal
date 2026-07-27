@@ -1,5 +1,11 @@
 # AGENTS.md
 
+## 2026-07-27 双距离链路复盘日志
+- 新增 `vision_association_*.csv`：每个新视觉帧分别记录全部 `SORT_PROJECTION`、全部 `DETECTION` 和完整 `CANDIDATE` 代价矩阵；候选行包含SORT投影像素、检测中心、`simple_id`、距离、有效性、像素代价和匈牙利选择结果。
+- 新增 `distance_arbitration_*.csv`：当RID测量、视觉帧或最终来源变化时，记录两路候选的距离/年龄/序号、视觉匹配误差、最终来源、滤波写入、来源切换及RID抑制视觉状态。
+- 通用 `events_*.csv` 不再重复写入 `GIMBAL_VISION_DETECTION`、`GIMBAL_VISION_BBOX_JITTER`、`GIMBAL_VISION_ASSOC`、`GIMBAL_VISION_UNMATCHED_DETECTION` 和 `DISTANCE_ARBITRATION`；RID原始串口、RID payload、原始UDP和四点匹配日志保持不变。
+- `GIMBAL_VISION_RESULT_TTL` 默认值现为3秒。该TTL同时影响视觉距离与既有视觉安全/打击新鲜度判断，打击发送仍默认关闭。
+
 ## 2026-07-26 RID优先的双距离来源
 - 当前距离架构以SORT为唯一轨迹和UI身份主线；RID四点匹配与云台视觉测距相互独立运行，二者的候选范围都严格限定为已通过二次过滤的 `ui_tracks`。
 - RID与视觉只生成距离候选，不在各自提供方流程中直接改写最终距离。主线程按每条SORT轨迹统一裁决：6秒内有效RID优先；否则仅当前云台目标可使用新鲜视觉距离；两者都无效时UI输出 `NaN`。

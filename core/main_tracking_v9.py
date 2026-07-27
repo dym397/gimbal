@@ -297,7 +297,7 @@ GIMBAL_CAMERA_SOURCE = os.getenv(
 GIMBAL_VISION_CONFIDENCE = _env_float("GIMBAL_VISION_CONFIDENCE", 0.30)
 GIMBAL_VISION_SETTLE_DELAY = _env_float("GIMBAL_VISION_SETTLE_DELAY", 0.20)
 GIMBAL_VISION_MIN_SHARPNESS = _env_float("GIMBAL_VISION_MIN_SHARPNESS", 20.0)
-GIMBAL_VISION_RESULT_TTL = _env_float("GIMBAL_VISION_RESULT_TTL", 1.00)
+GIMBAL_VISION_RESULT_TTL = _env_float("GIMBAL_VISION_RESULT_TTL", 3.00)
 GIMBAL_VISION_ASSOCIATION_MAX_PX = _env_float(
     "GIMBAL_VISION_ASSOCIATION_MAX_PX", 260.0
 )
@@ -483,6 +483,18 @@ class FieldLogger:
         self.events_f = open(os.path.join(log_dir, f"events_{timestamp}.csv"), "a", encoding="utf-8", newline="")
         self.gimbal_f = open(os.path.join(log_dir, f"gimbal_{timestamp}.csv"), "a", encoding="utf-8", newline="")
         self.rid_association_f = open(os.path.join(log_dir, f"rid_association_{timestamp}.csv"), "a", encoding="utf-8", newline="")
+        self.vision_association_f = open(
+            os.path.join(log_dir, f"vision_association_{timestamp}.csv"),
+            "a",
+            encoding="utf-8",
+            newline="",
+        )
+        self.distance_arbitration_f = open(
+            os.path.join(log_dir, f"distance_arbitration_{timestamp}.csv"),
+            "a",
+            encoding="utf-8",
+            newline="",
+        )
 
         self.measurements_fields = [
             "timestamp", "seq", "mode", "board", "cam", "logic_id", "meas_idx",
@@ -525,15 +537,6 @@ class FieldLogger:
             "raw_bbox_x1", "raw_bbox_y1", "raw_bbox_x2", "raw_bbox_y2",
             "clipped_bbox_x1", "clipped_bbox_y1", "clipped_bbox_x2", "clipped_bbox_y2",
             "vision_frame_ts", "vision_age", "simple_id", "class_id", "confidence",
-            "bbox_cx", "bbox_cy", "center_dx_px", "center_dy_px",
-            "bbox_width_px", "bbox_height_px",
-            "bbox_jitter_valid", "bbox_jitter_dt_s",
-            "bbox_jitter_dx_px", "bbox_jitter_dy_px",
-            "bbox_jitter_center_px", "bbox_jitter_center_norm",
-            "bbox_jitter_width_delta_px", "bbox_jitter_height_delta_px",
-            "bbox_jitter_iou", "bbox_jitter_previous_missing_frames",
-            "center_dx_norm", "center_dy_norm",
-            "center_offset_az_deg", "center_offset_el_deg",
             "is_edge_bbox", "visible_ratio",
         ]
         self.gimbal_fields = [
@@ -567,6 +570,32 @@ class FieldLogger:
             "station_altitude_m", "vertical_delta_m",
             "station_age_s", "device_heading_deg",
         ]
+        self.vision_association_fields = [
+            "timestamp", "event", "vision_frame_ts", "vision_age_s",
+            "association_policy", "master_id",
+            "sort_track_id", "sort_relative_az", "sort_map_az", "sort_el",
+            "sort_projected_x", "sort_projected_y",
+            "sort_projected_in_frame",
+            "measurement_index", "simple_id", "class_id", "confidence",
+            "bbox_x1", "bbox_y1", "bbox_x2", "bbox_y2",
+            "detection_center_x", "detection_center_y",
+            "distance", "distance_source", "distance_valid",
+            "warmup_count", "safe",
+            "association_error_px", "selected", "reason",
+        ]
+        self.distance_arbitration_fields = [
+            "timestamp", "track_id", "ui_id", "master_id", "is_master",
+            "selected_family", "selected_source", "selected_distance",
+            "selected_valid", "measurement_ts",
+            "filter_applied", "source_switch",
+            "rid_present", "rid_id", "rid_distance", "rid_age_s",
+            "rid_measurement_seq", "rid_valid",
+            "vision_present", "vision_frame_ts", "vision_age_s",
+            "vision_simple_id", "vision_distance", "vision_source",
+            "vision_distance_valid", "vision_fresh",
+            "vision_association_error_px", "vision_suppressed_by_rid",
+            "reason",
+        ]
 
         self.measurements_writer = csv.DictWriter(self.measurements_f, fieldnames=self.measurements_fields, extrasaction="ignore")
         self.summary_writer = csv.DictWriter(self.summary_f, fieldnames=self.summary_fields, extrasaction="ignore")
@@ -577,11 +606,23 @@ class FieldLogger:
             fieldnames=self.rid_association_fields,
             extrasaction="ignore",
         )
+        self.vision_association_writer = csv.DictWriter(
+            self.vision_association_f,
+            fieldnames=self.vision_association_fields,
+            extrasaction="ignore",
+        )
+        self.distance_arbitration_writer = csv.DictWriter(
+            self.distance_arbitration_f,
+            fieldnames=self.distance_arbitration_fields,
+            extrasaction="ignore",
+        )
         self.measurements_writer.writeheader()
         self.summary_writer.writeheader()
         self.events_writer.writeheader()
         self.gimbal_writer.writeheader()
         self.rid_association_writer.writeheader()
+        self.vision_association_writer.writeheader()
+        self.distance_arbitration_writer.writeheader()
         # The SORT/RID alignment sidecar discovers these files as soon as they
         # exist. Publish every header before announcing that field logging is
         # ready, otherwise the sidecar can briefly observe an empty CSV and
@@ -595,6 +636,8 @@ class FieldLogger:
             self.events_f,
             self.gimbal_f,
             self.rid_association_f,
+            self.vision_association_f,
+            self.distance_arbitration_f,
         ):
             stream.flush()
         self.last_flush_t = time.monotonic()
@@ -620,6 +663,8 @@ class FieldLogger:
         self.events_f.flush()
         self.gimbal_f.flush()
         self.rid_association_f.flush()
+        self.vision_association_f.flush()
+        self.distance_arbitration_f.flush()
         self.last_flush_t = now
 
     def write_raw_udp(self, row):
@@ -710,6 +755,34 @@ class FieldLogger:
         except Exception as e:
             self._handle_write_error(e)
 
+    def write_vision_association(self, row):
+        if self.disabled:
+            return
+        try:
+            with self.lock:
+                self._write_csv(
+                    self.vision_association_writer,
+                    self.vision_association_fields,
+                    row,
+                )
+                self._flush_if_due_locked()
+        except Exception as e:
+            self._handle_write_error(e)
+
+    def write_distance_arbitration(self, row):
+        if self.disabled:
+            return
+        try:
+            with self.lock:
+                self._write_csv(
+                    self.distance_arbitration_writer,
+                    self.distance_arbitration_fields,
+                    row,
+                )
+                self._flush_if_due_locked()
+        except Exception as e:
+            self._handle_write_error(e)
+
     def flush(self):
         if self.disabled:
             return
@@ -723,6 +796,8 @@ class FieldLogger:
                 self.events_f.flush()
                 self.gimbal_f.flush()
                 self.rid_association_f.flush()
+                self.vision_association_f.flush()
+                self.distance_arbitration_f.flush()
                 self.last_flush_t = time.monotonic()
         except Exception as e:
             self._handle_write_error(e)
@@ -738,6 +813,8 @@ class FieldLogger:
                 self.events_f,
                 self.gimbal_f,
                 self.rid_association_f,
+                self.vision_association_f,
+                self.distance_arbitration_f,
             ):
                 try:
                     f.flush()
@@ -748,8 +825,18 @@ class FieldLogger:
 
 FIELD_LOGGER = None
 
+EVENTS_REPLACED_BY_DEDICATED_LOGS = {
+    "GIMBAL_VISION_DETECTION",
+    "GIMBAL_VISION_BBOX_JITTER",
+    "GIMBAL_VISION_ASSOC",
+    "GIMBAL_VISION_UNMATCHED_DETECTION",
+    "DISTANCE_ARBITRATION",
+}
+
 
 def field_log_event(row):
+    if row.get("event") in EVENTS_REPLACED_BY_DEDICATED_LOGS:
+        return
     if FIELD_LOGGER is not None:
         try:
             FIELD_LOGGER.write_event(row)
@@ -1840,7 +1927,11 @@ def track_is_ui_fresh(track, now_t):
     return track.lost_seconds(now_t) <= UI_MAX_LOST_SECONDS
 
 
-def associate_vision_measurements_nearest(track_predictions, measurements):
+def associate_vision_measurements_nearest(
+    track_predictions,
+    measurements,
+    candidate_diagnostics=None,
+):
     """Pair SORT projections and YOLO centers by global nearest distance.
 
     There is deliberately no maximum pixel-distance rejection. Invalid
@@ -1871,6 +1962,11 @@ def associate_vision_measurements_nearest(track_predictions, measurements):
             continue
         measurement_items.append((measurement_index, center))
 
+    diagnostics = (
+        candidate_diagnostics
+        if candidate_diagnostics is not None
+        else []
+    )
     results = {}
     matched_measurement_indices = set()
     if prediction_items and measurement_items:
@@ -1885,6 +1981,23 @@ def associate_vision_measurements_nearest(track_predictions, measurements):
                 cost_matrix[track_index, measurement_col] = float(
                     np.linalg.norm(measured_center - expected_center)
                 )
+                measurement_index = measurement_items[measurement_col][0]
+                diagnostics.append({
+                    "track_id": prediction_items[track_index][0],
+                    "measurement_index": measurement_index,
+                    "sort_projected_center": [
+                        float(expected_center[0]),
+                        float(expected_center[1]),
+                    ],
+                    "detection_center": [
+                        float(measured_center[0]),
+                        float(measured_center[1]),
+                    ],
+                    "association_error_px": float(
+                        cost_matrix[track_index, measurement_col]
+                    ),
+                    "selected": False,
+                })
 
         track_indices, measurement_cols = linear_sum_assignment(cost_matrix)
         for track_index, measurement_col in zip(
@@ -1900,6 +2013,14 @@ def associate_vision_measurements_nearest(track_predictions, measurements):
             result_item["association_policy"] = "hungarian_nearest_no_gate"
             results[track_id] = result_item
             matched_measurement_indices.add(measurement_index)
+            for diagnostic in diagnostics:
+                if (
+                    diagnostic["track_id"] == track_id
+                    and diagnostic["measurement_index"]
+                    == measurement_index
+                ):
+                    diagnostic["selected"] = True
+                    break
 
     predicted_track_ids = [item[0] for item in prediction_items]
     unmatched_track_ids = sorted(
@@ -3703,6 +3824,7 @@ def main():
     latest_rid_bindings = {}
     last_applied_rid_measurement = {}
     last_selected_distance_source = {}
+    last_distance_decision_key = {}
     rid_assoc_last_log_ts = 0.0
     rid_assoc_cycle = 0
     stats_last_print = last_time
@@ -4652,6 +4774,7 @@ def main():
                 simple_measurements = (
                     vision_result.get("simple_measurements", []) or []
                 )
+                vision_assoc_candidates = []
                 if simple_measurements:
                     (
                         post_assoc_results,
@@ -4660,6 +4783,7 @@ def main():
                     ) = associate_vision_measurements_nearest(
                         track_predictions,
                         simple_measurements,
+                        candidate_diagnostics=vision_assoc_candidates,
                     )
                     vision_result["track_results"] = post_assoc_results
                     vision_result["matched_track_ids"] = sorted(
@@ -4682,6 +4806,309 @@ def main():
                 vision_frame_ts = float(vision_result.get("frame_ts", 0.0) or 0.0)
                 if vision_frame_ts > last_logged_vision_frame_ts:
                     last_logged_vision_frame_ts = vision_frame_ts
+                    if FIELD_LOGGER is not None:
+                        vision_log_common = {
+                            "timestamp": f"{curr_time:.6f}",
+                            "vision_frame_ts": f"{vision_frame_ts:.6f}",
+                            "vision_age_s": (
+                                f"{curr_time - vision_frame_ts:.6f}"
+                            ),
+                            "association_policy": (
+                                "hungarian_nearest_no_gate"
+                            ),
+                            "master_id": (
+                                "" if master_id is None else int(master_id)
+                            ),
+                        }
+                        vision_track_by_id = {
+                            int(track.id): track for track in ui_tracks
+                        }
+                        selected_by_track = {
+                            int(item["track_id"]): item
+                            for item in vision_assoc_candidates
+                            if item.get("selected")
+                        }
+                        selected_by_measurement = {
+                            int(item["measurement_index"]): item
+                            for item in vision_assoc_candidates
+                            if item.get("selected")
+                        }
+
+                        for prediction in track_predictions:
+                            sort_track_id = int(prediction["track_id"])
+                            projected_x = float(prediction["center"][0])
+                            projected_y = float(prediction["center"][1])
+                            sort_track = vision_track_by_id.get(sort_track_id)
+                            selected_item = selected_by_track.get(
+                                sort_track_id
+                            )
+                            selected_measurement = (
+                                None
+                                if selected_item is None
+                                else simple_measurements[
+                                    int(selected_item["measurement_index"])
+                                ]
+                            )
+                            FIELD_LOGGER.write_vision_association({
+                                **vision_log_common,
+                                "event": "SORT_PROJECTION",
+                                "sort_track_id": sort_track_id,
+                                "sort_relative_az": (
+                                    ""
+                                    if sort_track is None
+                                    else f"{float(sort_track.state[0, 0]):.6f}"
+                                ),
+                                "sort_map_az": (
+                                    ""
+                                    if sort_track is None
+                                    else f"{relative_to_map_azimuth(sort_track.state[0, 0]):.6f}"
+                                ),
+                                "sort_el": (
+                                    ""
+                                    if sort_track is None
+                                    else f"{float(sort_track.state[1, 0]):.6f}"
+                                ),
+                                "sort_projected_x": f"{projected_x:.3f}",
+                                "sort_projected_y": f"{projected_y:.3f}",
+                                "sort_projected_in_frame": (
+                                    1
+                                    if (
+                                        0.0 <= projected_x < IMG_W
+                                        and 0.0 <= projected_y < IMG_H
+                                    )
+                                    else 0
+                                ),
+                                "measurement_index": (
+                                    ""
+                                    if selected_item is None
+                                    else int(
+                                        selected_item["measurement_index"]
+                                    )
+                                ),
+                                "simple_id": (
+                                    ""
+                                    if selected_measurement is None
+                                    else selected_measurement.get(
+                                        "simple_id", ""
+                                    )
+                                ),
+                                "association_error_px": (
+                                    ""
+                                    if selected_item is None
+                                    else f"{float(selected_item['association_error_px']):.6f}"
+                                ),
+                                "selected": (
+                                    1 if selected_item is not None else 0
+                                ),
+                                "reason": (
+                                    "selected_projection"
+                                    if selected_item is not None
+                                    else "unmatched_projection"
+                                ),
+                            })
+
+                        for measurement_index, measurement in enumerate(
+                            simple_measurements
+                        ):
+                            bbox = measurement.get("bbox")
+                            center = measurement.get("center")
+                            selected_item = selected_by_measurement.get(
+                                measurement_index
+                            )
+                            FIELD_LOGGER.write_vision_association({
+                                **vision_log_common,
+                                "event": "DETECTION",
+                                "sort_track_id": (
+                                    ""
+                                    if selected_item is None
+                                    else int(selected_item["track_id"])
+                                ),
+                                "measurement_index": measurement_index,
+                                "simple_id": measurement.get("simple_id", ""),
+                                "class_id": measurement.get("class_id", ""),
+                                "confidence": (
+                                    f"{float(measurement.get('confidence', math.nan)):.6f}"
+                                ),
+                                "bbox_x1": (
+                                    "" if bbox is None
+                                    else f"{float(bbox[0]):.3f}"
+                                ),
+                                "bbox_y1": (
+                                    "" if bbox is None
+                                    else f"{float(bbox[1]):.3f}"
+                                ),
+                                "bbox_x2": (
+                                    "" if bbox is None
+                                    else f"{float(bbox[2]):.3f}"
+                                ),
+                                "bbox_y2": (
+                                    "" if bbox is None
+                                    else f"{float(bbox[3]):.3f}"
+                                ),
+                                "detection_center_x": (
+                                    "" if center is None
+                                    else f"{float(center[0]):.3f}"
+                                ),
+                                "detection_center_y": (
+                                    "" if center is None
+                                    else f"{float(center[1]):.3f}"
+                                ),
+                                "distance": (
+                                    ""
+                                    if not math.isfinite(float(
+                                        measurement.get(
+                                            "distance", math.nan
+                                        )
+                                    ))
+                                    else f"{float(measurement['distance']):.6f}"
+                                ),
+                                "distance_source": measurement.get(
+                                    "distance_source", "none"
+                                ),
+                                "distance_valid": (
+                                    1
+                                    if measurement.get("distance_valid")
+                                    else 0
+                                ),
+                                "warmup_count": int(
+                                    measurement.get("warmup_count", 0) or 0
+                                ),
+                                "safe": (
+                                    1 if measurement.get("safe") else 0
+                                ),
+                                "association_error_px": (
+                                    ""
+                                    if selected_item is None
+                                    else f"{float(selected_item['association_error_px']):.6f}"
+                                ),
+                                "selected": (
+                                    1 if selected_item is not None else 0
+                                ),
+                                "reason": (
+                                    "selected_detection"
+                                    if selected_item is not None
+                                    else "unmatched_detection"
+                                ),
+                            })
+
+                        for diagnostic in vision_assoc_candidates:
+                            sort_track_id = int(diagnostic["track_id"])
+                            measurement_index = int(
+                                diagnostic["measurement_index"]
+                            )
+                            sort_track = vision_track_by_id.get(sort_track_id)
+                            measurement = simple_measurements[
+                                measurement_index
+                            ]
+                            bbox = measurement.get("bbox")
+                            FIELD_LOGGER.write_vision_association({
+                                **vision_log_common,
+                                "event": "CANDIDATE",
+                                "sort_track_id": sort_track_id,
+                                "sort_relative_az": (
+                                    ""
+                                    if sort_track is None
+                                    else f"{float(sort_track.state[0, 0]):.6f}"
+                                ),
+                                "sort_map_az": (
+                                    ""
+                                    if sort_track is None
+                                    else f"{relative_to_map_azimuth(sort_track.state[0, 0]):.6f}"
+                                ),
+                                "sort_el": (
+                                    ""
+                                    if sort_track is None
+                                    else f"{float(sort_track.state[1, 0]):.6f}"
+                                ),
+                                "sort_projected_x": (
+                                    f"{float(diagnostic['sort_projected_center'][0]):.3f}"
+                                ),
+                                "sort_projected_y": (
+                                    f"{float(diagnostic['sort_projected_center'][1]):.3f}"
+                                ),
+                                "sort_projected_in_frame": (
+                                    1
+                                    if (
+                                        0.0
+                                        <= float(
+                                            diagnostic[
+                                                "sort_projected_center"
+                                            ][0]
+                                        )
+                                        < IMG_W
+                                        and 0.0
+                                        <= float(
+                                            diagnostic[
+                                                "sort_projected_center"
+                                            ][1]
+                                        )
+                                        < IMG_H
+                                    )
+                                    else 0
+                                ),
+                                "measurement_index": measurement_index,
+                                "simple_id": measurement.get("simple_id", ""),
+                                "class_id": measurement.get("class_id", ""),
+                                "confidence": (
+                                    f"{float(measurement.get('confidence', math.nan)):.6f}"
+                                ),
+                                "bbox_x1": (
+                                    "" if bbox is None
+                                    else f"{float(bbox[0]):.3f}"
+                                ),
+                                "bbox_y1": (
+                                    "" if bbox is None
+                                    else f"{float(bbox[1]):.3f}"
+                                ),
+                                "bbox_x2": (
+                                    "" if bbox is None
+                                    else f"{float(bbox[2]):.3f}"
+                                ),
+                                "bbox_y2": (
+                                    "" if bbox is None
+                                    else f"{float(bbox[3]):.3f}"
+                                ),
+                                "detection_center_x": (
+                                    f"{float(diagnostic['detection_center'][0]):.3f}"
+                                ),
+                                "detection_center_y": (
+                                    f"{float(diagnostic['detection_center'][1]):.3f}"
+                                ),
+                                "distance": (
+                                    ""
+                                    if not math.isfinite(float(
+                                        measurement.get(
+                                            "distance", math.nan
+                                        )
+                                    ))
+                                    else f"{float(measurement['distance']):.6f}"
+                                ),
+                                "distance_source": measurement.get(
+                                    "distance_source", "none"
+                                ),
+                                "distance_valid": (
+                                    1
+                                    if measurement.get("distance_valid")
+                                    else 0
+                                ),
+                                "warmup_count": int(
+                                    measurement.get("warmup_count", 0) or 0
+                                ),
+                                "safe": (
+                                    1 if measurement.get("safe") else 0
+                                ),
+                                "association_error_px": (
+                                    f"{float(diagnostic['association_error_px']):.6f}"
+                                ),
+                                "selected": (
+                                    1 if diagnostic.get("selected") else 0
+                                ),
+                                "reason": (
+                                    "hungarian_selected"
+                                    if diagnostic.get("selected")
+                                    else "hungarian_not_selected"
+                                ),
+                            })
                     # Record every raw gimbal-camera YOLO target before SORT
                     # association. This remains available even when ranging is
                     # warming, invalid, or cannot be written back to a track.
@@ -5098,28 +5525,115 @@ def main():
                 vision_suppressed_by_rid = (
                     selected_family == "rid" and vision_candidate_valid
                 )
+                rid_item_for_log = candidate.get("rid") or {}
+                rid_measurement_seq = rid_item_for_log.get(
+                    "measurement_seq",
+                    rid_item_for_log.get("update_seq", ""),
+                )
+                rid_receive_ts = rid_item_for_log.get("last_receive_ts")
+                rid_age_for_log = (
+                    math.inf
+                    if not rid_item_for_log
+                    else (
+                        curr_time - float(rid_receive_ts)
+                        if rid_receive_ts is not None
+                        else float(rid_item_for_log.get("age_s", math.inf))
+                    )
+                )
+                rid_distance_for_log = _parse_positive_float(
+                    rid_item_for_log.get("distance_m")
+                )
+                rid_valid_for_log = bool(
+                    rid_distance_for_log is not None
+                    and 0.0
+                    <= rid_age_for_log
+                    <= RID_DISTANCE_FRESH_SECONDS
+                )
+                distance_decision_key = (
+                    selected_now,
+                    bool(candidate["valid"]),
+                    rid_measurement_seq,
+                    rid_receive_ts,
+                    vision_frame_ts,
+                    vision_candidate_valid,
+                )
                 if (
-                    applied
-                    or previous_selected != selected_now
-                    or vision_suppressed_by_rid
+                    FIELD_LOGGER is not None
+                    and last_distance_decision_key.get(track_id)
+                    != distance_decision_key
                 ):
-                    field_log_event({
+                    FIELD_LOGGER.write_distance_arbitration({
                         "timestamp": f"{curr_time:.6f}",
-                        "seq": sender_seq,
-                        "mode": sender_mode,
-                        "event": "DISTANCE_ARBITRATION",
                         "track_id": track_id,
+                        "ui_id": get_or_assign_ui_id(track),
                         "master_id": (
                             "" if master_id is None else int(master_id)
                         ),
                         "is_master": 1 if track_id == master_id else 0,
-                        "distance": (
+                        "selected_family": selected_now,
+                        "selected_source": selected_source,
+                        "selected_distance": (
                             ""
                             if not math.isfinite(selected_distance)
                             else f"{selected_distance:.6f}"
                         ),
-                        "distance_source": selected_source,
-                        "cost": (
+                        "selected_valid": (
+                            1 if math.isfinite(selected_distance) else 0
+                        ),
+                        "measurement_ts": (
+                            f"{float(candidate.get('measurement_ts', 0.0)):.6f}"
+                        ),
+                        "filter_applied": 1 if applied else 0,
+                        "source_switch": 1 if source_switch else 0,
+                        "rid_present": 1 if rid_item_for_log else 0,
+                        "rid_id": rid_item_for_log.get("rid_id", ""),
+                        "rid_distance": (
+                            ""
+                            if rid_distance_for_log is None
+                            else f"{rid_distance_for_log:.6f}"
+                        ),
+                        "rid_age_s": (
+                            ""
+                            if not math.isfinite(rid_age_for_log)
+                            else f"{rid_age_for_log:.6f}"
+                        ),
+                        "rid_measurement_seq": rid_measurement_seq,
+                        "rid_valid": 1 if rid_valid_for_log else 0,
+                        "vision_present": (
+                            1 if vision_track_result else 0
+                        ),
+                        "vision_frame_ts": (
+                            ""
+                            if vision_frame_ts <= 0.0
+                            else f"{vision_frame_ts:.6f}"
+                        ),
+                        "vision_age_s": (
+                            ""
+                            if vision_frame_ts <= 0.0
+                            else f"{vision_age:.6f}"
+                        ),
+                        "vision_simple_id": vision_track_result.get(
+                            "simple_id", ""
+                        ),
+                        "vision_distance": (
+                            ""
+                            if _parse_positive_float(
+                                vision_track_result.get("distance")
+                            ) is None
+                            else f"{float(vision_track_result['distance']):.6f}"
+                        ),
+                        "vision_source": vision_track_result.get(
+                            "distance_source", "none"
+                        ),
+                        "vision_distance_valid": (
+                            1
+                            if vision_track_result.get("distance_valid")
+                            else 0
+                        ),
+                        "vision_fresh": (
+                            1 if vision_candidate_valid else 0
+                        ),
+                        "vision_association_error_px": (
                             ""
                             if not math.isfinite(float(
                                 vision_track_result.get(
@@ -5127,6 +5641,9 @@ def main():
                                 )
                             ))
                             else f"{float(vision_track_result.get('association_error_px')):.6f}"
+                        ),
+                        "vision_suppressed_by_rid": (
+                            1 if vision_suppressed_by_rid else 0
                         ),
                         "reason": (
                             f"selected={selected_now},"
@@ -5138,6 +5655,9 @@ def main():
                             f"{1 if vision_suppressed_by_rid else 0}"
                         ),
                     })
+                    last_distance_decision_key[
+                        track_id
+                    ] = distance_decision_key
                 last_selected_distance_source[track_id] = selected_now
 
             active_ui_track_ids = {
@@ -5147,6 +5667,7 @@ def main():
                 last_applied_vision_ts,
                 last_applied_rid_measurement,
                 last_selected_distance_source,
+                last_distance_decision_key,
             ):
                 for stale_track_id in list(state_map):
                     if stale_track_id not in active_ui_track_ids:

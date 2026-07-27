@@ -1,7 +1,9 @@
+import csv
 import importlib.util
 import math
 import struct
 import sys
+import tempfile
 import types
 from pathlib import Path
 
@@ -276,6 +278,7 @@ def test_vision_single_target_binds_without_pixel_distance_gate():
 
 
 def test_vision_multi_target_uses_global_one_to_one_nearest_assignment():
+    diagnostics = []
     results, unmatched_tracks, unmatched_detections = (
         tracking.associate_vision_measurements_nearest(
             [
@@ -286,6 +289,7 @@ def test_vision_multi_target_uses_global_one_to_one_nearest_assignment():
                 {"center": (90.0, 0.0), "label": "right"},
                 {"center": (10.0, 0.0), "label": "left"},
             ],
+            candidate_diagnostics=diagnostics,
         )
     )
 
@@ -293,6 +297,69 @@ def test_vision_multi_target_uses_global_one_to_one_nearest_assignment():
     assert results[2]["label"] == "right"
     assert unmatched_tracks == []
     assert unmatched_detections == []
+    assert len(diagnostics) == 4
+    selected = {
+        (item["track_id"], item["measurement_index"])
+        for item in diagnostics
+        if item["selected"]
+    }
+    assert selected == {(1, 1), (2, 0)}
+    assert all(
+        item["association_error_px"] >= 0.0 for item in diagnostics
+    )
+
+
+def test_field_logger_writes_dedicated_replay_logs():
+    with tempfile.TemporaryDirectory() as log_dir:
+        logger = tracking.FieldLogger(log_dir)
+        logger.write_vision_association({
+            "timestamp": "1.0",
+            "event": "CANDIDATE",
+            "vision_frame_ts": "0.9",
+            "sort_track_id": 7,
+            "simple_id": 3,
+            "association_error_px": "12.5",
+            "selected": 1,
+        })
+        logger.write_distance_arbitration({
+            "timestamp": "1.0",
+            "track_id": 7,
+            "selected_family": "vision",
+            "selected_distance": "123.0",
+            "selected_valid": 1,
+        })
+        previous_logger = tracking.FIELD_LOGGER
+        tracking.FIELD_LOGGER = logger
+        try:
+            tracking.field_log_event({
+                "timestamp": "1.0",
+                "event": "GIMBAL_VISION_ASSOC",
+            })
+        finally:
+            tracking.FIELD_LOGGER = previous_logger
+        logger.close()
+
+        vision_path = next(
+            Path(log_dir).glob("vision_association_*.csv")
+        )
+        distance_path = next(
+            Path(log_dir).glob("distance_arbitration_*.csv")
+        )
+        events_path = next(Path(log_dir).glob("events_*.csv"))
+        with vision_path.open(encoding="utf-8", newline="") as stream:
+            vision_rows = list(csv.DictReader(stream))
+        with distance_path.open(encoding="utf-8", newline="") as stream:
+            distance_rows = list(csv.DictReader(stream))
+        with events_path.open(encoding="utf-8", newline="") as stream:
+            event_rows = list(csv.DictReader(stream))
+
+        assert vision_rows[0]["event"] == "CANDIDATE"
+        assert vision_rows[0]["sort_track_id"] == "7"
+        assert vision_rows[0]["simple_id"] == "3"
+        assert vision_rows[0]["selected"] == "1"
+        assert distance_rows[0]["selected_family"] == "vision"
+        assert distance_rows[0]["selected_distance"] == "123.0"
+        assert event_rows == []
 
 
 def _fresh_rid_pair(track, distance=400.0, now_t=100.0, sequence=4):
