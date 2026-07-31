@@ -1,8 +1,9 @@
 # PROJECT_CONTEXT.md
 
-## 2026-07-31 视觉关联Y轴补偿
+## 2026-07-31 第三层实测与未测试摄像头统一修正
 - 视觉测距仍先对画面内全部YOLO目标独立运行，再回填SORT；最终匹配只改变距离写给哪条SORT轨迹，不改变测距runtime。
-- SORT投影按轨迹最近来源摄像头应用Y补偿：`logic_id=12` 为 `+46.5px`，`logic_id=13` 为 `+306.5px`，其他来源为 `0px`。
+- 第三层 `logic_id=11~15` 保留7月31日手动theta；其余摄像头在原始theta上统一叠加水平 `-2.0°`、垂直 `-1.85°`。
+- 所有摄像头的SORT投影Y像素补偿均为 `0px`，旧的logic12/13专用补偿已撤销。
 - 匹配代价为检测中心Y与补偿后SORT投影Y的绝对差，使用无硬门限的匈牙利一对一分配。X坐标不参与选择；近Y目标可能错绑，当前不增加额外拒绝机制。
 - `vision_association_*.csv` 可直接按 `sort_source_logic_id` 分组，使用 `sort_projected_y`、`sort_y_compensation_px`、`sort_compensated_y`、`detection_center_y` 和 `association_cost_y_px` 复盘各摄像头补偿效果；`association_dx_px/association_dy_px/association_error_px` 保留原始偏差供诊断。
 
@@ -16,7 +17,7 @@
 - SORT继续独占轨迹生命周期、`track_id`、`UI_ID`、角度状态以及最终距离状态；RID和云台视觉是两个并行、互不依赖的距离候选提供方。
 - 两条候选链路均只面向当前 `ui_tracks`：RID先执行既有四点方位匹配，视觉先独立完成YOLO与MLP/GRU测距，再把画面目标与SORT投影点关联。
 - 主线程对每条UI轨迹执行固定优先级：新鲜RID距离（6秒）→ 当前云台目标的新鲜视觉距离 → `NaN`。RID存在但未通过四点匹配、已过期或距离无效时，不会阻断视觉候选。
-- 视觉关联不再使用 `GIMBAL_VISION_SIMPLE_ASSOC_MAX_PX` 作为最终回填门限；当前以按来源摄像头补偿后的Y轴绝对残差构成代价矩阵，并用匈牙利算法完成一对一分配。原始X/Y和二维像素误差写入诊断日志，但不拒绝匹配。
+- 视觉关联不再使用 `GIMBAL_VISION_SIMPLE_ASSOC_MAX_PX` 作为最终回填门限；当前以Y轴绝对残差构成代价矩阵，并用匈牙利算法完成一对一分配。原始X/Y和二维像素误差写入诊断日志，但不拒绝匹配。
 - RID四点同步残差历史改为逐样本保留30秒，RID轨迹TTL和距离新鲜期均为6秒。距离来源从RID切换到视觉或反向切换时，重置距离滤波状态后接纳新来源首值。
 - UI和打击端继续读取SORT统一距离；打击端仍要求新鲜且安全的视觉框，未放宽原有硬件安全条件。外部协议、控制线程所有权和视觉模型算法均未改变。
 

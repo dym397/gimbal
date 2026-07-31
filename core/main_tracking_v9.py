@@ -450,10 +450,16 @@ FOV_X = 17.5
 FOV_Y = 9.9
 DEG_PER_PIXEL_X = FOV_X / IMG_W
 DEG_PER_PIXEL_Y = FOV_Y / IMG_H
-GIMBAL_VISION_Y_COMPENSATION_PX = {
-    12: _env_float("GIMBAL_VISION_Y_COMPENSATION_LOGIC12_PX", 46.5),
-    13: _env_float("GIMBAL_VISION_Y_COMPENSATION_LOGIC13_PX", 306.5),
-}
+MANUALLY_CALIBRATED_LOGIC_IDS = frozenset(range(11, 16))
+UNTESTED_CAMERA_THETA_HORIZONTAL_OFFSET_DEG = _env_float(
+    "UNTESTED_CAMERA_THETA_HORIZONTAL_OFFSET_DEG", -2.0
+)
+UNTESTED_CAMERA_THETA_VERTICAL_OFFSET_DEG = _env_float(
+    "UNTESTED_CAMERA_THETA_VERTICAL_OFFSET_DEG", -1.85
+)
+GIMBAL_VISION_Y_COMPENSATION_PX = _env_float(
+    "GIMBAL_VISION_Y_COMPENSATION_PX", 0.0
+)
 
 # Detection-end UDP bboxes use an explicit operator switch. Night detections
 # are direct 2560x1440 -> 640x480 resizes; daytime detections stay in 2K.
@@ -874,11 +880,13 @@ DEVICE_THETA = {
     9: {"theta_vertical": 5.5, "theta_horizontal": 342.7710},    # Layer 2 cam4
     10: {"theta_vertical": 5.5, "theta_horizontal": 321.0000},   # Layer 2 cam5
 
-    11: {"theta_vertical": 15.5000, "theta_horizontal": 31.9870},  # Layer 3 cam1
-    12: {"theta_vertical": 15.5000, "theta_horizontal": 19.6921},  # Layer 3 cam2
-    13: {"theta_vertical": 15.5000, "theta_horizontal": 0.9703},   # Layer 3 cam3
-    14: {"theta_vertical": 15.5000, "theta_horizontal": 339.9173}, # Layer 3 cam4
-    15: {"theta_vertical": 15.5000, "theta_horizontal": 322.7531}, # Layer 3 cam5
+    # Layer 3 was adjusted manually during the 2026-07-31 field test. These
+    # five cameras do not receive the untested-camera offsets below.
+    11: {"theta_vertical": 13.0000, "theta_horizontal": 29.9870},  # Layer 3 cam1
+    12: {"theta_vertical": 13.0000, "theta_horizontal": 18.6921},  # Layer 3 cam2
+    13: {"theta_vertical": 13.0000, "theta_horizontal": 359.0000}, # Layer 3 cam3
+    14: {"theta_vertical": 13.0000, "theta_horizontal": 337.9173}, # Layer 3 cam4
+    15: {"theta_vertical": 13.0000, "theta_horizontal": 319.7531}, # Layer 3 cam5
 
     16: {"theta_vertical": 25.5000, "theta_horizontal": 36.7386},  # Layer 4 cam1
     17: {"theta_vertical": 25.5000, "theta_horizontal": 18.9455},  # Layer 4 cam2
@@ -1938,14 +1946,8 @@ def track_is_ui_fresh(track, now_t):
 
 
 def gimbal_vision_y_compensation_px(logic_id):
-    """Return the measured SORT-to-gimbal-image Y correction for one camera."""
-    try:
-        normalized_logic_id = int(logic_id)
-    except (TypeError, ValueError):
-        return 0.0
-    return float(
-        GIMBAL_VISION_Y_COMPENSATION_PX.get(normalized_logic_id, 0.0)
-    )
+    """Return the single global SORT-to-gimbal-image Y correction."""
+    return float(GIMBAL_VISION_Y_COMPENSATION_PX)
 
 
 def associate_vision_measurements_nearest(
@@ -3432,8 +3434,17 @@ def calculate_angles(
     image_w=IMG_W,
     image_h=IMG_H,
 ):
-    base_az = cfg["theta_horizontal"] 
-    base_el = cfg["theta_vertical"]   
+    base_az = float(cfg["theta_horizontal"])
+    base_el = float(cfg["theta_vertical"])
+    try:
+        logic_id = int(cam_key)
+    except (TypeError, ValueError):
+        logic_id = None
+    if logic_id not in MANUALLY_CALIBRATED_LOGIC_IDS:
+        base_az = (
+            base_az + UNTESTED_CAMERA_THETA_HORIZONTAL_OFFSET_DEG
+        ) % 360.0
+        base_el += UNTESTED_CAMERA_THETA_VERTICAL_OFFSET_DEG
     image_w = float(image_w)
     image_h = float(image_h)
     
@@ -3691,6 +3702,13 @@ def main():
                 )
             rid_stop_event = threading.Event()
     print(f"[Config] DEVICE_HEADING_DEG={DEVICE_HEADING_DEG:.2f} (map north=0, east=90, south=180)")
+    print(
+        "[Config] Camera theta correction: "
+        f"manual_logic_ids={sorted(MANUALLY_CALIBRATED_LOGIC_IDS)}, "
+        f"untested_horizontal={UNTESTED_CAMERA_THETA_HORIZONTAL_OFFSET_DEG:+.2f}deg, "
+        f"untested_vertical={UNTESTED_CAMERA_THETA_VERTICAL_OFFSET_DEG:+.2f}deg, "
+        f"vision_y_compensation={GIMBAL_VISION_Y_COMPENSATION_PX:+.1f}px"
+    )
     print(
         "[Config] Detection UDP coordinates: "
         f"mode={UDP_DETECTION_COORD_MODE}, "

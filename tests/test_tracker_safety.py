@@ -316,7 +316,7 @@ def test_vision_multi_target_uses_global_one_to_one_y_assignment():
     )
 
 
-def test_vision_y_assignment_applies_known_logic_id_compensation():
+def test_vision_y_assignment_uses_zero_global_compensation():
     diagnostics = []
     results, unmatched_tracks, unmatched_detections = (
         tracking.associate_vision_measurements_nearest(
@@ -342,14 +342,31 @@ def test_vision_y_assignment_applies_known_logic_id_compensation():
 
     assert results[12]["label"] == "logic12"
     assert results[13]["label"] == "logic13"
-    assert results[12]["sort_y_compensation_px"] == 46.5
-    assert results[13]["sort_y_compensation_px"] == 306.5
-    assert results[12]["association_cost_y_px"] == 0.0
-    assert results[13]["association_cost_y_px"] == 0.0
+    assert results[12]["sort_y_compensation_px"] == 0.0
+    assert results[13]["sort_y_compensation_px"] == 0.0
+    assert results[12]["association_cost_y_px"] == 46.5
+    assert results[13]["association_cost_y_px"] == 306.5
     assert tracking.gimbal_vision_y_compensation_px(99) == 0.0
     assert tracking.gimbal_vision_y_compensation_px(None) == 0.0
     assert unmatched_tracks == []
     assert unmatched_detections == []
+
+
+def test_camera_theta_offsets_skip_manually_calibrated_layer3():
+    center_x = tracking.IMG_W / 2.0
+    center_y = tracking.IMG_H / 2.0
+
+    manual_az, manual_el = tracking.calculate_angles(
+        13, center_x, center_y, tracking.DEVICE_THETA[13]
+    )
+    untested_az, untested_el = tracking.calculate_angles(
+        8, center_x, center_y, tracking.DEVICE_THETA[8]
+    )
+
+    assert manual_az == 359.0
+    assert manual_el == 13.0
+    assert abs(untested_az - 358.0759) < 1e-9
+    assert abs(untested_el - 3.65) < 1e-9
 
 
 def test_field_logger_writes_dedicated_replay_logs():

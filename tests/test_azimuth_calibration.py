@@ -29,7 +29,7 @@ def _control_azimuth(base, relative_azimuth):
     return base + signed_relative
 
 
-def test_theta_minus_one_and_base_plus_one_preserve_all_camera_commands():
+def test_theta_table_preserves_base_shift_except_manual_layer3():
     old_horizontal = [
         33.4501, 17.7874, 1.0000, 344.8421, 327.6701,
         35.3086, 16.5593, 1.0759, 343.7710, 322.0000,
@@ -45,11 +45,23 @@ def test_theta_minus_one_and_base_plus_one_preserve_all_camera_commands():
 
     assert new_base == 60.3
     assert sorted(theta) == list(range(1, 46))
+    manual_layer3 = {
+        11: (29.9870, 13.0),
+        12: (18.6921, 13.0),
+        13: (359.0000, 13.0),
+        14: (337.9173, 13.0),
+        15: (319.7531, 13.0),
+    }
     assert theta[3]["theta_horizontal"] == 0.0
 
     for logic_id, old_azimuth in enumerate(old_horizontal, start=1):
         new_azimuth = theta[logic_id]["theta_horizontal"]
         assert 0.0 <= new_azimuth < 360.0
+        if logic_id in manual_layer3:
+            expected_azimuth, expected_vertical = manual_layer3[logic_id]
+            assert new_azimuth == expected_azimuth
+            assert theta[logic_id]["theta_vertical"] == expected_vertical
+            continue
         assert abs(new_azimuth - ((old_azimuth - 1.0) % 360.0)) < 1e-9
         assert abs(
             _control_azimuth(59.3, old_azimuth)
