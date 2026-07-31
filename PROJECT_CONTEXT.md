@@ -1,5 +1,11 @@
 # PROJECT_CONTEXT.md
 
+## 2026-07-31 视觉关联Y轴补偿
+- 视觉测距仍先对画面内全部YOLO目标独立运行，再回填SORT；最终匹配只改变距离写给哪条SORT轨迹，不改变测距runtime。
+- SORT投影按轨迹最近来源摄像头应用Y补偿：`logic_id=12` 为 `+46.5px`，`logic_id=13` 为 `+306.5px`，其他来源为 `0px`。
+- 匹配代价为检测中心Y与补偿后SORT投影Y的绝对差，使用无硬门限的匈牙利一对一分配。X坐标不参与选择；近Y目标可能错绑，当前不增加额外拒绝机制。
+- `vision_association_*.csv` 可直接按 `sort_source_logic_id` 分组，使用 `sort_projected_y`、`sort_y_compensation_px`、`sort_compensated_y`、`detection_center_y` 和 `association_cost_y_px` 复盘各摄像头补偿效果；`association_dx_px/association_dy_px/association_error_px` 保留原始偏差供诊断。
+
 ## 2026-07-27 可复盘日志结构
 - `vision_association_*.csv` 以 `vision_frame_ts` 为帧主键：`SORT_PROJECTION` 给出所有UI轨迹的投影位置，`DETECTION` 给出所有画面临时目标及测距结果，`CANDIDATE` 给出完整的SORT×检测像素代价和 `selected` 结果。
 - `distance_arbitration_*.csv` 以SORT `track_id` 为主线，连接RID候选、视觉候选、最终距离来源和滤波状态；只在输入或决策变化时写入，避免主循环重复刷相同行。
@@ -10,7 +16,7 @@
 - SORT继续独占轨迹生命周期、`track_id`、`UI_ID`、角度状态以及最终距离状态；RID和云台视觉是两个并行、互不依赖的距离候选提供方。
 - 两条候选链路均只面向当前 `ui_tracks`：RID先执行既有四点方位匹配，视觉先独立完成YOLO与MLP/GRU测距，再把画面目标与SORT投影点关联。
 - 主线程对每条UI轨迹执行固定优先级：新鲜RID距离（6秒）→ 当前云台目标的新鲜视觉距离 → `NaN`。RID存在但未通过四点匹配、已过期或距离无效时，不会阻断视觉候选。
-- 视觉关联不再使用 `GIMBAL_VISION_SIMPLE_ASSOC_MAX_PX` 作为最终回填门限；有效投影点与检测中心构成原始像素距离矩阵，以匈牙利算法完成全局最近的一对一分配。像素误差写入诊断日志，但不拒绝匹配。
+- 视觉关联不再使用 `GIMBAL_VISION_SIMPLE_ASSOC_MAX_PX` 作为最终回填门限；当前以按来源摄像头补偿后的Y轴绝对残差构成代价矩阵，并用匈牙利算法完成一对一分配。原始X/Y和二维像素误差写入诊断日志，但不拒绝匹配。
 - RID四点同步残差历史改为逐样本保留30秒，RID轨迹TTL和距离新鲜期均为6秒。距离来源从RID切换到视觉或反向切换时，重置距离滤波状态后接纳新来源首值。
 - UI和打击端继续读取SORT统一距离；打击端仍要求新鲜且安全的视觉框，未放宽原有硬件安全条件。外部协议、控制线程所有权和视觉模型算法均未改变。
 
@@ -26,13 +32,11 @@
 - RID未匹配、四点预热或门控拒绝时，符合UI条件的SORT目标仍会发送；此时距离字段为 `NaN`，不会让目标从UI消失。
 - UI威胁评分随每个状态包发送：距离 `<100m` 为100分，`100m~300m`（含端点）为50分，`>300m` 为0分，距离为 `NaN` 时评分也为 `NaN`。
 
-## 2026-07-13 测距有效性与关联诊断基线
+## 2026-07-13 测距有效性与历史关联诊断基线
 - 当前距离输出采用“首帧 MLP、满 25 帧后 GRU”的低延迟策略：第一帧物理测距、运动门控和 MLP 有效时即可输出 `distance_valid=True`，来源为 `mlp_warmup`。
 - `warmup_count=1~24` 只表示 GRU 的 25 帧输入窗口尚未填满；达到 25 帧后来源切换为 `gimbal_yolo_gru`。因此，25 帧是 GRU 稳距开始条件，不再是首次有效距离的开始条件。
 - 该策略用于避免为了等待完整 GRU 窗口而造成明显首次测距延迟；物理测距无效、运动门控拒绝、非有限值或非正距离仍按无效处理。
-- 当前 simple 模式的 `GIMBAL_VISION_SIMPLE_ASSOC_MAX_PX` 默认值为 `3000px`。这是单目标云台画面对准与测距链路诊断阶段使用的高容差配置，数值高意味着匹配严格度低。
-- 在该诊断配置下，SORT 投影点与 YOLO 测距框之间仍执行匈牙利一对一分配，但接近 2K 画面对角线的门限几乎不会拒绝错误组合；判断投影是否可行时必须查看 `association_error_px/cost` 的实际分布，不能只看 `matched_count`。
-- 正式多目标运行前仍需根据现场投影误差收紧最终 SORT 回填门限，并覆盖靠近、交叉、漏检和重新出现等身份一致性场景。
+- 当时 simple 模式曾使用 `GIMBAL_VISION_SIMPLE_ASSOC_MAX_PX=3000px` 作为低严格度诊断门限；该门限已不再参与当前最终回填，当前关联策略以2026-07-31说明为准。
 
 ## 2026-07-12 云台控制可靠性修复
 - 现场诊断日志新增 `GIMBAL_VISION_DETECTION`：对每个新云台相机帧的全部YOLO目标，在SORT关联和距离有效性判断前记录 bbox中心及其相对2K画面中心的 `dx/dy px`、归一化偏差和角度偏差，便于直接判断光轴/目标偏差。

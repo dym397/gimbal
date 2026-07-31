@@ -450,6 +450,10 @@ FOV_X = 17.5
 FOV_Y = 9.9
 DEG_PER_PIXEL_X = FOV_X / IMG_W
 DEG_PER_PIXEL_Y = FOV_Y / IMG_H
+GIMBAL_VISION_Y_COMPENSATION_PX = {
+    12: _env_float("GIMBAL_VISION_Y_COMPENSATION_LOGIC12_PX", 46.5),
+    13: _env_float("GIMBAL_VISION_Y_COMPENSATION_LOGIC13_PX", 306.5),
+}
 
 # Detection-end UDP bboxes use an explicit operator switch. Night detections
 # are direct 2560x1440 -> 640x480 resizes; daytime detections stay in 2K.
@@ -574,14 +578,18 @@ class FieldLogger:
             "timestamp", "event", "vision_frame_ts", "vision_age_s",
             "association_policy", "master_id",
             "sort_track_id", "sort_relative_az", "sort_map_az", "sort_el",
+            "sort_source_board", "sort_source_cam", "sort_source_logic_id",
             "sort_projected_x", "sort_projected_y",
-            "sort_projected_in_frame",
+            "sort_y_compensation_px", "sort_compensated_y",
+            "sort_projected_in_frame", "sort_compensated_in_frame",
             "measurement_index", "simple_id", "class_id", "confidence",
             "bbox_x1", "bbox_y1", "bbox_x2", "bbox_y2",
             "detection_center_x", "detection_center_y",
             "distance", "distance_source", "distance_valid",
             "warmup_count", "safe",
-            "association_error_px", "selected", "reason",
+            "association_dx_px", "association_dy_px",
+            "association_error_px", "association_cost_y_px",
+            "selected", "reason",
         ]
         self.distance_arbitration_fields = [
             "timestamp", "track_id", "ui_id", "master_id", "is_master",
@@ -593,7 +601,9 @@ class FieldLogger:
             "vision_present", "vision_frame_ts", "vision_age_s",
             "vision_simple_id", "vision_distance", "vision_source",
             "vision_distance_valid", "vision_fresh",
-            "vision_association_error_px", "vision_suppressed_by_rid",
+            "vision_source_logic_id", "vision_sort_y_compensation_px",
+            "vision_association_error_px", "vision_association_cost_y_px",
+            "vision_suppressed_by_rid",
             "reason",
         ]
 
@@ -1927,16 +1937,28 @@ def track_is_ui_fresh(track, now_t):
     return track.lost_seconds(now_t) <= UI_MAX_LOST_SECONDS
 
 
+def gimbal_vision_y_compensation_px(logic_id):
+    """Return the measured SORT-to-gimbal-image Y correction for one camera."""
+    try:
+        normalized_logic_id = int(logic_id)
+    except (TypeError, ValueError):
+        return 0.0
+    return float(
+        GIMBAL_VISION_Y_COMPENSATION_PX.get(normalized_logic_id, 0.0)
+    )
+
+
 def associate_vision_measurements_nearest(
     track_predictions,
     measurements,
     candidate_diagnostics=None,
 ):
-    """Pair SORT projections and YOLO centers by global nearest distance.
+    """Pair SORT projections and YOLO centers by compensated Y distance.
 
-    There is deliberately no maximum pixel-distance rejection. Invalid
-    centers are excluded, while the remaining rows and columns are assigned
-    once by the Hungarian algorithm.
+    There is deliberately no maximum-distance rejection. Known per-camera Y
+    corrections are applied to SORT projections, then the remaining rows and
+    columns are assigned once by the Hungarian algorithm. X is diagnostic
+    only and does not affect the assignment.
     """
     prediction_items = []
     for item in track_predictions or ():
@@ -1947,7 +1969,21 @@ def associate_vision_measurements_nearest(
             continue
         if center.shape != (2,) or not np.all(np.isfinite(center)):
             continue
-        prediction_items.append((track_id, center))
+        y_compensation_px = float(item.get(
+            "y_compensation_px",
+            gimbal_vision_y_compensation_px(item.get("logic_id")),
+        ))
+        compensated_center = center.copy()
+        compensated_center[1] += y_compensation_px
+        prediction_items.append({
+            "track_id": track_id,
+            "center": center,
+            "compensated_center": compensated_center,
+            "y_compensation_px": y_compensation_px,
+            "source_board": item.get("source_board", ""),
+            "source_cam": item.get("source_cam", ""),
+            "logic_id": item.get("logic_id", ""),
+        })
 
     measurement_items = []
     for measurement_index, measurement in enumerate(measurements or ()):
@@ -1974,26 +2010,45 @@ def associate_vision_measurements_nearest(
             (len(prediction_items), len(measurement_items)),
             dtype=np.float32,
         )
-        for track_index, (_, expected_center) in enumerate(prediction_items):
+        for track_index, prediction in enumerate(prediction_items):
+            expected_center = prediction["center"]
+            compensated_center = prediction["compensated_center"]
             for measurement_col, (_, measured_center) in enumerate(
                 measurement_items
             ):
-                cost_matrix[track_index, measurement_col] = float(
-                    np.linalg.norm(measured_center - expected_center)
+                delta = measured_center - expected_center
+                compensated_y_error = float(
+                    measured_center[1] - compensated_center[1]
+                )
+                cost_matrix[track_index, measurement_col] = abs(
+                    compensated_y_error
                 )
                 measurement_index = measurement_items[measurement_col][0]
                 diagnostics.append({
-                    "track_id": prediction_items[track_index][0],
+                    "track_id": prediction["track_id"],
                     "measurement_index": measurement_index,
                     "sort_projected_center": [
                         float(expected_center[0]),
                         float(expected_center[1]),
                     ],
+                    "sort_compensated_center": [
+                        float(compensated_center[0]),
+                        float(compensated_center[1]),
+                    ],
+                    "sort_y_compensation_px": float(
+                        prediction["y_compensation_px"]
+                    ),
+                    "sort_source_board": prediction["source_board"],
+                    "sort_source_cam": prediction["source_cam"],
+                    "sort_source_logic_id": prediction["logic_id"],
                     "detection_center": [
                         float(measured_center[0]),
                         float(measured_center[1]),
                     ],
-                    "association_error_px": float(
+                    "association_dx_px": float(delta[0]),
+                    "association_dy_px": float(delta[1]),
+                    "association_error_px": float(np.linalg.norm(delta)),
+                    "association_cost_y_px": float(
                         cost_matrix[track_index, measurement_col]
                     ),
                     "selected": False,
@@ -2003,14 +2058,32 @@ def associate_vision_measurements_nearest(
         for track_index, measurement_col in zip(
             track_indices, measurement_cols
         ):
-            track_id = prediction_items[int(track_index)][0]
+            prediction = prediction_items[int(track_index)]
+            track_id = prediction["track_id"]
             measurement_index = measurement_items[int(measurement_col)][0]
+            measured_center = measurement_items[int(measurement_col)][1]
+            expected_center = prediction["center"]
+            delta = measured_center - expected_center
             result_item = dict(measurements[measurement_index])
             result_item["track_id"] = track_id
-            result_item["association_error_px"] = float(
+            result_item["association_dx_px"] = float(delta[0])
+            result_item["association_dy_px"] = float(delta[1])
+            result_item["association_error_px"] = float(np.linalg.norm(delta))
+            result_item["association_cost_y_px"] = float(
                 cost_matrix[int(track_index), int(measurement_col)]
             )
-            result_item["association_policy"] = "hungarian_nearest_no_gate"
+            result_item["sort_y_compensation_px"] = float(
+                prediction["y_compensation_px"]
+            )
+            result_item["sort_compensated_y"] = float(
+                prediction["compensated_center"][1]
+            )
+            result_item["sort_source_board"] = prediction["source_board"]
+            result_item["sort_source_cam"] = prediction["source_cam"]
+            result_item["sort_source_logic_id"] = prediction["logic_id"]
+            result_item[
+                "association_policy"
+            ] = "hungarian_compensated_y_no_gate"
             results[track_id] = result_item
             matched_measurement_indices.add(measurement_index)
             for diagnostic in diagnostics:
@@ -2022,7 +2095,7 @@ def associate_vision_measurements_nearest(
                     diagnostic["selected"] = True
                     break
 
-    predicted_track_ids = [item[0] for item in prediction_items]
+    predicted_track_ids = [item["track_id"] for item in prediction_items]
     unmatched_track_ids = sorted(
         track_id for track_id in predicted_track_ids if track_id not in results
     )
@@ -4753,8 +4826,21 @@ def main():
                     expected_delta_el = (
                         track.state[1, 0] - shared_gimbal_el
                     )
+                    source_logic_id = getattr(
+                        track, "last_source_logic_id", None
+                    )
                     track_predictions.append({
                         "track_id": int(track.id),
+                        "source_board": getattr(
+                            track, "last_source_board", ""
+                        ),
+                        "source_cam": getattr(
+                            track, "last_source_cam", ""
+                        ),
+                        "logic_id": source_logic_id,
+                        "y_compensation_px": (
+                            gimbal_vision_y_compensation_px(source_logic_id)
+                        ),
                         "center": (
                             IMG_W / 2.0
                             + expected_delta_az / FOV_X * IMG_W,
@@ -4801,7 +4887,7 @@ def main():
                     ] = unmatched_measurements[:5]
                     vision_result[
                         "sort_association_policy"
-                    ] = "hungarian_nearest_no_gate"
+                    ] = "hungarian_compensated_y_no_gate"
                 track_results = vision_result.get("track_results", {})
                 vision_frame_ts = float(vision_result.get("frame_ts", 0.0) or 0.0)
                 if vision_frame_ts > last_logged_vision_frame_ts:
@@ -4814,7 +4900,7 @@ def main():
                                 f"{curr_time - vision_frame_ts:.6f}"
                             ),
                             "association_policy": (
-                                "hungarian_nearest_no_gate"
+                                "hungarian_compensated_y_no_gate"
                             ),
                             "master_id": (
                                 "" if master_id is None else int(master_id)
@@ -4838,6 +4924,12 @@ def main():
                             sort_track_id = int(prediction["track_id"])
                             projected_x = float(prediction["center"][0])
                             projected_y = float(prediction["center"][1])
+                            y_compensation_px = float(
+                                prediction.get("y_compensation_px", 0.0)
+                            )
+                            compensated_y = (
+                                projected_y + y_compensation_px
+                            )
                             sort_track = vision_track_by_id.get(sort_track_id)
                             selected_item = selected_by_track.get(
                                 sort_track_id
@@ -4868,13 +4960,36 @@ def main():
                                     if sort_track is None
                                     else f"{float(sort_track.state[1, 0]):.6f}"
                                 ),
+                                "sort_source_board": prediction.get(
+                                    "source_board", ""
+                                ),
+                                "sort_source_cam": prediction.get(
+                                    "source_cam", ""
+                                ),
+                                "sort_source_logic_id": prediction.get(
+                                    "logic_id", ""
+                                ),
                                 "sort_projected_x": f"{projected_x:.3f}",
                                 "sort_projected_y": f"{projected_y:.3f}",
+                                "sort_y_compensation_px": (
+                                    f"{y_compensation_px:.3f}"
+                                ),
+                                "sort_compensated_y": (
+                                    f"{compensated_y:.3f}"
+                                ),
                                 "sort_projected_in_frame": (
                                     1
                                     if (
                                         0.0 <= projected_x < IMG_W
                                         and 0.0 <= projected_y < IMG_H
+                                    )
+                                    else 0
+                                ),
+                                "sort_compensated_in_frame": (
+                                    1
+                                    if (
+                                        0.0 <= projected_x < IMG_W
+                                        and 0.0 <= compensated_y < IMG_H
                                     )
                                     else 0
                                 ),
@@ -4896,6 +5011,21 @@ def main():
                                     ""
                                     if selected_item is None
                                     else f"{float(selected_item['association_error_px']):.6f}"
+                                ),
+                                "association_dx_px": (
+                                    ""
+                                    if selected_item is None
+                                    else f"{float(selected_item['association_dx_px']):.6f}"
+                                ),
+                                "association_dy_px": (
+                                    ""
+                                    if selected_item is None
+                                    else f"{float(selected_item['association_dy_px']):.6f}"
+                                ),
+                                "association_cost_y_px": (
+                                    ""
+                                    if selected_item is None
+                                    else f"{float(selected_item['association_cost_y_px']):.6f}"
                                 ),
                                 "selected": (
                                     1 if selected_item is not None else 0
@@ -4922,6 +5052,37 @@ def main():
                                     ""
                                     if selected_item is None
                                     else int(selected_item["track_id"])
+                                ),
+                                "sort_source_board": (
+                                    ""
+                                    if selected_item is None
+                                    else selected_item.get(
+                                        "sort_source_board", ""
+                                    )
+                                ),
+                                "sort_source_cam": (
+                                    ""
+                                    if selected_item is None
+                                    else selected_item.get(
+                                        "sort_source_cam", ""
+                                    )
+                                ),
+                                "sort_source_logic_id": (
+                                    ""
+                                    if selected_item is None
+                                    else selected_item.get(
+                                        "sort_source_logic_id", ""
+                                    )
+                                ),
+                                "sort_y_compensation_px": (
+                                    ""
+                                    if selected_item is None
+                                    else f"{float(selected_item['sort_y_compensation_px']):.3f}"
+                                ),
+                                "sort_compensated_y": (
+                                    ""
+                                    if selected_item is None
+                                    else f"{float(selected_item['sort_compensated_center'][1]):.3f}"
                                 ),
                                 "measurement_index": measurement_index,
                                 "simple_id": measurement.get("simple_id", ""),
@@ -4981,6 +5142,21 @@ def main():
                                     if selected_item is None
                                     else f"{float(selected_item['association_error_px']):.6f}"
                                 ),
+                                "association_dx_px": (
+                                    ""
+                                    if selected_item is None
+                                    else f"{float(selected_item['association_dx_px']):.6f}"
+                                ),
+                                "association_dy_px": (
+                                    ""
+                                    if selected_item is None
+                                    else f"{float(selected_item['association_dy_px']):.6f}"
+                                ),
+                                "association_cost_y_px": (
+                                    ""
+                                    if selected_item is None
+                                    else f"{float(selected_item['association_cost_y_px']):.6f}"
+                                ),
                                 "selected": (
                                     1 if selected_item is not None else 0
                                 ),
@@ -5020,11 +5196,26 @@ def main():
                                     if sort_track is None
                                     else f"{float(sort_track.state[1, 0]):.6f}"
                                 ),
+                                "sort_source_board": diagnostic.get(
+                                    "sort_source_board", ""
+                                ),
+                                "sort_source_cam": diagnostic.get(
+                                    "sort_source_cam", ""
+                                ),
+                                "sort_source_logic_id": diagnostic.get(
+                                    "sort_source_logic_id", ""
+                                ),
                                 "sort_projected_x": (
                                     f"{float(diagnostic['sort_projected_center'][0]):.3f}"
                                 ),
                                 "sort_projected_y": (
                                     f"{float(diagnostic['sort_projected_center'][1]):.3f}"
+                                ),
+                                "sort_y_compensation_px": (
+                                    f"{float(diagnostic['sort_y_compensation_px']):.3f}"
+                                ),
+                                "sort_compensated_y": (
+                                    f"{float(diagnostic['sort_compensated_center'][1]):.3f}"
                                 ),
                                 "sort_projected_in_frame": (
                                     1
@@ -5040,6 +5231,26 @@ def main():
                                         <= float(
                                             diagnostic[
                                                 "sort_projected_center"
+                                            ][1]
+                                        )
+                                        < IMG_H
+                                    )
+                                    else 0
+                                ),
+                                "sort_compensated_in_frame": (
+                                    1
+                                    if (
+                                        0.0
+                                        <= float(
+                                            diagnostic[
+                                                "sort_compensated_center"
+                                            ][0]
+                                        )
+                                        < IMG_W
+                                        and 0.0
+                                        <= float(
+                                            diagnostic[
+                                                "sort_compensated_center"
                                             ][1]
                                         )
                                         < IMG_H
@@ -5099,6 +5310,15 @@ def main():
                                 ),
                                 "association_error_px": (
                                     f"{float(diagnostic['association_error_px']):.6f}"
+                                ),
+                                "association_dx_px": (
+                                    f"{float(diagnostic['association_dx_px']):.6f}"
+                                ),
+                                "association_dy_px": (
+                                    f"{float(diagnostic['association_dy_px']):.6f}"
+                                ),
+                                "association_cost_y_px": (
+                                    f"{float(diagnostic['association_cost_y_px']):.6f}"
                                 ),
                                 "selected": (
                                     1 if diagnostic.get("selected") else 0
@@ -5633,6 +5853,18 @@ def main():
                         "vision_fresh": (
                             1 if vision_candidate_valid else 0
                         ),
+                        "vision_source_logic_id": vision_track_result.get(
+                            "sort_source_logic_id", ""
+                        ),
+                        "vision_sort_y_compensation_px": (
+                            ""
+                            if not math.isfinite(float(
+                                vision_track_result.get(
+                                    "sort_y_compensation_px", math.nan
+                                )
+                            ))
+                            else f"{float(vision_track_result.get('sort_y_compensation_px')):.6f}"
+                        ),
                         "vision_association_error_px": (
                             ""
                             if not math.isfinite(float(
@@ -5641,6 +5873,15 @@ def main():
                                 )
                             ))
                             else f"{float(vision_track_result.get('association_error_px')):.6f}"
+                        ),
+                        "vision_association_cost_y_px": (
+                            ""
+                            if not math.isfinite(float(
+                                vision_track_result.get(
+                                    "association_cost_y_px", math.nan
+                                )
+                            ))
+                            else f"{float(vision_track_result.get('association_cost_y_px')):.6f}"
                         ),
                         "vision_suppressed_by_rid": (
                             1 if vision_suppressed_by_rid else 0

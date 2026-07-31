@@ -272,29 +272,33 @@ def test_vision_single_target_binds_without_pixel_distance_gate():
     assert set(results) == {7}
     assert results[7]["distance"] == 123.0
     assert results[7]["association_error_px"] > 3000.0
-    assert results[7]["association_policy"] == "hungarian_nearest_no_gate"
+    assert (
+        results[7]["association_policy"]
+        == "hungarian_compensated_y_no_gate"
+    )
+    assert results[7]["association_cost_y_px"] == 3280.0
     assert unmatched_tracks == []
     assert unmatched_detections == []
 
 
-def test_vision_multi_target_uses_global_one_to_one_nearest_assignment():
+def test_vision_multi_target_uses_global_one_to_one_y_assignment():
     diagnostics = []
     results, unmatched_tracks, unmatched_detections = (
         tracking.associate_vision_measurements_nearest(
             [
                 {"track_id": 1, "center": (0.0, 0.0)},
-                {"track_id": 2, "center": (100.0, 0.0)},
+                {"track_id": 2, "center": (100.0, 100.0)},
             ],
             [
-                {"center": (90.0, 0.0), "label": "right"},
-                {"center": (10.0, 0.0), "label": "left"},
+                {"center": (10.0, 90.0), "label": "bottom"},
+                {"center": (90.0, 10.0), "label": "top"},
             ],
             candidate_diagnostics=diagnostics,
         )
     )
 
-    assert results[1]["label"] == "left"
-    assert results[2]["label"] == "right"
+    assert results[1]["label"] == "top"
+    assert results[2]["label"] == "bottom"
     assert unmatched_tracks == []
     assert unmatched_detections == []
     assert len(diagnostics) == 4
@@ -307,6 +311,45 @@ def test_vision_multi_target_uses_global_one_to_one_nearest_assignment():
     assert all(
         item["association_error_px"] >= 0.0 for item in diagnostics
     )
+    assert all(
+        item["association_cost_y_px"] >= 0.0 for item in diagnostics
+    )
+
+
+def test_vision_y_assignment_applies_known_logic_id_compensation():
+    diagnostics = []
+    results, unmatched_tracks, unmatched_detections = (
+        tracking.associate_vision_measurements_nearest(
+            [
+                {
+                    "track_id": 12,
+                    "logic_id": 12,
+                    "center": (1280.0, 700.0),
+                },
+                {
+                    "track_id": 13,
+                    "logic_id": 13,
+                    "center": (1280.0, 800.0),
+                },
+            ],
+            [
+                {"center": (2400.0, 746.5), "label": "logic12"},
+                {"center": (100.0, 1106.5), "label": "logic13"},
+            ],
+            candidate_diagnostics=diagnostics,
+        )
+    )
+
+    assert results[12]["label"] == "logic12"
+    assert results[13]["label"] == "logic13"
+    assert results[12]["sort_y_compensation_px"] == 46.5
+    assert results[13]["sort_y_compensation_px"] == 306.5
+    assert results[12]["association_cost_y_px"] == 0.0
+    assert results[13]["association_cost_y_px"] == 0.0
+    assert tracking.gimbal_vision_y_compensation_px(99) == 0.0
+    assert tracking.gimbal_vision_y_compensation_px(None) == 0.0
+    assert unmatched_tracks == []
+    assert unmatched_detections == []
 
 
 def test_field_logger_writes_dedicated_replay_logs():
