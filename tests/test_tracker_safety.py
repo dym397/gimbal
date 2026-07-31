@@ -92,6 +92,18 @@ def test_long_lost_track_uses_strict_reacquire_gate():
     assert original.last_update_ts == 100.0
 
 
+def test_long_lost_track_can_reacquire_just_inside_four_degree_cap():
+    tracker, original = _tracker_with_track()
+    original.P[0, 0] = 10000.0
+    original.P[1, 1] = 10000.0
+
+    tracker.update([_measurement(3.99)], dt=0.25, now_t=101.2)
+
+    assert tracking.TRACK_REACQUIRE_MAX_DEG == 4.0
+    assert len(tracker.tracks) == 1
+    assert original.last_update_ts == 101.2
+
+
 def test_recent_track_can_still_match_inside_global_hard_cap():
     tracker, original = _tracker_with_track()
     original.P[0, 0] = 10000.0
@@ -109,6 +121,20 @@ def test_ui_freshness_is_stricter_than_internal_retention():
     assert tracking.track_is_ui_fresh(track, 100.9)
     assert not tracking.track_is_ui_fresh(track, 101.1)
     assert track.lost_seconds(101.1) < tracking.TRACK_MAX_LOST_SECONDS
+
+
+def test_default_internal_retention_expires_at_twelve_seconds():
+    tracker = tracking.MultiTargetTracker(
+        max_lost_seconds=tracking.TRACK_MAX_LOST_SECONDS
+    )
+    tracker.update([_measurement(0.0)], dt=0.1, now_t=100.0)
+    original = tracker.tracks[0]
+
+    tracker.update([], dt=0.25, now_t=111.999)
+    assert original in tracker.tracks
+
+    tracker.update([], dt=0.25, now_t=112.0)
+    assert original not in tracker.tracks
 
 
 def test_linux_rid_device_defaults_use_fixed_physical_usb_paths(monkeypatch):
