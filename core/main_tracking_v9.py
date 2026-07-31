@@ -427,7 +427,7 @@ MEAS_FUSION_WINDOW_SECONDS = _env_float("MEAS_FUSION_WINDOW_SECONDS", 0.20)
 PACKET_QUEUE_MAXLEN = _env_int("PACKET_QUEUE_MAXLEN", 256)
 TRACK_MAX_LOST_SECONDS = _env_float("TRACK_MAX_LOST_SECONDS", 12.0)  # internal ID retention; UI/control freshness remains independently bounded below
 MAX_LOCK_LOST_SECONDS = _env_float("MAX_LOCK_LOST_SECONDS", 1.6)  # external UI/gimbal/strike lock grace time
-UI_MAX_LOST_SECONDS = _env_float("UI_MAX_LOST_SECONDS", 1.0)  # hide stale predictions before the control lock grace expires
+UI_MAX_LOST_SECONDS = _env_float("UI_MAX_LOST_SECONDS", 3.0)  # tolerate detector dropouts for UI only; control/strike still use MAX_LOCK_LOST_SECONDS
 TRACK_ASSOCIATION_MAX_DEG = _env_float("TRACK_ASSOCIATION_MAX_DEG", 6.0)  # global hard cap for covariance-expanded association
 TRACK_REACQUIRE_STRICT_AFTER_SECONDS = _env_float("TRACK_REACQUIRE_STRICT_AFTER_SECONDS", 1.0)
 TRACK_REACQUIRE_MAX_DEG = _env_float("TRACK_REACQUIRE_MAX_DEG", 4.0)  # conservative long-gap cap; pairs at exactly 4.0 deg remain blocked
@@ -1943,6 +1943,17 @@ def track_ui_source(track, fallback_board, fallback_cam):
 def track_is_ui_fresh(track, now_t):
     """Hide stale prediction-only tracks while retaining them internally."""
     return track.lost_seconds(now_t) <= UI_MAX_LOST_SECONDS
+
+
+def select_ui_tracks_for_display(active_tracks, now_t):
+    """Keep confirmed UI identities visible across short detector dropouts."""
+    return [
+        track
+        for track in active_tracks
+        if track.confirmed
+        and getattr(track, "ui_confirmed", False)
+        and track_is_ui_fresh(track, now_t)
+    ]
 
 
 def gimbal_vision_y_compensation_px(logic_id):
@@ -4361,9 +4372,8 @@ def main():
                 debug_context=debug_context,
             )
 
-            # Internal valid tracks drive master selection and gimbal scheduling.
-            # RID/vision distance candidates use the stricter ui_tracks subset,
-            # so short false alarms cannot receive a public distance or UI ID.
+            # Control/strike freshness and UI display freshness are independent:
+            # the UI may bridge a detector dropout after control has released it.
             valid_tracks = [
                 t for t in active_tracks
                 if t.confirmed
@@ -4374,11 +4384,7 @@ def main():
                     t.ui_confirmed = True
                 if t.hit_streak >= STRIKE_TRACK_CONFIRM_HITS:
                     t.strike_confirmed = True
-            ui_tracks = [
-                t for t in valid_tracks
-                if getattr(t, "ui_confirmed", False)
-                and track_is_ui_fresh(t, curr_time)
-            ]
+            ui_tracks = select_ui_tracks_for_display(active_tracks, curr_time)
             strike_valid_tracks = [
                 t for t in valid_tracks
                 if getattr(t, "ui_confirmed", False)

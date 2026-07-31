@@ -118,9 +118,22 @@ def test_recent_track_can_still_match_inside_global_hard_cap():
 def test_ui_freshness_is_stricter_than_internal_retention():
     _, track = _tracker_with_track()
 
-    assert tracking.track_is_ui_fresh(track, 100.9)
-    assert not tracking.track_is_ui_fresh(track, 101.1)
-    assert track.lost_seconds(101.1) < tracking.TRACK_MAX_LOST_SECONDS
+    assert tracking.track_is_ui_fresh(track, 102.9)
+    assert not tracking.track_is_ui_fresh(track, 103.1)
+    assert track.lost_seconds(103.1) < tracking.TRACK_MAX_LOST_SECONDS
+
+
+def test_ui_dropout_tolerance_outlives_control_lock_only():
+    _, track = _tracker_with_track()
+    track.confirmed = True
+    track.ui_confirmed = True
+    dropout_time = 101.7
+
+    assert track.lost_seconds(dropout_time) > tracking.MAX_LOCK_LOST_SECONDS
+    assert tracking.track_is_ui_fresh(track, dropout_time)
+    assert tracking.select_ui_tracks_for_display(
+        [track], dropout_time
+    ) == [track]
 
 
 def test_default_internal_retention_expires_at_twelve_seconds():
