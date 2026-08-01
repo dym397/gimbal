@@ -281,13 +281,16 @@ UI_PORT = int(os.getenv("UI_PORT", "9999"))
 LOCAL_PORT = int(os.getenv("LOCAL_PORT", "8888"))
 WINDOWS_GIMBAL_CAMERA_SOURCE = "000000008"
 LINUX_GIMBAL_CAMERA_SOURCE = "/dev/v4l/by-path/platform-xhci-hcd.4.auto-usb-0:1.1:1.0-video-index0"
-ENABLE_STRIKE_SEND = _env_flag("ENABLE_STRIKE_SEND", False)
+ENABLE_STRIKE_SEND = _env_flag("ENABLE_STRIKE_SEND", True)
 STRIKE_IP = os.getenv("STRIKE_IP", "192.168.0.80")
 STRIKE_PORT = int(os.getenv("STRIKE_PORT", "10123"))
 STRIKE_SEND_HZ = _env_float("STRIKE_SEND_HZ", 10.0)
 STRIKE_WINDOW_SECONDS = _env_float("STRIKE_WINDOW_SECONDS", 1.0)
 STRIKE_LEAD_TIME = _env_float("STRIKE_LEAD_TIME", 0.3)
 STRIKE_SETTLED_EVENT_TTL = _env_float("STRIKE_SETTLED_EVENT_TTL", 0.5)
+STRIKE_VISION_MISSING_HOLD_SECONDS = _env_float(
+    "STRIKE_VISION_MISSING_HOLD_SECONDS", 0.5
+)
 TRACK_DISTANCE_TTL = _env_float("TRACK_DISTANCE_TTL", 3.0)
 ENABLE_GIMBAL_VISION = _env_flag("ENABLE_GIMBAL_VISION", False)
 GIMBAL_CAMERA_SOURCE = os.getenv(
@@ -3617,6 +3620,39 @@ def choose_strike_target(valid_tracks, curr_time, track_results, strike_target_i
     return best_track, ranked_candidates
 
 
+def build_strike_track_results(current_results, cached_results, curr_time):
+    """Briefly retain a track only when it is absent from the current vision result."""
+    now_t = float(curr_time)
+    normalized_results = {}
+    if isinstance(current_results, dict):
+        for raw_track_id, result in current_results.items():
+            try:
+                track_id = int(raw_track_id)
+            except (TypeError, ValueError):
+                continue
+            if not isinstance(result, dict):
+                continue
+            normalized_results[track_id] = result
+            cached_results[track_id] = {
+                "result": dict(result),
+                "last_present_ts": now_t,
+            }
+
+    for track_id, cached_entry in list(cached_results.items()):
+        if track_id in normalized_results:
+            continue
+        missing_age = now_t - float(cached_entry["last_present_ts"])
+        if not (
+            0.0 <= missing_age <= STRIKE_VISION_MISSING_HOLD_SECONDS
+        ):
+            del cached_results[track_id]
+            continue
+        held_result = dict(cached_entry["result"])
+        held_result["strike_missing_hold"] = True
+        normalized_results[track_id] = held_result
+    return normalized_results
+
+
 def format_strike_candidates(ranked_candidates, topk=MASTER_SELECTION_LOG_TOPK):
     if not ranked_candidates:
         return "none"
@@ -3906,6 +3942,7 @@ def main():
     angle_unsafe_frames = 0
     last_applied_vision_ts = {}
     last_logged_vision_frame_ts = 0.0
+    strike_track_results_cache = {}
     strike_window = {
         "track_id": None,
         "distance": None,
@@ -5938,10 +5975,15 @@ def main():
                     if stale_track_id not in active_ui_track_ids:
                         del state_map[stale_track_id]
 
-            track_results_for_strike = (
+            current_track_results_for_strike = (
                 vision_result.get("track_results", {})
                 if isinstance(vision_result, dict)
                 else {}
+            )
+            track_results_for_strike = build_strike_track_results(
+                current_track_results_for_strike,
+                strike_track_results_cache,
+                curr_time,
             )
             current_strike_track = next(
                 (t for t in strike_valid_tracks if t.id == strike_target_id),
