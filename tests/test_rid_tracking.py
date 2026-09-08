@@ -138,7 +138,9 @@ def test_four_point_pair_window_discards_samples_older_than_history():
 
     rid = _four_point_rid("RID-A", 100.0, 4, 4.0)
     bindings, diagnostics = associator.associate(
-        [_four_point_sort(7, 103.1)],
+        # A different SORT is used because a still-maintained bound SORT now
+        # deliberately retains RID ownership even after the fit window ages.
+        [_four_point_sort(8, 103.1)],
         [rid],
         now_ts=40.0,
     )
@@ -173,6 +175,46 @@ def test_four_point_association_gates_before_one_to_one_assignment():
     assert sum(item["selected"] for item in diagnostics) == 2
 
 
+def test_normal_rid_keeps_bound_sort_until_that_sort_disappears():
+    """A live SORT generation must keep exclusive ownership of its RID."""
+    associator = RIDFourPointAssociator()
+    bindings = {}
+    for sequence in range(1, 5):
+        bindings, _ = associator.associate(
+            [
+                _four_point_sort(7, 103.1),
+                _four_point_sort(8, 130.0),
+            ],
+            [_four_point_rid("RID-A", 100.0, sequence, float(sequence))],
+            now_ts=float(sequence),
+        )
+
+    assert set(bindings) == {7}
+
+    # RID-A later fits SORT 8 better, but SORT 7 is still maintained.
+    for sequence in range(5, 9):
+        bindings, _ = associator.associate(
+            [
+                _four_point_sort(7, 170.0),
+                _four_point_sort(8, 103.1),
+            ],
+            [_four_point_rid("RID-A", 100.0, sequence, float(sequence))],
+            now_ts=float(sequence),
+        )
+
+    assert set(bindings) == {7}
+    assert bindings[7]["rid"]["rid_id"] == "RID-A"
+    assert bindings[7]["state"] == "four_point_retained"
+
+    # Rebinding is allowed only after the original SORT generation vanishes.
+    rebound, _ = associator.associate(
+        [_four_point_sort(8, 103.1)],
+        [_four_point_rid("RID-A", 100.0, 9, 9.0)],
+        now_ts=9.0,
+    )
+    assert set(rebound) == {8}
+
+
 def test_four_point_association_never_forces_an_all_blocked_assignment():
     associator = RIDFourPointAssociator()
 
@@ -182,6 +224,336 @@ def test_four_point_association_never_forces_an_all_blocked_assignment():
 
     assert bindings == {}
     assert not any(item["selected"] for item in diagnostics)
+
+
+def test_forced_rid_binds_nearest_sort_immediately_despite_large_bias():
+    associator = RIDFourPointAssociator()
+    forced_rid = _four_point_rid(
+        "1581F6W8W255D0020XDB", 100.0, 1, 1.0
+    )
+
+    bindings, diagnostics = associator.associate(
+        [
+            _four_point_sort(7, 250.0),
+            _four_point_sort(8, 110.0),
+        ],
+        [forced_rid],
+        now_ts=1.0,
+    )
+
+    assert set(bindings) == {8}
+    assert bindings[8]["state"] == "forced_nearest"
+    assert bindings[8]["trajectory_ready"] is False
+    assert bindings[8]["current_error_deg"] == 10.0
+    selected = [item for item in diagnostics if item["selected"]]
+    assert len(selected) == 1
+    assert selected[0]["sort_track_id"] == 8
+    assert selected[0]["reason"] == "forced_nearest_rid_id_selected"
+
+
+def test_forced_rid_nearest_sort_uses_circular_azimuth_distance():
+    associator = RIDFourPointAssociator()
+    forced_rid = _four_point_rid(
+        "1581F6W8W255D0020XDB", 359.0, 1, 1.0
+    )
+
+    bindings, _ = associator.associate(
+        [
+            _four_point_sort(7, 330.0),
+            _four_point_sort(8, 1.0),
+        ],
+        [forced_rid],
+        now_ts=1.0,
+    )
+
+    assert set(bindings) == {8}
+    assert bindings[8]["current_error_deg"] == 2.0
+
+
+def test_second_forced_rid_binds_immediately_despite_large_bias():
+    associator = RIDFourPointAssociator()
+    forced_rid = _four_point_rid(
+        "1581F986425C800ST22Q", 100.0, 1, 1.0
+    )
+
+    bindings, diagnostics = associator.associate(
+        [
+            _four_point_sort(7, 250.0),
+            _four_point_sort(8, 110.0),
+        ],
+        [forced_rid],
+        now_ts=1.0,
+    )
+
+    assert set(bindings) == {8}
+    assert bindings[8]["state"] == "forced_nearest"
+    assert bindings[8]["trajectory_ready"] is False
+    assert diagnostics[1]["reason"] == "forced_nearest_rid_id_selected"
+
+
+def test_two_forced_rids_bind_distinct_nearest_sort_tracks():
+    associator = RIDFourPointAssociator()
+    first = _four_point_rid(
+        "1581F6W8W255D0020XDB", 10.0, 1, 1.0, ui_id=1
+    )
+    second = _four_point_rid(
+        "1581F986425C800ST22Q", 200.0, 2, 1.0, ui_id=2
+    )
+
+    bindings, diagnostics = associator.associate(
+        [
+            _four_point_sort(7, 12.0),
+            _four_point_sort(8, 198.0),
+        ],
+        [first, second],
+        now_ts=1.0,
+    )
+
+    assert {
+        sort_id: binding["rid"]["rid_id"]
+        for sort_id, binding in bindings.items()
+    } == {
+        7: "1581F6W8W255D0020XDB",
+        8: "1581F986425C800ST22Q",
+    }
+    assert all(binding["state"] == "forced_nearest" for binding in bindings.values())
+    assert sum(item["selected"] for item in diagnostics) == 2
+
+
+def test_two_forced_rids_lock_sort_tracks_before_normal_rid():
+    associator = RIDFourPointAssociator()
+    bindings = {}
+    diagnostics = []
+    for sequence in range(1, 5):
+        bindings, diagnostics = associator.associate(
+            [
+                _four_point_sort(7, 103.1),
+                _four_point_sort(8, 203.1),
+            ],
+            [
+                _four_point_rid(
+                    "1581F6W8W255D0020XDB",
+                    260.0,
+                    sequence,
+                    float(sequence),
+                    ui_id=1,
+                ),
+                _four_point_rid(
+                    "1581F986425C800ST22Q",
+                    20.0,
+                    sequence + 100,
+                    float(sequence),
+                    ui_id=2,
+                ),
+                _four_point_rid(
+                    "RID-NORMAL",
+                    100.0,
+                    sequence + 200,
+                    float(sequence),
+                    ui_id=3,
+                ),
+            ],
+            now_ts=float(sequence),
+        )
+
+    assert len(bindings) == 2
+    assert {
+        binding["rid"]["rid_id"] for binding in bindings.values()
+    } == {
+        "1581F6W8W255D0020XDB",
+        "1581F986425C800ST22Q",
+    }
+    assert not any(
+        item["rid_id"] == "RID-NORMAL" and item["selected"]
+        for item in diagnostics
+    )
+
+
+def test_forced_rid_has_priority_over_normal_four_point_match():
+    associator = RIDFourPointAssociator()
+    bindings = {}
+    diagnostics = []
+    for sequence in range(1, 5):
+        bindings, diagnostics = associator.associate(
+            [_four_point_sort(7, 103.1)],
+            [
+                _four_point_rid(
+                    "1581F6W8W255D0020XDB",
+                    250.0,
+                    sequence,
+                    float(sequence),
+                    ui_id=1,
+                ),
+                _four_point_rid(
+                    "RID-NORMAL",
+                    100.0,
+                    sequence + 100,
+                    float(sequence),
+                    ui_id=2,
+                ),
+            ],
+            now_ts=float(sequence),
+        )
+
+    assert set(bindings) == {7}
+    assert bindings[7]["rid"]["rid_id"] == "1581F6W8W255D0020XDB"
+    assert bindings[7]["state"] == "forced_retained"
+    assert not any(
+        item["rid_id"] == "RID-NORMAL" and item["selected"]
+        for item in diagnostics
+    )
+
+
+def test_forced_rid_keeps_original_sort_when_another_sort_becomes_nearer():
+    """Catch per-cycle nearest reassignment of an already bound special RID."""
+    associator = RIDFourPointAssociator()
+    forced_rid = _four_point_rid(
+        "1581F6W8W255D0020XDB", 10.0, 1, 1.0
+    )
+
+    first_bindings, _ = associator.associate(
+        [
+            _four_point_sort(7, 11.0),
+            _four_point_sort(8, 100.0),
+        ],
+        [forced_rid],
+        now_ts=1.0,
+    )
+    assert set(first_bindings) == {7}
+
+    moved_rid = _four_point_rid(
+        "1581F6W8W255D0020XDB", 100.0, 2, 2.0
+    )
+    second_bindings, _ = associator.associate(
+        [
+            _four_point_sort(7, 170.0),
+            _four_point_sort(8, 101.0),
+        ],
+        [moved_rid],
+        now_ts=2.0,
+    )
+
+    assert set(second_bindings) == {7}
+    assert second_bindings[7]["state"] == "forced_retained"
+    assert second_bindings[7]["binding_changed"] is False
+
+
+def test_one_sort_keeps_first_special_rid_when_other_becomes_nearer():
+    """Catch a second special RID stealing a still-valid SORT binding."""
+    associator = RIDFourPointAssociator()
+    first = _four_point_rid(
+        "1581F6W8W255D0020XDB", 10.0, 1, 1.0, ui_id=1
+    )
+    second = _four_point_rid(
+        "1581F986425C800ST22Q", 40.0, 2, 1.0, ui_id=2
+    )
+
+    first_bindings, _ = associator.associate(
+        [_four_point_sort(7, 12.0)],
+        [first, second],
+        now_ts=1.0,
+    )
+    assert first_bindings[7]["rid"]["rid_id"] == first["rid_id"]
+
+    first_moved = _four_point_rid(
+        "1581F6W8W255D0020XDB", 170.0, 3, 2.0, ui_id=1
+    )
+    second_near = _four_point_rid(
+        "1581F986425C800ST22Q", 12.1, 4, 2.0, ui_id=2
+    )
+    second_bindings, _ = associator.associate(
+        [_four_point_sort(7, 12.0)],
+        [first_moved, second_near],
+        now_ts=2.0,
+    )
+
+    assert second_bindings[7]["rid"]["rid_id"] == first["rid_id"]
+    assert second_bindings[7]["state"] == "forced_retained"
+
+
+def test_forced_rid_rebinds_by_nearest_azimuth_after_sort_disappears():
+    """Catch retaining a binding to a SORT track no longer in ui_tracks."""
+    associator = RIDFourPointAssociator()
+    forced_rid = _four_point_rid(
+        "1581F6W8W255D0020XDB", 10.0, 1, 1.0
+    )
+    first_bindings, _ = associator.associate(
+        [_four_point_sort(7, 11.0)],
+        [forced_rid],
+        now_ts=1.0,
+    )
+    assert set(first_bindings) == {7}
+
+    reappeared_rid = _four_point_rid(
+        "1581F6W8W255D0020XDB", 200.0, 2, 2.0
+    )
+    second_bindings, _ = associator.associate(
+        [
+            _four_point_sort(17, 201.0),
+            _four_point_sort(18, 250.0),
+        ],
+        [reappeared_rid],
+        now_ts=2.0,
+    )
+
+    assert set(second_bindings) == {17}
+    assert second_bindings[17]["state"] == "forced_nearest"
+    assert second_bindings[17]["binding_changed"] is True
+    assert second_bindings[17]["previous_sort_track_id"] == 7
+
+
+def test_remaining_special_rid_takes_over_after_bound_rid_is_absent():
+    """Catch stale special identity reservations blocking an active peer."""
+    associator = RIDFourPointAssociator()
+    first = _four_point_rid(
+        "1581F6W8W255D0020XDB", 10.0, 1, 1.0, ui_id=1
+    )
+    second = _four_point_rid(
+        "1581F986425C800ST22Q", 40.0, 2, 1.0, ui_id=2
+    )
+    first_bindings, _ = associator.associate(
+        [_four_point_sort(7, 12.0)],
+        [first, second],
+        now_ts=1.0,
+    )
+    assert first_bindings[7]["rid"]["rid_id"] == first["rid_id"]
+
+    takeover_bindings, _ = associator.associate(
+        [_four_point_sort(7, 39.0)],
+        [second],
+        now_ts=8.0,
+    )
+
+    assert takeover_bindings[7]["rid"]["rid_id"] == second["rid_id"]
+    assert takeover_bindings[7]["binding_changed"] is True
+
+
+def test_normal_rid_assignment_is_unchanged_after_special_binding_history():
+    """Catch special binding state leaking into the ordinary four-point path."""
+    associator = RIDFourPointAssociator()
+    special = _four_point_rid(
+        "1581F6W8W255D0020XDB", 10.0, 1, 1.0
+    )
+    associator.associate(
+        [_four_point_sort(7, 11.0)],
+        [special],
+        now_ts=1.0,
+    )
+
+    bindings = {}
+    for sequence in range(2, 6):
+        normal = _four_point_rid(
+            "RID-NORMAL", 100.0, sequence, float(sequence)
+        )
+        bindings, _ = associator.associate(
+            [_four_point_sort(7, 103.1)],
+            [normal],
+            now_ts=float(sequence),
+        )
+
+    assert set(bindings) == {7}
+    assert bindings[7]["state"] == "four_point"
+    assert bindings[7]["rid"]["rid_id"] == "RID-NORMAL"
 
 
 def _payload(rid_id="RID-A", lon=104.0, lat=30.0, timestamp=100):

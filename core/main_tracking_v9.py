@@ -382,6 +382,50 @@ RID_ALLOW_DEFAULT_STATION_POSITION = _env_flag(
     "RID_ALLOW_DEFAULT_STATION_POSITION", False
 )
 DEVICE_HEADING_DEG = _env_float("DEVICE_HEADING_DEG", 180) % 360.0  # 设备自身0度方向的地图方位：北0/东90/南180
+DEVICE_HEADING_SET_MSG = 0x04
+DEVICE_HEADING_PACKET_FORMAT = "!Bf"
+DEVICE_HEADING_PACKET_SIZE = struct.calcsize(DEVICE_HEADING_PACKET_FORMAT)
+_DEVICE_HEADING_LOCK = threading.Lock()
+
+
+def get_device_heading_deg():
+    with _DEVICE_HEADING_LOCK:
+        return float(DEVICE_HEADING_DEG)
+
+
+def set_device_heading_deg(value):
+    """Update the UI map-heading offset without changing tracker coordinates."""
+    try:
+        new_heading = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("heading must be a finite float") from exc
+    if not math.isfinite(new_heading) or not 0.0 <= new_heading < 360.0:
+        raise ValueError("heading must satisfy 0 <= heading < 360")
+
+    global DEVICE_HEADING_DEG
+    with _DEVICE_HEADING_LOCK:
+        old_heading = float(DEVICE_HEADING_DEG)
+        DEVICE_HEADING_DEG = new_heading
+    return old_heading, new_heading
+
+
+def decode_device_heading_packet(data):
+    """Decode ``0x04 + network-order float32 heading`` from the UI."""
+    if not isinstance(data, (bytes, bytearray, memoryview)):
+        raise ValueError("heading packet must be bytes")
+    packet = bytes(data)
+    if len(packet) != DEVICE_HEADING_PACKET_SIZE:
+        raise ValueError(
+            f"heading packet length must be {DEVICE_HEADING_PACKET_SIZE}"
+        )
+    msg_type, heading = struct.unpack(DEVICE_HEADING_PACKET_FORMAT, packet)
+    if msg_type != DEVICE_HEADING_SET_MSG:
+        raise ValueError(f"unexpected heading packet type 0x{msg_type:02x}")
+    if not math.isfinite(heading) or not 0.0 <= heading < 360.0:
+        raise ValueError("heading must satisfy 0 <= heading < 360")
+    return float(heading)
+
+
 # GIMBAL_AZ_BASE = 57.4  # 云台水平基准角（UI绝对方位 0° 映射到控制角的基准）
 # GIMBAL_INIT_EL = -0.4  # 启动时俯仰归位角，目标通常从该方向进入
 #测试版本基准角度
@@ -437,7 +481,7 @@ TRACK_REACQUIRE_MAX_DEG = _env_float("TRACK_REACQUIRE_MAX_DEG", 4.0)  # conserva
 ASSOCIATION_BLOCKED_COST = 1.0e6
 MAX_LOCK_LOST_FRAMES = _env_int("MAX_LOCK_LOST_FRAMES", 8)  # legacy log-only frame counter threshold
 TRACK_CONFIRM_HITS = _env_int("TRACK_CONFIRM_HITS", 3)  # internal SORT/KF confirmation threshold
-UI_TRACK_CONFIRM_HITS = _env_int("UI_TRACK_CONFIRM_HITS", 5)  # extra gate before exposing a UI ID
+UI_TRACK_CONFIRM_HITS = _env_int("UI_TRACK_CONFIRM_HITS", 24)  # extra gate before exposing a UI ID
 STRIKE_TRACK_CONFIRM_HITS = _env_int("STRIKE_TRACK_CONFIRM_HITS", UI_TRACK_CONFIRM_HITS)  # strike target is never exposed earlier than UI
 MASTER_SWITCH_SCORE_MARGIN = _env_float("MASTER_SWITCH_SCORE_MARGIN", 2.0)
 MASTER_SWITCH_CONFIRM_SECONDS = _env_float("MASTER_SWITCH_CONFIRM_SECONDS", 0.8)
@@ -1178,6 +1222,50 @@ def rk3588_thread():
         try:
             data, addr = sock.recvfrom(65535)
             recv_ts = time.time()
+            if data[:1] == bytes((DEVICE_HEADING_SET_MSG,)):
+                if addr[0] != UI_IP:
+                    reason = (
+                        f"source_ip={addr[0]},expected_ui_ip={UI_IP},"
+                        "action=rejected"
+                    )
+                    print(f"[Net][Heading][Reject] {reason}")
+                    field_log_event({
+                        "timestamp": f"{recv_ts:.6f}",
+                        "event": "DEVICE_HEADING_UPDATE_REJECTED",
+                        "reason": reason,
+                    })
+                    continue
+                try:
+                    requested_heading = decode_device_heading_packet(data)
+                    old_heading, new_heading = set_device_heading_deg(
+                        requested_heading
+                    )
+                except ValueError as e:
+                    reason = (
+                        f"source={addr[0]}:{addr[1]},"
+                        f"packet_len={len(data)},error={e}"
+                    )
+                    print(f"[Net][Heading][Reject] {reason}")
+                    field_log_event({
+                        "timestamp": f"{recv_ts:.6f}",
+                        "event": "DEVICE_HEADING_UPDATE_REJECTED",
+                        "reason": reason,
+                    })
+                    continue
+                print(
+                    f"[Net][Heading] source={addr[0]}:{addr[1]}, "
+                    f"DEVICE_HEADING_DEG={old_heading:.2f}->{new_heading:.2f}"
+                )
+                field_log_event({
+                    "timestamp": f"{recv_ts:.6f}",
+                    "event": "DEVICE_HEADING_UPDATE",
+                    "reason": (
+                        f"source={addr[0]}:{addr[1]},"
+                        f"old_heading_deg={old_heading:.6f},"
+                        f"new_heading_deg={new_heading:.6f}"
+                    ),
+                })
+                continue
             pkg = json.loads(data.decode("utf-8"))
             if isinstance(pkg, dict) and "objs" in pkg:
                 pkg["_recv_ts"] = recv_ts
@@ -1928,8 +2016,10 @@ def format_fusion_groups(groups):
     return ";".join(parts)
 
 
-def relative_to_map_azimuth(relative_az, device_heading_deg=DEVICE_HEADING_DEG):
+def relative_to_map_azimuth(relative_az, device_heading_deg=None):
     """将设备自身坐标系方位角转换为正北为0度的地图绝对方位角。"""
+    if device_heading_deg is None:
+        device_heading_deg = get_device_heading_deg()
     return (float(relative_az) + float(device_heading_deg)) % 360.0
 
 
@@ -2154,12 +2244,23 @@ def pair_ui_tracks_with_rid(
         pairs.append({
             "sort_track": track,
             "rid": binding["rid"],
+            "binding_state": binding.get("state", "four_point"),
+            "binding_reason": binding.get(
+                "reason", "four_point_gate_pass_selected"
+            ),
+            "binding_changed": bool(
+                binding.get("binding_changed", False)
+            ),
+            "previous_sort_track_id": binding.get(
+                "previous_sort_track_id"
+            ),
             "az_error_deg": binding["current_error_deg"],
             "bias_error_deg": binding["bias_error_deg"],
             "shape_p95_deg": binding["shape_p95_deg"],
             "curve_bias_deg": binding["curve_bias_deg"],
             "association_cost_deg": binding["association_cost_deg"],
             "trajectory_samples": binding["trajectory_samples"],
+            "trajectory_ready": binding["trajectory_ready"],
         })
     return (
         sorted(pairs, key=lambda item: int(item["rid"]["ui_id"])),
@@ -2227,6 +2328,11 @@ def choose_final_distance_candidate(
                 "valid": True,
                 "source": "rid_gps",
                 "source_family": "rid",
+                "force_filter_reset": bool(
+                    str((rid_pair or {}).get("binding_state", ""))
+                    .startswith("forced_")
+                    and (rid_pair or {}).get("binding_changed", False)
+                ),
                 "distance": rid_distance,
                 "measurement_ts": receive_ts,
                 "measurement_key": measurement_seq,
@@ -2262,6 +2368,7 @@ def choose_final_distance_candidate(
             "valid": True,
             "source": source,
             "source_family": "vision",
+            "force_filter_reset": False,
             "distance": vision_distance,
             "measurement_ts": frame_ts,
             "measurement_key": frame_ts,
@@ -2276,6 +2383,7 @@ def choose_final_distance_candidate(
         "valid": False,
         "source": "none",
         "source_family": "none",
+        "force_filter_reset": False,
         "distance": float("nan"),
         "measurement_ts": 0.0,
         "measurement_key": None,
@@ -2880,11 +2988,13 @@ class StandardKalmanTrack:
         self.dist_uncertainty = np.sqrt(self.dist_P[0, 0])
         return True
 
-    def set_final_distance(self, dist, ts, source):
+    def set_final_distance(self, dist, ts, source, force_reset=False):
         dist_val = _parse_positive_float(dist)
         if dist_val is None:
             return False
         source = str(source)
+        if force_reset:
+            return self._reset_distance_filter(dist_val, ts, source)
         if (
             self.dist_state is not None
             and distance_source_family(self.dist_source)
@@ -4422,6 +4532,10 @@ def main():
                 if t.hit_streak >= STRIKE_TRACK_CONFIRM_HITS:
                     t.strike_confirmed = True
             ui_tracks = select_ui_tracks_for_display(active_tracks, curr_time)
+            # Cloud control requires both UI confirmation and the shorter
+            # control-validity window; UI-only prediction bridging must not
+            # drive the gimbal.
+            gimbal_tracks = [t for t in ui_tracks if t in valid_tracks]
             strike_valid_tracks = [
                 t for t in valid_tracks
                 if getattr(t, "ui_confirmed", False)
@@ -4726,7 +4840,7 @@ def main():
                 if item.get("rid") is not None
             }
 
-            master_track = next((t for t in valid_tracks if t.id == master_id), None)
+            master_track = next((t for t in gimbal_tracks if t.id == master_id), None)
             prev_master_id = master_id
             master_lost = (prev_master_id is not None and master_track is None)
 
@@ -4734,7 +4848,7 @@ def main():
                 if PRINT_EVENT_LOGS:
                     print(
                         f"[TargetLost] master_id={prev_master_id} 不再满足锁定条件: "
-                        f"valid_ids={[int(t.id) for t in valid_tracks]}"
+                        f"gimbal_ids={[int(t.id) for t in gimbal_tracks]}"
                     )
                 field_log_event({
                     "timestamp": f"{curr_time:.6f}",
@@ -4742,7 +4856,7 @@ def main():
                     "mode": sender_mode,
                     "event": "TargetLost",
                     "track_id": int(prev_master_id),
-                    "reason": "not_in_valid_tracks",
+                    "reason": "not_in_gimbal_tracks",
                 })
                 clear_strike_window(strike_window)
                 master_id = None
@@ -4751,7 +4865,7 @@ def main():
             curr_gimbal_az = shared_gimbal_az
             curr_gimbal_el = shared_gimbal_el
             best_track, ranked_candidates = choose_master_track(
-                valid_tracks,
+                gimbal_tracks,
                 curr_gimbal_az,
                 curr_gimbal_el,
                 master_id=master_id,
@@ -5730,16 +5844,21 @@ def main():
                 applied = False
                 if candidate["valid"] and selected_family == "rid":
                     measurement_key = candidate["measurement_key"]
+                    force_filter_reset = bool(
+                        candidate.get("force_filter_reset", False)
+                    )
                     should_apply = (
                         last_applied_rid_measurement.get(track_id)
                         != measurement_key
                         or previous_family != "rid"
+                        or force_filter_reset
                     )
                     if should_apply:
                         applied = track.set_final_distance(
                             candidate["distance"],
                             candidate["measurement_ts"],
                             candidate["source"],
+                            force_reset=force_filter_reset,
                         )
                         if applied:
                             last_applied_rid_measurement[
@@ -6558,8 +6677,7 @@ def main():
                             "selected": 1 if diagnostic["selected"] else 0,
                             "ambiguous": 0,
                             "binding_state": (
-                                "four_point"
-                                if diagnostic["selected"] else ""
+                                diagnostic.get("binding_state", "")
                             ),
                             "reason": diagnostic["reason"],
                             "distance_m": (
@@ -6640,7 +6758,9 @@ def main():
                             "trajectory_samples": current_pair[
                                 "trajectory_samples"
                             ],
-                            "trajectory_ready": 1,
+                            "trajectory_ready": (
+                                1 if current_pair["trajectory_ready"] else 0
+                            ),
                             "max_az_error_deg": (
                                 f"{RID_FOUR_POINT_MAX_BIAS_ERROR_DEG:.6f}"
                             ),
@@ -6653,11 +6773,19 @@ def main():
                                 else f"{pair_rid['vertical_delta_m']:.3f}"
                             ),
                             "selected": 1,
-                            "binding_state": "four_point",
+                            "binding_state": current_pair.get(
+                                "binding_state", "four_point"
+                            ),
                             "reason": (
-                                "four_point_gate_pass_selected"
+                                current_pair.get(
+                                    "binding_reason",
+                                    "four_point_gate_pass_selected",
+                                )
                                 if pair_rid.get("elevation_deg") is not None
-                                else "four_point_gate_pass_selected;"
+                                else current_pair.get(
+                                    "binding_reason",
+                                    "four_point_gate_pass_selected",
+                                ) + ";"
                                 "altitude_difference_unavailable"
                             ),
                             **station_fields,
@@ -6700,7 +6828,8 @@ def main():
                         "" if rid_item is None else rid_item["rid_id"]
                     )
                     rid_binding_text = (
-                        "" if rid_item is None else "four_point"
+                        "" if rid_item is None
+                        else ui_pair.get("binding_state", "four_point")
                     )
                     rid_error_text = (
                         "" if rid_item is None

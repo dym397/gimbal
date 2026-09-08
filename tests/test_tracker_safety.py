@@ -70,6 +70,62 @@ def test_track_remembers_its_latest_detection_source():
     assert track.last_source_logic_id == 14
 
 
+def test_ui_track_is_exposed_only_after_thirteen_hits():
+    tracker, track = _tracker_with_track()
+
+    for hit_number in range(2, 13):
+        now_t = 100.0 + (hit_number - 1) * 0.1
+        tracker.update([_measurement(0.0)], dt=0.1, now_t=now_t)
+        if track.hit_streak >= tracking.UI_TRACK_CONFIRM_HITS:
+            track.ui_confirmed = True
+
+    assert track.hit_streak == 12
+    assert tracking.select_ui_tracks_for_display([track], 101.1) == []
+
+    tracker.update([_measurement(0.0)], dt=0.1, now_t=101.2)
+    if track.hit_streak >= tracking.UI_TRACK_CONFIRM_HITS:
+        track.ui_confirmed = True
+
+    assert track.hit_streak == 13
+    assert tracking.select_ui_tracks_for_display([track], 101.2) == [track]
+
+
+def test_ui_heading_packet_updates_map_heading_at_runtime():
+    assert hasattr(tracking, "decode_device_heading_packet")
+    assert hasattr(tracking, "set_device_heading_deg")
+    assert hasattr(tracking, "get_device_heading_deg")
+
+    packet = struct.pack("!Bf", 0x04, 271.25)
+    decoded_heading = tracking.decode_device_heading_packet(packet)
+    original_heading = tracking.get_device_heading_deg()
+    try:
+        old_heading, new_heading = tracking.set_device_heading_deg(
+            decoded_heading
+        )
+        assert old_heading == original_heading
+        assert new_heading == 271.25
+        assert tracking.relative_to_map_azimuth(10.0) == 281.25
+    finally:
+        tracking.set_device_heading_deg(original_heading)
+
+
+def test_ui_heading_packet_rejects_wrong_type_length_and_value():
+    assert hasattr(tracking, "decode_device_heading_packet")
+
+    invalid_packets = (
+        struct.pack("!Bf", 0x02, 180.0),
+        b"\x04\x00\x00\x00",
+        struct.pack("!Bf", 0x04, 360.0),
+        struct.pack("!Bf", 0x04, float("nan")),
+    )
+    for packet in invalid_packets:
+        try:
+            tracking.decode_device_heading_packet(packet)
+        except ValueError:
+            continue
+        raise AssertionError(f"invalid packet accepted: {packet!r}")
+
+
 def test_covariance_growth_cannot_accept_ten_degree_jump():
     tracker, original = _tracker_with_track()
     original.P[0, 0] = 10000.0
@@ -218,6 +274,27 @@ def test_ui_pair_does_not_force_a_wrong_bias_match():
 
     assert pairs == []
     assert diagnostics[0]["reason"] == "four_point_bias_error_exceeds_gate"
+
+
+def test_ui_pair_exposes_only_the_initial_special_binding_as_changed():
+    """Catch loss of the transition flag needed for RID filter resets."""
+    associator = tracking.RIDFourPointAssociator()
+    track = _track_at_map_az(100.0)
+    special = _rid_at_map_az(1, 100.0, 1, 1.0)
+    special["key"] = (
+        "GB42590-2023", 1, "1581F6W8W255D0020XDB"
+    )
+    special["rid_id"] = "1581F6W8W255D0020XDB"
+
+    first_pairs, _ = tracking.pair_ui_tracks_with_rid(
+        [track], [special], associator, now_ts=1.0
+    )
+    second_pairs, _ = tracking.pair_ui_tracks_with_rid(
+        [track], [special], associator, now_ts=1.1
+    )
+
+    assert first_pairs[0]["binding_changed"] is True
+    assert second_pairs[0]["binding_changed"] is False
 
 
 def test_unmatched_ui_sort_track_is_kept_without_rid():
@@ -501,6 +578,34 @@ def test_final_distance_candidate_prefers_fresh_rid_over_vision():
     assert candidate["distance"] == 400.0
 
 
+def test_only_changed_special_binding_requests_distance_filter_reset():
+    """Catch filter-reset behavior leaking into ordinary RID candidates."""
+    track = _track_at_map_az(103.1)
+    special_pair = _fresh_rid_pair(track, distance=400.0)
+    special_pair.update({
+        "binding_state": "forced_nearest",
+        "binding_changed": True,
+    })
+
+    special_candidate = tracking.choose_final_distance_candidate(
+        track,
+        special_pair,
+        _vision_candidate(distance=120.0),
+        gimbal_target_id=track.id,
+        curr_time=100.0,
+    )
+    normal_candidate = tracking.choose_final_distance_candidate(
+        track,
+        _fresh_rid_pair(track, distance=400.0),
+        _vision_candidate(distance=120.0),
+        gimbal_target_id=track.id,
+        curr_time=100.0,
+    )
+
+    assert special_candidate["force_filter_reset"] is True
+    assert normal_candidate["force_filter_reset"] is False
+
+
 def test_final_distance_candidate_uses_vision_when_rid_is_stale():
     track = _track_at_map_az(103.1)
     rid_pair = _fresh_rid_pair(track, distance=400.0, now_t=93.9)
@@ -539,6 +644,25 @@ def test_distance_filter_resets_when_source_changes():
     track.dist_state[1, 0] = 12.0
 
     assert track.set_final_distance(400.0, 100.1, "rid_gps")
+
+    assert track.dist_source == "rid_gps"
+    assert track.dist_state[0, 0] == 400.0
+    assert track.dist_state[1, 0] == 0.0
+    assert track.dist_P[0, 0] == 10.0
+
+
+def test_distance_filter_can_reset_when_special_rid_binding_changes():
+    """Catch carrying one special RID's state into another RID binding."""
+    track = _track_at_map_az(103.1)
+    assert track.set_final_distance(100.0, 100.0, "rid_gps")
+    track.dist_state[1, 0] = 12.0
+
+    assert track.set_final_distance(
+        400.0,
+        100.1,
+        "rid_gps",
+        force_reset=True,
+    )
 
     assert track.dist_source == "rid_gps"
     assert track.dist_state[0, 0] == 400.0
