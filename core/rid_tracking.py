@@ -20,6 +20,10 @@ from scipy.optimize import linear_sum_assignment
 
 
 EARTH_RADIUS_M = 6_371_008.8
+FORCED_NEAREST_RID_IDS = frozenset({
+    "1581F6W8W255D0020XDB",
+    "1581F986425C800ST22Q",
+})
 
 
 def circular_error_deg(a, b):
@@ -920,6 +924,12 @@ class RIDFourPointAssociator:
     * ``shape_p95_deg``: 95th percentile absolute deviation from that median.
 
     Hungarian assignment runs only on candidates which pass both hard gates.
+    Once selected, every RID retains exclusive ownership of that exact SORT
+    generation until the RID or SORT leaves the maintained input set.
+    Identities in ``FORCED_NEAREST_RID_IDS`` are assigned first, without angle
+    gates, to the globally nearest distinct current SORT azimuths.  A forced
+    assignment is retained while that exact SORT generation remains visible;
+    retained SORT rows are reserved before the otherwise unchanged assignment.
     """
 
     BLOCKED_COST = 1.0e6
@@ -946,6 +956,9 @@ class RIDFourPointAssociator:
         self.sort_histories = {}
         self.pair_windows = {}
         self.last_diagnostics = []
+        # Every RID keeps exclusive ownership of the same SORT generation
+        # until that RID or SORT is no longer present in the maintained input.
+        self.persistent_bindings = {}
 
     @staticmethod
     def _append_sort_sample(history, timestamp, map_az):
@@ -1128,6 +1141,41 @@ class RIDFourPointAssociator:
         diagnostics = []
         metrics_by_pair = {}
         selected_pairs = set()
+        sticky_pairs = {}
+
+        previous_bindings = {
+            rid_key: dict(state)
+            for rid_key, state in self.persistent_bindings.items()
+        }
+        previous_rid_by_sort = {
+            (
+                int(state["sort_track_id"]),
+                state.get("sort_created_ts"),
+            ): rid_key
+            for rid_key, state in previous_bindings.items()
+        }
+        active_rid_keys = {rid_item["key"] for rid_item in rid_tracks}
+        current_sort_generations = {
+            (
+                int(sort_item["track_id"]),
+                (
+                    None
+                    if sort_item.get("track_created_ts") is None
+                    else float(sort_item["track_created_ts"])
+                ),
+            )
+            for sort_item in sort_tracks
+        }
+        for rid_key, state in list(self.persistent_bindings.items()):
+            generation = (
+                int(state["sort_track_id"]),
+                state.get("sort_created_ts"),
+            )
+            if (
+                rid_key not in active_rid_keys
+                or generation not in current_sort_generations
+            ):
+                del self.persistent_bindings[rid_key]
 
         if sort_tracks and rid_tracks:
             gated_cost = np.full(
@@ -1154,6 +1202,129 @@ class RIDFourPointAssociator:
                             "association_cost_deg"
                         ]
 
+            # Retain every RID's original SORT generation first.  A crossing,
+            # temporary angle error, or a better candidate must not move the
+            # RID while its exact SORT generation is still maintained.
+            forced_cols = [
+                col
+                for col, rid_item in enumerate(rid_tracks)
+                if str(rid_item.get("rid_id", "")).strip()
+                in FORCED_NEAREST_RID_IDS
+            ]
+            reserved_rows = set()
+            reserved_cols = set()
+            for col, rid_item in enumerate(rid_tracks):
+                rid_key = rid_tracks[col]["key"]
+                state = self.persistent_bindings.get(rid_key)
+                if state is None:
+                    continue
+                for row, sort_item in enumerate(sort_tracks):
+                    sort_created_ts = (
+                        None
+                        if sort_item.get("track_created_ts") is None
+                        else float(sort_item["track_created_ts"])
+                    )
+                    if (
+                        int(sort_item["track_id"])
+                        == int(state["sort_track_id"])
+                        and sort_created_ts == state.get("sort_created_ts")
+                        and row not in reserved_rows
+                    ):
+                        is_forced = (
+                            str(rid_item.get("rid_id", "")).strip()
+                            in FORCED_NEAREST_RID_IDS
+                        )
+                        sticky_pairs[(row, col)] = {
+                            "state": (
+                                "forced_retained"
+                                if is_forced else "four_point_retained"
+                            ),
+                            "reason": (
+                                "forced_rid_binding_retained"
+                                if is_forced
+                                else "four_point_rid_binding_retained"
+                            ),
+                            "binding_changed": False,
+                            "previous_sort_track_id": int(
+                                state["sort_track_id"]
+                            ),
+                        }
+                        reserved_rows.add(row)
+                        reserved_cols.add(col)
+                        break
+
+            # Assign only unbound forced identities.  This joint Hungarian
+            # step has no rejection gate; with one SORT it selects the special
+            # RID having the smallest circular azimuth difference.
+            available_rows = [
+                row for row in range(len(sort_tracks))
+                if row not in reserved_rows
+            ]
+            unbound_forced_cols = [
+                col for col in forced_cols
+                if col not in reserved_cols
+            ]
+            if available_rows and unbound_forced_cols:
+                forced_cost = np.empty(
+                    (len(available_rows), len(unbound_forced_cols)),
+                    dtype=float,
+                )
+                for row_index, row in enumerate(available_rows):
+                    sort_item = sort_tracks[row]
+                    for col_index, col in enumerate(unbound_forced_cols):
+                        forced_cost[row_index, col_index] = circular_error_deg(
+                            sort_item["map_az"], rid_tracks[col]["map_az"]
+                        )
+                forced_row_indices, forced_col_indices = linear_sum_assignment(
+                    forced_cost
+                )
+                for row_index, col_index in zip(
+                    forced_row_indices, forced_col_indices
+                ):
+                    row = available_rows[int(row_index)]
+                    col = unbound_forced_cols[int(col_index)]
+                    rid_key = rid_tracks[col]["key"]
+                    sort_item = sort_tracks[row]
+                    sort_created_ts = (
+                        None
+                        if sort_item.get("track_created_ts") is None
+                        else float(sort_item["track_created_ts"])
+                    )
+                    previous_state = previous_bindings.get(rid_key)
+                    previous_sort_track_id = (
+                        None
+                        if previous_state is None
+                        else int(previous_state["sort_track_id"])
+                    )
+                    previous_sort_rid = previous_rid_by_sort.get(
+                        (int(sort_item["track_id"]), sort_created_ts)
+                    )
+                    sticky_pairs[(row, col)] = {
+                        "state": "forced_nearest",
+                        "reason": "forced_nearest_rid_id_selected",
+                        "binding_changed": (
+                            previous_state is None
+                            or previous_sort_track_id
+                            != int(sort_item["track_id"])
+                            or previous_state.get("sort_created_ts")
+                            != sort_created_ts
+                            or previous_sort_rid not in (None, rid_key)
+                        ),
+                        "previous_sort_track_id": previous_sort_track_id,
+                    }
+                    self.persistent_bindings[rid_key] = {
+                        "sort_track_id": int(sort_item["track_id"]),
+                        "sort_created_ts": sort_created_ts,
+                    }
+
+            # Forced rows and columns are unavailable to ordinary RID.  Put
+            # each selected forced pair back with a dominant finite cost.
+            for row, col in sticky_pairs:
+                gated_cost[row, :] = self.BLOCKED_COST
+                gated_cost[:, col] = self.BLOCKED_COST
+            for row, col in sticky_pairs:
+                gated_cost[row, col] = -self.BLOCKED_COST
+
             rows, cols = linear_sum_assignment(gated_cost)
             for row, col in zip(rows, cols):
                 if gated_cost[row, col] >= self.BLOCKED_COST:
@@ -1162,10 +1333,39 @@ class RIDFourPointAssociator:
                 rid_item = rid_tracks[int(col)]
                 sort_id = int(sort_item["track_id"])
                 pair = (sort_id, rid_item["key"])
-                metrics = metrics_by_pair[pair]
+                metrics = dict(metrics_by_pair[pair])
+                sticky_state = sticky_pairs.get((int(row), int(col)))
+                is_sticky = sticky_state is not None
+                if is_sticky:
+                    metrics["association_cost_deg"] = metrics[
+                        "current_error_deg"
+                    ]
                 selected_pairs.add(pair)
+                sort_created_ts = (
+                    None
+                    if sort_item.get("track_created_ts") is None
+                    else float(sort_item["track_created_ts"])
+                )
+                self.persistent_bindings[rid_item["key"]] = {
+                    "sort_track_id": sort_id,
+                    "sort_created_ts": sort_created_ts,
+                }
                 bindings[sort_id] = {
-                    "state": "four_point",
+                    "state": (
+                        sticky_state["state"] if is_sticky else "four_point"
+                    ),
+                    "reason": (
+                        sticky_state["reason"]
+                        if is_sticky
+                        else "four_point_gate_pass_selected"
+                    ),
+                    "binding_changed": (
+                        sticky_state["binding_changed"] if is_sticky else False
+                    ),
+                    "previous_sort_track_id": (
+                        sticky_state["previous_sort_track_id"]
+                        if is_sticky else None
+                    ),
                     "sort": sort_item,
                     "rid": rid_item,
                     **metrics,
@@ -1178,8 +1378,25 @@ class RIDFourPointAssociator:
                 metrics = metrics_by_pair.get(pair)
                 if metrics is None:
                     metrics = self._metrics(sort_item, rid_item, now_ts)
+                selected_binding = bindings.get(sort_id)
+                is_selected_binding = bool(
+                    selected_binding is not None
+                    and selected_binding["rid"]["key"] == rid_item["key"]
+                )
                 if pair in selected_pairs:
-                    reason = "four_point_gate_pass_selected"
+                    reason = (
+                        selected_binding["reason"]
+                        if is_selected_binding
+                        else "four_point_gate_pass_selected"
+                    )
+                elif (
+                    str(rid_item.get("rid_id", "")).strip()
+                    in FORCED_NEAREST_RID_IDS
+                ):
+                    reason = (
+                        "forced_nearest_rid_id_not_selected_"
+                        "insufficient_sort_tracks"
+                    )
                 elif not metrics["trajectory_ready"]:
                     reason = (
                         "four_point_alignment_pending"
@@ -1216,6 +1433,15 @@ class RIDFourPointAssociator:
                     "max_curve_error_deg": self.max_shape_p95_deg,
                     "selected": pair in selected_pairs,
                     "ambiguous": False,
+                    "binding_state": (
+                        selected_binding["state"]
+                        if is_selected_binding
+                        else ("four_point" if pair in selected_pairs else "")
+                    ),
+                    "binding_changed": (
+                        selected_binding["binding_changed"]
+                        if is_selected_binding else False
+                    ),
                     "reason": reason,
                     "distance_m": float(rid_item["distance_m"]),
                     "rid_age_s": float(rid_item.get("age_s", 0.0)),
