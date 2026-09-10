@@ -524,6 +524,11 @@ def enrich_rid_tracks(
             )
             else None
         )
+        if value["vertical_delta_m"] is not None:
+            value["distance_m"] = math.hypot(
+                distance_m,
+                value["vertical_delta_m"],
+            )
         value["elevation_deg"] = elevation_from_altitudes(
             distance_m,
             target_altitude_m,

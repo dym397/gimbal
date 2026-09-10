@@ -1293,7 +1293,73 @@ def test_enrich_rid_tracks_does_not_use_operator_coordinates():
         station_altitude=450.0,
     )
 
-    assert 95.0 < enriched[0]["distance_m"] < 97.0
+    assert 108.0 < enriched[0]["distance_m"] < 109.0
     assert 89.9 < enriched[0]["map_az"] < 90.1
     assert 27.0 < enriched[0]["elevation_deg"] < 28.0
     assert enriched[0]["vertical_delta_m"] == 50.0
+
+
+def test_enrich_rid_tracks_uses_slant_range_when_altitudes_available():
+    rid_tracks = [{
+        "position_valid": True,
+        "latitude": 30.0,
+        "longitude": 104.0,
+        "alt_geo": 500.0,
+        "measurement_history": [],
+    }]
+
+    enriched = enrich_rid_tracks(
+        rid_tracks,
+        30.0,
+        104.0,
+        station_altitude=450.0,
+    )
+
+    assert enriched[0]["distance_m"] == 50.0
+    assert enriched[0]["vertical_delta_m"] == 50.0
+
+
+def test_enrich_rid_tracks_falls_back_to_horizontal_when_station_altitude_missing():
+    manager = RIDTrackManager()
+    manager.update_payload(_payload("RID-A", lon=104.001, lat=30.0), receive_ts=10.0)
+
+    enriched = enrich_rid_tracks(
+        manager.snapshot(now_ts=10.1),
+        30.0,
+        104.0,
+        station_altitude=None,
+    )
+
+    assert 95.0 < enriched[0]["distance_m"] < 97.0
+
+
+def test_enrich_rid_tracks_falls_back_to_horizontal_when_rid_altitude_missing():
+    manager = RIDTrackManager()
+    payload = _payload("RID-A", lon=104.001, lat=30.0)
+    payload["UAVInfo"]["AltGeo"] = None
+    manager.update_payload(payload, receive_ts=10.0)
+
+    enriched = enrich_rid_tracks(
+        manager.snapshot(now_ts=10.1),
+        30.0,
+        104.0,
+        station_altitude=450.0,
+    )
+
+    assert 95.0 < enriched[0]["distance_m"] < 97.0
+
+
+def test_enrich_rid_tracks_falls_back_to_horizontal_for_rid_altitude_sentinel():
+    manager = RIDTrackManager()
+    payload = _payload("RID-A", lon=104.001, lat=30.0)
+    payload["UAVInfo"]["AltGeo"] = -1000
+    manager.update_payload(payload, receive_ts=10.0)
+
+    enriched = enrich_rid_tracks(
+        manager.snapshot(now_ts=10.1),
+        30.0,
+        104.0,
+        station_altitude=450.0,
+    )
+
+    assert 95.0 < enriched[0]["distance_m"] < 97.0
