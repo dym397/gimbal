@@ -342,7 +342,7 @@ def test_ui_threat_score_uses_requested_distance_boundaries():
     assert math.isnan(tracking.ui_threat_score_from_distance(float("nan")))
 
 
-def test_ui_status_packet_contains_nan_distance_and_nan_threat():
+def test_ui_status_packet_is_not_sent_without_valid_distance():
     class CaptureSocket:
         def __init__(self):
             self.sent = []
@@ -354,23 +354,50 @@ def test_ui_status_packet_contains_nan_distance_and_nan_threat():
     sender.sock.close()
     sender.sock = CaptureSocket()
 
-    sender.send_status(
+    for distance in (None, "invalid", float("nan"), float("inf"), 0.0, -1.0):
+        sent = sender.send_status(
+            "BOARD_3",
+            2,
+            7,
+            azimuth=123.0,
+            elevation=4.0,
+            distance=distance,
+            threat_score=float("nan"),
+        )
+        assert sent is False
+    assert sender.sock.sent == []
+
+
+def test_ui_status_packet_is_sent_with_valid_distance():
+    class CaptureSocket:
+        def __init__(self):
+            self.sent = []
+
+        def sendto(self, packet, address):
+            self.sent.append((packet, address))
+
+    sender = tracking.UISender("127.0.0.1", 9999)
+    sender.sock.close()
+    sender.sock = CaptureSocket()
+
+    sent = sender.send_status(
         "BOARD_3",
         2,
         7,
         azimuth=123.0,
         elevation=4.0,
-        distance=float("nan"),
-        threat_score=tracking.ui_threat_score_from_distance(float("nan")),
+        distance=125.0,
+        threat_score=50.0,
     )
 
+    assert sent is True
     packet, address = sender.sock.sent[0]
     unpacked = struct.unpack("!BB8sIffff", packet)
     assert address == ("127.0.0.1", 9999)
     assert unpacked[0] == 0x02
     assert unpacked[3] == 7
-    assert math.isnan(unpacked[6])
-    assert math.isnan(unpacked[7])
+    assert unpacked[6] == 125.0
+    assert unpacked[7] == 50.0
 
 
 def test_vision_single_target_binds_without_pixel_distance_gate():

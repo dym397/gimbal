@@ -1070,6 +1070,15 @@ def get_camera_params(board_id, cam_idx):
 # ==========================================
 # 网络发送类 (UI)
 # ==========================================
+def ui_distance_is_valid(distance):
+    """Return whether a target has a positive finite distance for UI output."""
+    try:
+        distance = float(distance)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(distance) and distance > 0.0
+
+
 class UISender:
     def __init__(self, ip, port):
         self.ip = ip
@@ -1080,6 +1089,8 @@ class UISender:
         self.MSG_GPS = 0x03
 
     def send_status(self, board_str, camera_id, target_id, azimuth, elevation, distance, threat_score=float("nan")):
+            if not ui_distance_is_valid(distance):
+                return False
             try:
                 if not isinstance(board_str, str):
                     board_str = str(board_str)
@@ -1098,8 +1109,10 @@ class UISender:
                 )
                 with self.lock:
                     self.sock.sendto(packet, (self.ip, self.port))
+                return True
             except Exception as e:
                 print(f"[Sender] Error: {e}")
+                return False
 
     def send_gps_location(self, latitude, longitude):
             try:
@@ -6812,18 +6825,34 @@ def main():
                     sort_map_az = relative_to_map_azimuth(t.state[0, 0])
                     map_az = sort_map_az
                     send_el = float(t.state[1, 0])
-                    ui_id = get_or_assign_ui_id(t)
                     ui_az_source = "sort_map"
                     source_board, source_cam = track_ui_source(
                         t, board_str, cam_idx
                     )
-                    sender.send_status(
+                    if not ui_distance_is_valid(send_dist):
+                        field_log_event({
+                            "timestamp": f"{curr_time:.6f}",
+                            "seq": sender_seq,
+                            "mode": sender_mode,
+                            "event": "UI_STATUS_SKIP_NO_DISTANCE",
+                            "track_id": int(t.id),
+                            "master_id": "" if master_id is None else int(master_id),
+                            "internal_track_id": int(t.id),
+                            "ui_id": "",
+                            "distance_source": dist_source,
+                            "reason": "no_positive_finite_distance",
+                        })
+                        continue
+                    ui_id = get_or_assign_ui_id(t)
+                    status_sent = sender.send_status(
                         source_board, source_cam, ui_id,
                         azimuth=map_az,
                         elevation=send_el,
                         distance=send_dist,
                         threat_score=threat_score
                     )
+                    if not status_sent:
+                        continue
                     rid_id_text = (
                         "" if rid_item is None else rid_item["rid_id"]
                     )
