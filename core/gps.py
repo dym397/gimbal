@@ -47,6 +47,11 @@ def gga_ellipsoid_height(msg):
     return altitude_msl + geoid_separation
 
 
+def gga_msl_height(msg):
+    """Return orthometric/mean-sea-level height from one NMEA GGA fix."""
+    return _finite_float(getattr(msg, "altitude", None))
+
+
 def wgs84_to_gcj02(lng, lat):
     """
     WGS84转GCJ02(火星坐标系)
@@ -101,7 +106,14 @@ def read_gps_fix(
     status_interval=5.0,
     coordinate_system="gcj02",
     include_altitude=False,
+    altitude_reference="ellipsoid",
 ):
+    altitude_reference = str(altitude_reference).strip().lower()
+    if altitude_reference not in {"ellipsoid", "msl"}:
+        raise ValueError(
+            f"unsupported altitude_reference={altitude_reference!r}; "
+            "expected 'ellipsoid' or 'msl'"
+        )
     if port is None:
         port = default_gps_port()
 
@@ -118,7 +130,7 @@ def read_gps_fix(
 
     longitude = None
     latitude = None
-    ellipsoid_height = None
+    altitude = None
 
     try:
         with serial.Serial(port, baudrate, timeout=1) as ser:
@@ -167,7 +179,11 @@ def read_gps_fix(
 
                     longitude = float(msg.longitude)
                     latitude = float(msg.latitude)
-                    ellipsoid_height = gga_ellipsoid_height(msg)
+                    altitude = (
+                        gga_msl_height(msg)
+                        if altitude_reference == "msl"
+                        else gga_ellipsoid_height(msg)
+                    )
                     break
     except serial.SerialException:
         result = (None, None, None, "serial_error")
@@ -179,7 +195,7 @@ def read_gps_fix(
 
     coordinate_system = str(coordinate_system).strip().lower()
     if coordinate_system == "wgs84":
-        result = (longitude, latitude, ellipsoid_height, port)
+        result = (longitude, latitude, altitude, port)
         return result if include_altitude else (result[0], result[1], result[3])
     if coordinate_system != "gcj02":
         raise ValueError(
@@ -194,7 +210,7 @@ def read_gps_fix(
     longitude, latitude = wgs84_to_gcj02(
         round(longitude, 4), round(latitude, 4)
     )
-    result = (longitude, latitude, ellipsoid_height, port)
+    result = (longitude, latitude, altitude, port)
     return result if include_altitude else (result[0], result[1], result[3])
 
 

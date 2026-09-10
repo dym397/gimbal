@@ -1522,7 +1522,7 @@ def laser_reader_thread(laser, stop_event):
 
 
 class SharedPositionState:
-    """Thread-safe WGS-84 station position and ellipsoid height for RID."""
+    """Thread-safe WGS-84 station position and MSL height for RID."""
 
     def __init__(
         self,
@@ -1780,6 +1780,7 @@ def gps_sender_thread(sender, position_state=None):
             status_interval=GPS_STATUS_INTERVAL,
             coordinate_system="wgs84",
             include_altitude=True,
+            altitude_reference="msl",
         )
 
         send_source = source
@@ -1818,12 +1819,12 @@ def gps_sender_thread(sender, position_state=None):
                 "event": "GPS_STATION_FIX",
                 "reason": (
                     f"source={send_source},lat={latitude:.8f},"
-                    f"lon={longitude:.8f},ellipsoid_height_m={altitude}"
+                    f"lon={longitude:.8f},alt_msl_m={altitude}"
                 ),
             })
 
         # Keep the historical UI coordinate behavior while RID calculations
-        # use the unrounded WGS-84 fix stored above.
+        # use the unrounded WGS-84 fix and GGA MSL height stored above.
         ui_longitude = longitude
         ui_latitude = latitude
         if send_source != "default" and wgs84_to_gcj02 is not None:
@@ -4170,7 +4171,7 @@ def main():
         print("[GimbalVision] disabled by ENABLE_GIMBAL_VISION=False")
 
     distance_mode = (
-        "RID WGS-84 horizontal distance"
+        "RID WGS-84 slant distance using GPS MSL altitude"
         if rid_track_manager is not None
         else (
             "gimbal camera YOLO/MLP/GRU"
