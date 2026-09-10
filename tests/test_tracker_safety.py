@@ -70,24 +70,24 @@ def test_track_remembers_its_latest_detection_source():
     assert track.last_source_logic_id == 14
 
 
-def test_ui_track_is_exposed_only_after_thirteen_hits():
+def test_ui_track_is_exposed_only_after_twenty_four_hits():
     tracker, track = _tracker_with_track()
 
-    for hit_number in range(2, 13):
+    for hit_number in range(2, 24):
         now_t = 100.0 + (hit_number - 1) * 0.1
         tracker.update([_measurement(0.0)], dt=0.1, now_t=now_t)
         if track.hit_streak >= tracking.UI_TRACK_CONFIRM_HITS:
             track.ui_confirmed = True
 
-    assert track.hit_streak == 12
-    assert tracking.select_ui_tracks_for_display([track], 101.1) == []
+    assert track.hit_streak == 23
+    assert tracking.select_ui_tracks_for_display([track], 102.2) == []
 
-    tracker.update([_measurement(0.0)], dt=0.1, now_t=101.2)
+    tracker.update([_measurement(0.0)], dt=0.1, now_t=102.3)
     if track.hit_streak >= tracking.UI_TRACK_CONFIRM_HITS:
         track.ui_confirmed = True
 
-    assert track.hit_streak == 13
-    assert tracking.select_ui_tracks_for_display([track], 101.2) == [track]
+    assert track.hit_streak == 24
+    assert tracking.select_ui_tracks_for_display([track], 102.3) == [track]
 
 
 def test_ui_heading_packet_updates_map_heading_at_runtime():
@@ -525,6 +525,44 @@ def test_rid_ui_replacement_tracker_forget_removes_all_rid_state():
     assert tracker.peek_replacement(rid_key) == 0
     assert not tracker.is_superseded(7)
     assert tracker.forget(rid_key) is False
+
+
+def test_ui_status_send_decision_applies_rid_replacement_and_visual_suppression():
+    tracker = tracking.RIDUIReplacementTracker(repeat_count=3)
+    rid_key = ("GB42590-2023", 1, "RID-A")
+    tracker.observe_bindings({rid_key: 7})
+    tracker.observe_bindings({rid_key: 12})
+
+    assert tracking.ui_status_send_decision(
+        125.0,
+        ui_id=12,
+        rid_key=rid_key,
+        replacement_tracker=tracker,
+    ) == {
+        "send": True,
+        "replaced_target_id": 7,
+        "reason": "rid_bound",
+    }
+    assert tracking.ui_status_send_decision(
+        125.0,
+        ui_id=7,
+        rid_key=None,
+        replacement_tracker=tracker,
+    ) == {
+        "send": False,
+        "replaced_target_id": 0,
+        "reason": "superseded_visual_only_ui_id",
+    }
+    assert tracking.ui_status_send_decision(
+        125.0,
+        ui_id=20,
+        rid_key=None,
+        replacement_tracker=tracker,
+    ) == {
+        "send": True,
+        "replaced_target_id": 0,
+        "reason": "visual_only",
+    }
 
 
 def test_vision_single_target_binds_without_pixel_distance_gate():

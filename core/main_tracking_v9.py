@@ -1171,6 +1171,40 @@ class RIDUIReplacementTracker:
         return self._states.pop(rid_key, None) is not None
 
 
+def ui_status_send_decision(
+    distance,
+    ui_id,
+    rid_key,
+    replacement_tracker,
+):
+    """Decide whether one distance-qualified UI target may be sent."""
+    if not ui_distance_is_valid(distance):
+        return {
+            "send": False,
+            "replaced_target_id": 0,
+            "reason": "no_positive_finite_distance",
+        }
+    if rid_key is not None:
+        return {
+            "send": True,
+            "replaced_target_id": replacement_tracker.peek_replacement(
+                rid_key
+            ),
+            "reason": "rid_bound",
+        }
+    if replacement_tracker.is_superseded(ui_id):
+        return {
+            "send": False,
+            "replaced_target_id": 0,
+            "reason": "superseded_visual_only_ui_id",
+        }
+    return {
+        "send": True,
+        "replaced_target_id": 0,
+        "reason": "visual_only",
+    }
+
+
 class UISender:
     def __init__(self, ip, port):
         self.ip = ip
@@ -3926,6 +3960,7 @@ def main():
             print(f"[FieldLog][Warn] 初始化失败: {e}")
 
     sender = UISender(UI_IP, UI_PORT)
+    rid_ui_replacement_tracker = RIDUIReplacementTracker(repeat_count=3)
     strike_sender = StrikeSender(STRIKE_IP, STRIKE_PORT) if ENABLE_STRIKE_SEND else None
     station_position = SharedPositionState(
         longitude=(
@@ -4284,6 +4319,11 @@ def main():
             curr_time = time.time()
             if rid_track_manager is not None:
                 for expired_track in rid_track_manager.prune_expired(curr_time):
+                    expired_rid_key = expired_track.get("key")
+                    replacement_state_deleted = (
+                        expired_rid_key is not None
+                        and rid_ui_replacement_tracker.forget(expired_rid_key)
+                    )
                     field_log_event({
                         "timestamp": f"{curr_time:.6f}",
                         "event": "RID_TRACK_EXPIRED_DELETE",
@@ -4297,6 +4337,18 @@ def main():
                             "action=permanent_delete;next_report_creates_new_ui_id"
                         ),
                     })
+                    if replacement_state_deleted:
+                        field_log_event({
+                            "timestamp": f"{curr_time:.6f}",
+                            "event": "RID_UI_REPLACEMENT_STATE_DELETE",
+                            "ui_id": expired_track.get("ui_id", ""),
+                            "distance_source": "",
+                            "reason": (
+                                f"rid_id={expired_track.get('rid_id', '')},"
+                                f"key={expired_track.get('key_text', '')},"
+                                "action=forget_permanently_expired_rid"
+                            ),
+                        })
             # --- 1. 获取 UDP 数据：短时间窗内的分摄像头包合成一个逻辑帧 ---
             while packet_queue:
                 pkg = packet_queue.popleft()
@@ -6913,6 +6965,41 @@ def main():
                             **station_fields,
                         })
 
+                current_rid_ui_bindings = {}
+                for ui_pair in ui_fusion_pairs:
+                    rid_item = ui_pair["rid"]
+                    if rid_item is None:
+                        continue
+                    pair_track = ui_pair["sort_track"]
+                    pair_distance_state = final_distance_by_track.get(
+                        int(pair_track.id), {}
+                    )
+                    pair_distance = pair_distance_state.get(
+                        "distance", math.nan
+                    )
+                    if not ui_distance_is_valid(pair_distance):
+                        continue
+                    current_rid_ui_bindings[rid_item["key"]] = (
+                        get_or_assign_ui_id(pair_track)
+                    )
+                for switch in rid_ui_replacement_tracker.observe_bindings(
+                    current_rid_ui_bindings
+                ):
+                    switch_rid_key = switch["rid_key"]
+                    field_log_event({
+                        "timestamp": f"{curr_time:.6f}",
+                        "seq": sender_seq,
+                        "mode": sender_mode,
+                        "event": "RID_UI_ID_SWITCH",
+                        "ui_id": int(switch["new_ui_id"]),
+                        "distance_source": "rid",
+                        "reason": (
+                            f"rid_key={switch_rid_key!r},"
+                            f"old_ui_id={int(switch['old_ui_id'])},"
+                            f"new_ui_id={int(switch['new_ui_id'])}"
+                        ),
+                    })
+
                 for ui_pair in ui_fusion_pairs:
                     t = ui_pair["sort_track"]
                     rid_item = ui_pair["rid"]
@@ -6953,15 +7040,91 @@ def main():
                         })
                         continue
                     ui_id = get_or_assign_ui_id(t)
+                    rid_key = (
+                        None if rid_item is None else rid_item["key"]
+                    )
+                    send_decision = ui_status_send_decision(
+                        send_dist,
+                        ui_id=ui_id,
+                        rid_key=rid_key,
+                        replacement_tracker=rid_ui_replacement_tracker,
+                    )
+                    if not send_decision["send"]:
+                        field_log_event({
+                            "timestamp": f"{curr_time:.6f}",
+                            "seq": sender_seq,
+                            "mode": sender_mode,
+                            "event": "UI_SUPERSEDED_TARGET_SKIP",
+                            "track_id": int(t.id),
+                            "internal_track_id": int(t.id),
+                            "ui_id": int(ui_id),
+                            "master_id": (
+                                "" if master_id is None else int(master_id)
+                            ),
+                            "distance": f"{send_dist:.6f}",
+                            "distance_source": dist_source,
+                            "reason": send_decision["reason"],
+                        })
+                        continue
+                    replaced_target_id = int(
+                        send_decision["replaced_target_id"]
+                    )
                     status_sent = sender.send_status(
                         source_board, source_cam, ui_id,
                         azimuth=map_az,
                         elevation=send_el,
                         distance=send_dist,
-                        threat_score=threat_score
+                        threat_score=threat_score,
+                        replaced_target_id=replaced_target_id,
                     )
                     if not status_sent:
                         continue
+                    if rid_key is not None and replaced_target_id != 0:
+                        replacement_remaining = (
+                            rid_ui_replacement_tracker.mark_sent(
+                                rid_key, replaced_target_id
+                            )
+                        )
+                        field_log_event({
+                            "timestamp": f"{curr_time:.6f}",
+                            "seq": sender_seq,
+                            "mode": sender_mode,
+                            "event": "UI_REPLACEMENT_SEND",
+                            "track_id": int(t.id),
+                            "internal_track_id": int(t.id),
+                            "ui_id": int(ui_id),
+                            "master_id": (
+                                "" if master_id is None else int(master_id)
+                            ),
+                            "distance": f"{send_dist:.6f}",
+                            "distance_source": dist_source,
+                            "reason": (
+                                f"rid_key={rid_key!r},"
+                                f"replaced_target_id={replaced_target_id},"
+                                f"remaining={replacement_remaining}"
+                            ),
+                        })
+                        if replacement_remaining == 0:
+                            field_log_event({
+                                "timestamp": f"{curr_time:.6f}",
+                                "seq": sender_seq,
+                                "mode": sender_mode,
+                                "event": "UI_REPLACEMENT_COMPLETE",
+                                "track_id": int(t.id),
+                                "internal_track_id": int(t.id),
+                                "ui_id": int(ui_id),
+                                "master_id": (
+                                    "" if master_id is None
+                                    else int(master_id)
+                                ),
+                                "distance": f"{send_dist:.6f}",
+                                "distance_source": dist_source,
+                                "reason": (
+                                    f"rid_key={rid_key!r},"
+                                    f"replaced_target_id="
+                                    f"{replaced_target_id},remaining=0"
+                                ),
+                            })
                     rid_id_text = (
                         "" if rid_item is None else rid_item["rid_id"]
                     )
@@ -7008,6 +7171,7 @@ def main():
                             f"ui_id_source=sort,"
                             f"ui_distance_source="
                             f"{final_distance_state.get('source_family', 'none')},"
+                            f"replaced_target_id={replaced_target_id},"
                             f"sort_map_az={sort_map_az:.6f},"
                             f"rid_map_az={rid_map_az_text},"
                             f"rid_render={rid_render_text}"
