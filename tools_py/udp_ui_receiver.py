@@ -9,15 +9,27 @@ MSG_GPS = 0x03
 
 
 def parse_status_packet(data):
-    expected_len = struct.calcsize("!BB8sIfff")
+    expected_len = struct.calcsize("!BB8sIffffI")
     if len(data) != expected_len:
         return f"invalid status packet length={len(data)}, expected={expected_len}"
 
-    msg_type, camera_id, board_bytes, target_id, azimuth, elevation, distance = struct.unpack("!BB8sIfff", data)
+    (
+        msg_type,
+        camera_id,
+        board_bytes,
+        target_id,
+        azimuth,
+        elevation,
+        distance,
+        threat_score,
+        replaced_target_id,
+    ) = struct.unpack("!BB8sIffffI", data)
     board = board_bytes.rstrip(b"\x00").decode("utf-8", errors="replace")
     return (
         f"STATUS type=0x{msg_type:02X}, board={board}, camera_id={camera_id}, "
-        f"target_id={target_id}, az={azimuth:.3f}, el={elevation:.3f}, dist={distance:.3f}"
+        f"target_id={target_id}, az={azimuth:.3f}, el={elevation:.3f}, "
+        f"dist={distance:.3f}, threat={threat_score:.3f}, "
+        f"replaced_target_id={replaced_target_id}"
     )
 
 

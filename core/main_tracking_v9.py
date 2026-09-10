@@ -1088,8 +1088,24 @@ class UISender:
         self.MSG_STATUS = 0x02
         self.MSG_GPS = 0x03
 
-    def send_status(self, board_str, camera_id, target_id, azimuth, elevation, distance, threat_score=float("nan")):
+    def send_status(
+        self,
+        board_str,
+        camera_id,
+        target_id,
+        azimuth,
+        elevation,
+        distance,
+        threat_score=float("nan"),
+        replaced_target_id=0,
+    ):
             if not ui_distance_is_valid(distance):
+                return False
+            try:
+                replaced_target_id = int(replaced_target_id)
+            except (TypeError, ValueError, OverflowError):
+                return False
+            if not 0 <= replaced_target_id <= 0xFFFFFFFF:
                 return False
             try:
                 if not isinstance(board_str, str):
@@ -1097,7 +1113,7 @@ class UISender:
                 board_bytes = board_str.encode('utf-8')
 
                 packet = struct.pack(
-                    '!BB8sIffff',
+                    '!BB8sIffffI',
                     self.MSG_STATUS,
                     int(camera_id),
                     board_bytes,
@@ -1105,7 +1121,8 @@ class UISender:
                     float(azimuth),
                     float(elevation),
                     float(distance),
-                    float(threat_score)
+                    float(threat_score),
+                    replaced_target_id,
                 )
                 with self.lock:
                     self.sock.sendto(packet, (self.ip, self.port))

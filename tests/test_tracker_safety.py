@@ -388,16 +388,68 @@ def test_ui_status_packet_is_sent_with_valid_distance():
         elevation=4.0,
         distance=125.0,
         threat_score=50.0,
+        replaced_target_id=23,
     )
 
     assert sent is True
     packet, address = sender.sock.sent[0]
-    unpacked = struct.unpack("!BB8sIffff", packet)
+    assert len(packet) == 34
+    unpacked = struct.unpack("!BB8sIffffI", packet)
     assert address == ("127.0.0.1", 9999)
     assert unpacked[0] == 0x02
     assert unpacked[3] == 7
     assert unpacked[6] == 125.0
     assert unpacked[7] == 50.0
+    assert unpacked[8] == 23
+
+
+def test_ui_status_packet_defaults_replaced_target_id_to_zero():
+    class CaptureSocket:
+        def __init__(self):
+            self.sent = []
+
+        def sendto(self, packet, address):
+            self.sent.append((packet, address))
+
+    sender = tracking.UISender("127.0.0.1", 9999)
+    sender.sock.close()
+    sender.sock = CaptureSocket()
+
+    assert sender.send_status(
+        "BOARD_3",
+        2,
+        7,
+        azimuth=123.0,
+        elevation=4.0,
+        distance=125.0,
+        threat_score=50.0,
+    )
+    packet, _ = sender.sock.sent[0]
+
+    assert struct.unpack("!BB8sIffffI", packet)[8] == 0
+
+
+def test_ui_receiver_parses_replaced_target_id():
+    from tools_py import udp_ui_receiver
+
+    packet = struct.pack(
+        "!BB8sIffffI",
+        0x02,
+        2,
+        b"BOARD_3",
+        7,
+        123.0,
+        4.0,
+        125.0,
+        50.0,
+        23,
+    )
+
+    parsed = udp_ui_receiver.parse_status_packet(packet)
+
+    assert "target_id=7" in parsed
+    assert "threat=50.000" in parsed
+    assert "replaced_target_id=23" in parsed
 
 
 def test_vision_single_target_binds_without_pixel_distance_gate():
