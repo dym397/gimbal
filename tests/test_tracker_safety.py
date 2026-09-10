@@ -452,6 +452,81 @@ def test_ui_receiver_parses_replaced_target_id():
     assert "replaced_target_id=23" in parsed
 
 
+def test_rid_ui_replacement_tracker_keeps_same_id_across_binding_gap():
+    tracker = tracking.RIDUIReplacementTracker(repeat_count=3)
+    rid_key = ("GB42590-2023", 1, "RID-A")
+
+    assert tracker.observe_bindings({rid_key: 7}) == []
+    assert tracker.peek_replacement(rid_key) == 0
+    assert tracker.observe_bindings({}) == []
+    assert tracker.observe_bindings({rid_key: 7}) == []
+    assert tracker.peek_replacement(rid_key) == 0
+    assert not tracker.is_superseded(7)
+
+
+def test_rid_ui_replacement_tracker_repeats_old_id_three_times():
+    tracker = tracking.RIDUIReplacementTracker(repeat_count=3)
+    rid_key = ("GB42590-2023", 1, "RID-A")
+    tracker.observe_bindings({rid_key: 7})
+
+    assert tracker.observe_bindings({rid_key: 12}) == [{
+        "rid_key": rid_key,
+        "old_ui_id": 7,
+        "new_ui_id": 12,
+    }]
+    assert tracker.is_superseded(7)
+    assert tracker.peek_replacement(rid_key) == 7
+    assert tracker.mark_sent(rid_key, 7) == 2
+    assert tracker.mark_sent(rid_key, 7) == 1
+    assert tracker.mark_sent(rid_key, 7) == 0
+    assert tracker.peek_replacement(rid_key) == 0
+    assert tracker.is_superseded(7)
+
+
+def test_rid_ui_replacement_tracker_isolates_rids_and_queues_switches_fifo():
+    tracker = tracking.RIDUIReplacementTracker(repeat_count=3)
+    rid_a = ("GB42590-2023", 1, "RID-A")
+    rid_b = ("GB42590-2023", 1, "RID-B")
+    tracker.observe_bindings({rid_a: 7, rid_b: 20})
+    tracker.observe_bindings({rid_a: 12, rid_b: 20})
+    tracker.observe_bindings({rid_a: 18, rid_b: 25})
+
+    assert tracker.peek_replacement(rid_a) == 7
+    assert tracker.peek_replacement(rid_b) == 20
+    for expected_remaining in (2, 1, 0):
+        assert tracker.mark_sent(rid_a, 7) == expected_remaining
+    assert tracker.peek_replacement(rid_a) == 12
+    assert tracker.peek_replacement(rid_b) == 20
+
+
+def test_current_rid_binding_cancels_deletion_and_supersession_for_ui_id():
+    tracker = tracking.RIDUIReplacementTracker(repeat_count=3)
+    rid_a = ("GB42590-2023", 1, "RID-A")
+    rid_b = ("GB42590-2023", 1, "RID-B")
+    tracker.observe_bindings({rid_a: 7, rid_b: 20})
+    tracker.observe_bindings({rid_a: 12, rid_b: 20})
+    assert tracker.peek_replacement(rid_a) == 7
+    assert tracker.is_superseded(7)
+
+    tracker.observe_bindings({rid_a: 12, rid_b: 7})
+
+    assert tracker.peek_replacement(rid_a) == 0
+    assert not tracker.is_superseded(7)
+    assert tracker.peek_replacement(rid_b) == 20
+
+
+def test_rid_ui_replacement_tracker_forget_removes_all_rid_state():
+    tracker = tracking.RIDUIReplacementTracker(repeat_count=3)
+    rid_key = ("GB42590-2023", 1, "RID-A")
+    tracker.observe_bindings({rid_key: 7})
+    tracker.observe_bindings({rid_key: 12})
+
+    assert tracker.forget(rid_key) is True
+    assert tracker.peek_replacement(rid_key) == 0
+    assert not tracker.is_superseded(7)
+    assert tracker.forget(rid_key) is False
+
+
 def test_vision_single_target_binds_without_pixel_distance_gate():
     results, unmatched_tracks, unmatched_detections = (
         tracking.associate_vision_measurements_nearest(

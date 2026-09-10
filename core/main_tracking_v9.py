@@ -1079,6 +1079,98 @@ def ui_distance_is_valid(distance):
     return math.isfinite(distance) and distance > 0.0
 
 
+class RIDUIReplacementTracker:
+    """Track UI identities superseded by accepted RID bindings."""
+
+    def __init__(self, repeat_count=3):
+        self.repeat_count = max(1, int(repeat_count))
+        self._states = {}
+
+    def observe_bindings(self, bindings):
+        """Record a complete cycle of RID-to-UI bindings and return switches."""
+        normalized = {
+            rid_key: int(ui_id)
+            for rid_key, ui_id in dict(bindings or {}).items()
+            if int(ui_id) > 0
+        }
+        switches = []
+        for rid_key, ui_id in normalized.items():
+            state = self._states.get(rid_key)
+            if state is None:
+                self._states[rid_key] = {
+                    "bound_ui_id": ui_id,
+                    "pending_replacements": [],
+                    "superseded_ui_ids": set(),
+                }
+                continue
+
+            old_ui_id = int(state["bound_ui_id"])
+            if old_ui_id == ui_id:
+                continue
+
+            state["bound_ui_id"] = ui_id
+            pending_ids = {
+                int(item["old_ui_id"])
+                for item in state["pending_replacements"]
+            }
+            if (
+                old_ui_id not in pending_ids
+                and old_ui_id not in state["superseded_ui_ids"]
+            ):
+                state["pending_replacements"].append({
+                    "old_ui_id": old_ui_id,
+                    "remaining": self.repeat_count,
+                })
+            state["superseded_ui_ids"].add(old_ui_id)
+            switches.append({
+                "rid_key": rid_key,
+                "old_ui_id": old_ui_id,
+                "new_ui_id": ui_id,
+            })
+
+        # A UI identity currently owned by any RID must never be deleted or
+        # suppressed, regardless of the iteration order of multiple RID rows.
+        active_ui_ids = set(normalized.values())
+        if active_ui_ids:
+            for state in self._states.values():
+                state["superseded_ui_ids"].difference_update(active_ui_ids)
+                state["pending_replacements"] = [
+                    item
+                    for item in state["pending_replacements"]
+                    if int(item["old_ui_id"]) not in active_ui_ids
+                ]
+        return switches
+
+    def peek_replacement(self, rid_key):
+        state = self._states.get(rid_key)
+        if state is None or not state["pending_replacements"]:
+            return 0
+        return int(state["pending_replacements"][0]["old_ui_id"])
+
+    def mark_sent(self, rid_key, old_ui_id):
+        state = self._states.get(rid_key)
+        if state is None or not state["pending_replacements"]:
+            return 0
+        pending = state["pending_replacements"][0]
+        if int(pending["old_ui_id"]) != int(old_ui_id):
+            return int(pending["remaining"])
+        pending["remaining"] = max(0, int(pending["remaining"]) - 1)
+        remaining = int(pending["remaining"])
+        if remaining == 0:
+            state["pending_replacements"].pop(0)
+        return remaining
+
+    def is_superseded(self, ui_id):
+        ui_id = int(ui_id)
+        return any(
+            ui_id in state["superseded_ui_ids"]
+            for state in self._states.values()
+        )
+
+    def forget(self, rid_key):
+        return self._states.pop(rid_key, None) is not None
+
+
 class UISender:
     def __init__(self, ip, port):
         self.ip = ip
